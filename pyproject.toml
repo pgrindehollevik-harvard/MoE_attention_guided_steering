@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moe-attention-guided-steering"
+version = "0.1.0"
+description = "Teaching-first scaffold for attention-guided steering in Mixture-of-Experts language models."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
