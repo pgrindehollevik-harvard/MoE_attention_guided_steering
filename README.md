@@ -34,11 +34,14 @@ This is the bridge between the two papers:
 ## Repository layout
 
 - `0_validate_dataset.py` through `4_export_experiment_report.py`: numbered scripts inspired by the attention-guided steering repo.
+- `inspect_reference_data.py`: quick summary tool for the imported attention-guided steering text assets under `data/`.
 - `args.py`: shared CLI flags used by the scripts.
 - `src/moe_attention_guided_steering/`: reusable library code.
+- `data/`: vendored concept lists, general statements, and evaluation prompt templates from the attention-guided steering repo.
 - `examples/toy_experiment.json`: a tiny synthetic dataset that makes the full pipeline runnable immediately.
 - `docs/ARCHITECTURE.md`: codebase walkthrough.
 - `docs/RESEARCH_SYNTHESIS.md`: plain-English mapping from the reference papers to this repo.
+- `docs/UPSTREAM_DATA.md`: provenance and usage notes for the imported attention-guided steering data.
 - `tests/`: unit tests for the core logic.
 
 ## Quickstart
@@ -46,6 +49,7 @@ This is the bridge between the two papers:
 From the repository root:
 
 ```bash
+python3 inspect_reference_data.py --concept-type fears
 python3 0_validate_dataset.py
 python3 1_select_representative_tokens.py --output-dir outputs/demo
 python3 2_compute_expert_scores.py --output-dir outputs/demo
@@ -55,6 +59,24 @@ python3 -m unittest discover -s tests
 ```
 
 The scripts default to `examples/toy_experiment.json`, so you can run the whole pipeline without downloading models.
+
+## Imported attention-guided steering data
+
+The repository now includes the text assets from the upstream
+`attention_guided_steering/data` tree so we can stay close to that project's
+concept catalog and evaluation setup.
+
+That imported data is useful immediately for:
+
+- choosing concept families to probe,
+- reusing the upstream evaluation prompt templates,
+- keeping a future real-model collector aligned with the same experimental setup.
+
+What it does *not* provide yet is the actual trace data needed by the MoE hybrid
+pipeline. Our current `0` through `4` scripts still expect an `ExperimentDataset`
+with per-layer attention weights and per-token expert loads. In other words, the
+imported `data/` tree is now the experiment catalog, while `examples/toy_experiment.json`
+remains the runnable toy trace dataset.
 
 ## What is already implemented
 
@@ -70,6 +92,7 @@ The scripts default to `examples/toy_experiment.json`, so you can run the whole 
 The next engineering step is to replace the toy JSON input with a real instrumentation layer that:
 
 - records per-layer attention signals from an MoE model,
+- uses the imported `data/` catalog to choose concept families and evaluation templates,
 - extracts expert router loads or expert activations at the selected token positions,
 - applies the resulting intervention plan during generation.
 

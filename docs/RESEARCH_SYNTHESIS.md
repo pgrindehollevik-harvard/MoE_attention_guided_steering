@@ -46,4 +46,4 @@ These are the questions we should answer as the repo grows:
 
 ## 6. Practical engineering direction
 
-For the next iteration, the highest-value implementation step is a real collector that exports actual traces from an MoE checkpoint into this repo's dataset format. Once that exists, the rest of the code can already score experts and write reports.
+For the next iteration, the highest-value implementation step is a real collector that exports actual traces from an MoE checkpoint into this repo's dataset format. The newly imported `data/` tree from the attention-guided steering repo gives us a ready-made concept catalog and evaluation prompt bank, so the collector can stay aligned with the upstream experimental setup while still writing outputs into this repo's typed schema. Once that exists, the rest of the code can already score experts and write reports.

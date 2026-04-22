@@ -17,6 +17,11 @@ The top-level scripts give the project a very explicit research workflow:
 5. `4_export_experiment_report.py`
    Produces a human-readable Markdown summary for collaborators.
 
+There is also one utility script outside the numbered pipeline:
+
+- `inspect_reference_data.py`
+  Summarizes the imported attention-guided steering text assets under `data/`.
+
 ## Shared package
 
 The reusable logic lives in `src/moe_attention_guided_steering/`.
@@ -35,6 +40,8 @@ The reusable logic lives in `src/moe_attention_guided_steering/`.
   A thin orchestration layer that wires the pieces together.
 - `io_utils.py`
   Output helpers for JSON and Markdown reports.
+- `reference_data.py`
+  Loaders and adapters for the imported attention-guided steering text assets.
 
 ## Why this split matters
 
@@ -52,6 +59,7 @@ Right now the repo is deliberately in **toy mode**. That means the input is a JS
 When we move to a real MoE model, the main changes should be:
 
 - add a model-instrumentation module that records attention and expert loads,
+- use `reference_data.py` to pick concept catalogs and evaluation templates from the imported upstream `data/` tree,
 - write those traces into the same schema used by the toy dataset,
 - keep the rest of the pipeline unchanged.
 
