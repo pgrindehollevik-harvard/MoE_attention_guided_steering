@@ -74,8 +74,8 @@ The key script is:
 
 ```bash
 python3 collect_attention_to_prefix.py \
-  --model-id meta-llama/Meta-Llama-3.1-8B-Instruct \
-  --model-tag llama_3_1_8b \
+  --model-id meta-llama/Llama-3.1-8B-Instruct \
+  --model-tag llama_3_1_8b_instruct \
   --concept-type fears \
   --sample-concepts 5 \
   --seed 7 \
@@ -91,6 +91,9 @@ one candidate suffix token per layer, closely matching the upstream
 - a final `layer_to_token` map that can later drive MoE expert-load collection.
 
 See [docs/REAL_MODEL_ATTENTION.md](/Users/peterflo/Desktop/MoE_attention_guided_steering/docs/REAL_MODEL_ATTENTION.md) and [docs/SLURM_RUNBOOK.md](/Users/peterflo/Desktop/MoE_attention_guided_steering/docs/SLURM_RUNBOOK.md) for the details.
+
+If you run this through Slurm, it is often safest to export `HF_HOME=$HOME/.cache/huggingface`
+so the batch job reuses the same Hugging Face auth and cache created by `hf auth login`.
 
 ## Imported attention-guided steering data
 

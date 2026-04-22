@@ -67,12 +67,47 @@ class AttentionCollectionRun:
 
 
 def _flatten_token_ids(token_ids: Any) -> List[int]:
-    """Convert token ids from tensors/lists into a flat Python list."""
+    """Convert token ids from tensors, mappings, or lists into a flat Python list.
+
+    Some chat tokenizers return a bare tensor for `apply_chat_template(...)`,
+    while others return a mapping such as `{"input_ids": tensor, ...}`. This
+    helper normalizes both cases so downstream prefix-span logic can stay shape-
+    focused instead of tokenizer-output focused.
+    """
+    if isinstance(token_ids, dict):
+        token_ids = token_ids["input_ids"]
+    elif hasattr(token_ids, "keys") and "input_ids" in token_ids:
+        token_ids = token_ids["input_ids"]
+    elif hasattr(token_ids, "input_ids"):
+        token_ids = token_ids.input_ids
+
     if hasattr(token_ids, "tolist"):
         token_ids = token_ids.tolist()
     if token_ids and isinstance(token_ids[0], list):
         token_ids = token_ids[0]
     return [int(token_id) for token_id in token_ids]
+
+
+def _normalize_model_inputs(encoded_inputs: Any) -> Dict[str, Any]:
+    """Convert tokenizer outputs into a plain model-input mapping.
+
+    Output shape meaning:
+    - `input_ids`: `(1, S)`
+    - optional `attention_mask`: `(1, S)`
+
+    where `S` is the sequence length of the chat-formatted prompt.
+    """
+    if isinstance(encoded_inputs, dict):
+        normalized = dict(encoded_inputs)
+    elif hasattr(encoded_inputs, "keys"):
+        normalized = {key: encoded_inputs[key] for key in encoded_inputs.keys()}
+    else:
+        normalized = {"input_ids": encoded_inputs}
+
+    if "input_ids" not in normalized:
+        raise KeyError("Tokenizer output must contain input_ids.")
+
+    return normalized
 
 
 def longest_common_prefix_length(left: Sequence[int], right: Sequence[int]) -> int:
@@ -174,7 +209,7 @@ def load_hf_model_resources(
     }
 
     if torch_dtype:
-        model_kwargs["torch_dtype"] = getattr(torch, torch_dtype)
+        model_kwargs["dtype"] = getattr(torch, torch_dtype)
 
     if load_in_4bit:
         from transformers import BitsAndBytesConfig
@@ -319,7 +354,8 @@ def collect_attention_trace_for_prompt_pair(
     """Run one positive upstream-style prompt through the model and collect attentions.
 
     Shape flow:
-    1. Tokenized chat prompt has sequence length `S`.
+    1. The positive prompt is formatted with the model's chat template and
+       tokenized into `input_ids` with shape `(1, S)`.
     2. Hugging Face returns attentions per layer with shape `(1, H, S, S)`.
     3. Each layer is reduced to `(N,)`, where `N` is the number of shared suffix
        candidate tokens.
@@ -335,24 +371,30 @@ def collect_attention_trace_for_prompt_pair(
         prompt_pair.body_text,
     )
 
-    encoded_inputs = tokenizer(
-        prompt_pair.positive_full_prompt,
+    encoded_inputs = tokenizer.apply_chat_template(
+        [{"role": "user", "content": prompt_pair.positive_full_prompt}],
+        tokenize=True,
+        add_generation_prompt=True,
         return_tensors="pt",
-        padding=False,
-        add_special_tokens=False,
-    ).to(model.device)
+    )
+    if hasattr(encoded_inputs, "to"):
+        encoded_inputs = encoded_inputs.to(model.device)
+    encoded_inputs = _normalize_model_inputs(encoded_inputs)
+
+    model_kwargs: Dict[str, Any] = {
+        "input_ids": encoded_inputs["input_ids"],
+        "output_attentions": True,
+        "return_dict": True,
+        "use_cache": False,
+    }
+    if "attention_mask" in encoded_inputs:
+        model_kwargs["attention_mask"] = encoded_inputs["attention_mask"]
 
     with torch.no_grad():
-        outputs = model(
-            input_ids=encoded_inputs["input_ids"],
-            attention_mask=encoded_inputs["attention_mask"],
-            output_attentions=True,
-            return_dict=True,
-            use_cache=False,
-        )
+        outputs = model(**model_kwargs)
 
-    input_ids = encoded_inputs["input_ids"][0]
-    candidate_token_ids = input_ids[-resources.num_candidate_suffix_tokens :].tolist()
+    input_ids = _flatten_token_ids(encoded_inputs["input_ids"])
+    candidate_token_ids = input_ids[-resources.num_candidate_suffix_tokens :]
     candidate_token_texts = resources.tokenizer.convert_ids_to_tokens(candidate_token_ids)
     candidate_token_relative_indices = list(
         range(-resources.num_candidate_suffix_tokens, 0)

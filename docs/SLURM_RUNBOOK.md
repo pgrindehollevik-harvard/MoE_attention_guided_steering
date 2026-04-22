@@ -18,8 +18,8 @@ on a GPU cluster. The template job script lives at:
 
 ```bash
 python3 collect_attention_to_prefix.py \
-  --model-id meta-llama/Meta-Llama-3.1-8B-Instruct \
-  --model-tag llama_3_1_8b \
+  --model-id meta-llama/Llama-3.1-8B-Instruct \
+  --model-tag llama_3_1_8b_instruct \
   --concept-type fears \
   --sample-concepts 5 \
   --seed 7 \
@@ -48,5 +48,9 @@ fear concepts before scaling to the full concept list.
   backend still returns the full attention tensors you need.
 - If VRAM is tight, try a smaller model first or use `--load-in-4bit`.
 - Set a writable cache directory with `--cache-dir` or by exporting `HF_HOME`.
+  Reusing `HF_HOME=$HOME/.cache/huggingface` is often the easiest way to make
+  Slurm jobs see the same auth token created by `hf auth login`.
 - The collector currently runs batch size `1`, intentionally matching the
   upstream attention extraction style and keeping tensor bookkeeping simple.
+- Many clusters require partition and wall-time overrides at submit time, for
+  example `sbatch --partition=<gpu_partition> --time=<hh:mm:ss> ...`.

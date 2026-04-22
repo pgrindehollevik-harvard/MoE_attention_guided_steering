@@ -21,11 +21,11 @@ if [ -f .venv/bin/activate ]; then
 fi
 
 export TOKENIZERS_PARALLELISM=false
-export HF_HOME="${HF_HOME:-$REPO_DIR/.hf_cache}"
+export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
 
 python3 collect_attention_to_prefix.py \
-  --model-id "${MODEL_ID:-meta-llama/Meta-Llama-3.1-8B-Instruct}" \
-  --model-tag "${MODEL_TAG:-llama_3_1_8b}" \
+  --model-id "${MODEL_ID:-meta-llama/Llama-3.1-8B-Instruct}" \
+  --model-tag "${MODEL_TAG:-llama_3_1_8b_instruct}" \
   --concept-type "${CONCEPT_TYPE:-fears}" \
   --sample-concepts "${SAMPLE_CONCEPTS:-5}" \
   --seed "${SEED:-7}" \
