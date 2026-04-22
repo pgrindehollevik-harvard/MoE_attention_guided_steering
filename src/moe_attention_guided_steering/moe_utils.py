@@ -15,6 +15,28 @@ def compute_expert_scores_for_layer(
     examples against its mean load on the selected tokens from negative examples.
     A positive delta means the expert is more associated with the target concept;
     a negative delta means the expert is more associated with the contrast concept.
+
+    Numeric interpretation of the input:
+    - `selected_tokens_by_label["positive"]` can be stacked into a matrix of
+      shape `(N_positive, X)`
+    - `selected_tokens_by_label["negative"]` can be stacked into a matrix of
+      shape `(N_negative, X)`
+    where `X` is the number of experts in this layer.
+
+    The operation performed here is column-wise:
+    - compute `positive_mean` with shape `(X,)`
+    - compute `negative_mean` with shape `(X,)`
+    - compute `delta = positive_mean - negative_mean`, also shape `(X,)`
+
+    Inputs:
+    - `layer_index`: identifier of the layer whose expert columns are being
+      compared.
+    - `selected_tokens_by_label`: selected token rows grouped into positive and
+      negative sets.
+
+    Returns:
+    - `List[ExpertShiftScore]` of length `X`, where each item corresponds to one
+      column of the implicit expert-load matrices.
     """
     positive_tokens = selected_tokens_by_label.get("positive", [])
     negative_tokens = selected_tokens_by_label.get("negative", [])
@@ -52,6 +74,23 @@ def build_layer_intervention(
     action is asymmetric: some experts should be strengthened while others should
     be suppressed. Sparse top-k rules are also easier to explain to collaborators
     than dense coefficient vectors in the first project version.
+
+    Numeric interpretation:
+    - `scores` is the dense per-expert delta vector for this layer, with length
+      `X`.
+    - the output keeps only sparse index lists:
+      - `experts_to_activate` with length `<= K`
+      - `experts_to_deactivate` with length `<= K`
+      where `K = config.top_k_experts`.
+
+    Inputs:
+    - `layer_index`: layer whose delta vector is being thresholded.
+    - `scores`: dense score vector represented as structured records.
+    - `config`: thresholds and top-k sparsity controls.
+
+    Returns:
+    - `LayerIntervention`: sparse steering decision plus the original dense score
+      records for inspection.
     """
     sorted_desc = sorted(scores, key=lambda score: score.delta, reverse=True)
     sorted_asc = sorted(scores, key=lambda score: score.delta)
@@ -88,7 +127,21 @@ def build_steering_plan(
     contrast_concept: str,
     config: InterventionConfig,
 ) -> SteeringPlan:
-    """Build the complete layerwise steering plan for the experiment."""
+    """Build the complete layerwise steering plan for the experiment.
+
+    Numeric interpretation:
+    - `scores_by_layer[layer]` is a dense vector of length `X_l` for that layer.
+    - the resulting plan stores one sparse intervention summary per layer.
+
+    Inputs:
+    - `scores_by_layer`: dense per-layer expert delta vectors.
+    - `concept`: target concept associated with positive examples.
+    - `contrast_concept`: concept associated with negative examples.
+    - `config`: thresholds and top-k settings used to sparsify each layer.
+
+    Returns:
+    - `SteeringPlan`: full multi-layer intervention recommendation.
+    """
     layers = [
         build_layer_intervention(layer_index, scores_by_layer[layer_index], config)
         for layer_index in sorted(scores_by_layer)

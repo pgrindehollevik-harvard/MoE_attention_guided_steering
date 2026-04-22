@@ -34,14 +34,19 @@ This is the bridge between the two papers:
 ## Repository layout
 
 - `0_validate_dataset.py` through `4_export_experiment_report.py`: numbered scripts inspired by the attention-guided steering repo.
+- `collect_attention_to_prefix.py`: real-model GPU script for collecting upstream-style attention-to-prefix scores and per-layer token choices.
 - `inspect_reference_data.py`: quick summary tool for the imported attention-guided steering text assets under `data/`.
+- `prepare_manual_fear_review.py`: builds a manual three-way worksheet for baseline vs MoESteer vs attention-guided MoESteer.
 - `args.py`: shared CLI flags used by the scripts.
 - `src/moe_attention_guided_steering/`: reusable library code.
 - `data/`: vendored concept lists, general statements, and evaluation prompt templates from the attention-guided steering repo.
 - `examples/toy_experiment.json`: a tiny synthetic dataset that makes the full pipeline runnable immediately.
 - `docs/ARCHITECTURE.md`: codebase walkthrough.
 - `docs/RESEARCH_SYNTHESIS.md`: plain-English mapping from the reference papers to this repo.
+- `docs/REAL_MODEL_ATTENTION.md`: explanation of the new real-model attention collection stage.
+- `docs/SLURM_RUNBOOK.md`: generic cluster launch notes.
 - `docs/UPSTREAM_DATA.md`: provenance and usage notes for the imported attention-guided steering data.
+- `slurm/`: Slurm submission templates for GPU runs.
 - `tests/`: unit tests for the core logic.
 
 ## Quickstart
@@ -59,6 +64,33 @@ python3 -m unittest discover -s tests
 ```
 
 The scripts default to `examples/toy_experiment.json`, so you can run the whole pipeline without downloading models.
+
+## Real-model attention collection
+
+The repo now also includes a real GPU-ready attention stage inspired directly by
+the upstream `attention_guided_steering` workflow.
+
+The key script is:
+
+```bash
+python3 collect_attention_to_prefix.py \
+  --model-id meta-llama/Meta-Llama-3.1-8B-Instruct \
+  --model-tag llama_3_1_8b \
+  --concept-type fears \
+  --sample-concepts 5 \
+  --seed 7 \
+  --statement-stride 2
+```
+
+This script computes the actual per-layer attention-to-prefix scores used to pick
+one candidate suffix token per layer, closely matching the upstream
+`0_visualize_attn.py` stage. The output is:
+
+- a raw attention score array with shape `(num_prompts, num_layers, num_candidate_tokens)`,
+- rich JSON metadata,
+- a final `layer_to_token` map that can later drive MoE expert-load collection.
+
+See [docs/REAL_MODEL_ATTENTION.md](/Users/peterflo/Desktop/MoE_attention_guided_steering/docs/REAL_MODEL_ATTENTION.md) and [docs/SLURM_RUNBOOK.md](/Users/peterflo/Desktop/MoE_attention_guided_steering/docs/SLURM_RUNBOOK.md) for the details.
 
 ## Imported attention-guided steering data
 
@@ -82,6 +114,7 @@ remains the runnable toy trace dataset.
 
 - a validated dataset schema for attention + expert-load traces,
 - attention-based representative-token selection,
+- a real-model attention-to-prefix collector aligned with the upstream attention-guided steering repo,
 - positive-vs-negative expert score computation,
 - a thresholded layerwise intervention planner,
 - JSON + Markdown report generation,
@@ -93,6 +126,7 @@ The next engineering step is to replace the toy JSON input with a real instrumen
 
 - records per-layer attention signals from an MoE model,
 - uses the imported `data/` catalog to choose concept families and evaluation templates,
+- uses the new real attention collector to choose one suffix token index per layer,
 - extracts expert router loads or expert activations at the selected token positions,
 - applies the resulting intervention plan during generation.
 

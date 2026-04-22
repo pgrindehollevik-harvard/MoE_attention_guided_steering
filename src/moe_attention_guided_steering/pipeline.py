@@ -22,6 +22,28 @@ def run_pipeline(dataset: ExperimentDataset, config: ExperimentConfig) -> Pipeli
     The orchestration function is intentionally thin. Each major step still lives in
     its own module so that collaborators can inspect selection, scoring, or output
     logic without wading through a monolithic script.
+
+    Shape flow through the pipeline:
+    1. Input dataset supplies, for each layer, an attention vector `(T_l,)` and
+       expert-load matrix `(T_l, X_l)` per example.
+    2. Selection reduces each layer to one expert-load row `(X_l,)` per example.
+    3. Grouping by label yields implicit matrices `(N_positive, X_l)` and
+       `(N_negative, X_l)`.
+    4. Scoring reduces those matrices to dense delta vectors `(X_l,)`.
+    5. Planning sparsifies each dense vector into small index lists of experts to
+       activate or deactivate.
+
+    Important: this function orchestrates downstream processing only. It does not
+    calculate attention weights or expert loads from a live model; those values
+    must already be present in `dataset`.
+
+    Inputs:
+    - `dataset`: precomputed experiment traces in typed form.
+    - `config`: selection and intervention settings for the run.
+
+    Returns:
+    - `PipelineArtifacts`: selected token rows, dense per-layer score vectors,
+      and the final sparse steering plan.
     """
     selected_tokens_by_layer = index_selected_tokens_by_layer_and_label(
         dataset.examples,

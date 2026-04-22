@@ -21,6 +21,10 @@ There is also one utility script outside the numbered pipeline:
 
 - `inspect_reference_data.py`
   Summarizes the imported attention-guided steering text assets under `data/`.
+- `collect_attention_to_prefix.py`
+  Runs the real-model attention-to-prefix collection stage on a Hugging Face chat model.
+- `prepare_manual_fear_review.py`
+  Samples fears and evaluation questions for a three-condition manual comparison.
 
 ## Shared package
 
@@ -42,6 +46,12 @@ The reusable logic lives in `src/moe_attention_guided_steering/`.
   Output helpers for JSON and Markdown reports.
 - `reference_data.py`
   Loaders and adapters for the imported attention-guided steering text assets.
+- `upstream_prompt_datasets.py`
+  Recreates the upstream prefixed-vs-unprefixed statement prompts.
+- `attention_collection.py`
+  Real-model attention extraction and layerwise token selection.
+- `manual_review.py`
+  Builds the manual worksheet for baseline, MoESteer, and attention-guided MoESteer.
 
 ## Why this split matters
 
@@ -56,11 +66,20 @@ Research code becomes hard to reason about when the data schema, selection logic
 
 Right now the repo is deliberately in **toy mode**. That means the input is a JSON file containing pre-computed attention weights and expert loads. This keeps the core research logic understandable before we introduce heavy framework dependencies.
 
+That said, the repo is no longer toy-only. The new attention collector is the
+first real-model stage:
+
+- it loads an actual chat model,
+- reconstructs the upstream prefixed statement prompts,
+- computes attention-to-prefix scores for the shared suffix candidate tokens,
+- writes a per-layer token index map that future MoE tracing can consume.
+
 When we move to a real MoE model, the main changes should be:
 
-- add a model-instrumentation module that records attention and expert loads,
+- add a model-instrumentation module that records expert loads,
 - use `reference_data.py` to pick concept catalogs and evaluation templates from the imported upstream `data/` tree,
-- write those traces into the same schema used by the toy dataset,
+- use `attention_collection.py` to pick the layerwise token positions,
+- write the resulting attention-plus-expert traces into the same schema used by the toy dataset,
 - keep the rest of the pipeline unchanged.
 
 That separation is useful because it lets us debug model collection and intervention planning independently.

@@ -12,6 +12,27 @@ def load_experiment(path: str) -> ExperimentDataset:
     around is that research code gets confusing very quickly when each function has
     to remember the exact nested shape of the input payload. A typed in-memory
     representation makes the later pipeline code much easier to audit.
+
+    Expected numeric structure:
+    - examples: `E`
+    - layers per example: `L`
+    - candidate tokens per layer: `T_l`
+    - experts per token in layer `l`: `X_l`
+
+    In matrix terms, each layer contributes:
+    - an attention vector of shape `(T_l,)`
+    - an expert-load matrix of shape `(T_l, X_l)`
+
+    Important: this function does not calculate attention. It reads already
+    computed `attention_weight` scalars and `expert_loads` vectors from the input
+    JSON file and converts them into typed Python records.
+
+    Inputs:
+    - `path`: location of the JSON file containing precomputed traces.
+
+    Returns:
+    - `ExperimentDataset`: nested dataclasses representing the full
+      `[example][layer][token][expert]` structure.
     """
     payload = json.loads(Path(path).read_text())
     examples: List[PromptRecord] = []
@@ -54,6 +75,20 @@ def validate_dataset(dataset: ExperimentDataset) -> None:
     - at least one positive and one negative example exist,
     - every example exposes the same layer indices,
     - every token in the same layer uses the same number of experts.
+
+    Shape assumptions being checked:
+    - every example follows the same layer axis `L`,
+    - within one layer, the expert-load matrix has a consistent width `X`,
+    - every layer has at least one token row, so the attention vector `(T,)` and
+      expert-load matrix `(T, X)` are both non-empty.
+
+    Inputs:
+    - `dataset`: parsed experiment structure whose nested records imply the
+      numeric shapes used later by selection and scoring.
+
+    Returns:
+    - `None`. The function raises `ValueError` if any shape or labeling
+      assumption needed by the pipeline is violated.
     """
     if not dataset.examples:
         raise ValueError("Dataset must contain at least one example.")

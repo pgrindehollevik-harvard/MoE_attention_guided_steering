@@ -1,0 +1,8 @@
+numpy>=1.26
+tqdm>=4.66
+transformers>=4.45
+accelerate>=0.34
+sentencepiece>=0.2
+torch>=2.2
+# Install only if your cluster/image supports bitsandbytes CUDA wheels.
+# bitsandbytes>=0.43
