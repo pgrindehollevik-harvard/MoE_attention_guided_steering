@@ -15,9 +15,9 @@ from moe_attention_guided_steering.reference_data import load_reference_concept_
 
 
 def main() -> None:
-    """Sample fears and evaluation questions, then write a three-condition review bundle."""
+    """Sample fears and evaluation questions, then write a review bundle."""
     parser = argparse.ArgumentParser(
-        description="Prepare a manual baseline vs MoESteer vs attention-guided MoESteer review sheet."
+        description="Prepare a manual qualitative review sheet for the currently configured comparison conditions."
     )
     parser.add_argument(
         "--data-dir",

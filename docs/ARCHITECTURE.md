@@ -1,85 +1,95 @@
 # Architecture Walkthrough
 
-This codebase is organized to feel familiar to anyone who has already read the attention-guided steering repository.
+This repo is now organized around one primary runnable experiment:
 
-## Numbered scripts
+- **Stage 1**: baseline vs **span-based SteerMoE** on
+  `allenai/OLMoE-1B-7B-0125-Instruct`
 
-The top-level scripts give the project a very explicit research workflow:
+The earlier toy scripts and failed single-token OLMoE hybrid entrypoints were
+removed so the codebase lines up with that goal.
 
-1. `0_validate_dataset.py`
-   Loads the dataset and checks that the experiment specification is structurally sound.
-2. `1_select_representative_tokens.py`
-   Chooses the highest-attention token for each layer and example.
-3. `2_compute_expert_scores.py`
-   Compares expert usage between positive and negative examples.
-4. `3_build_steering_plan.py`
-   Converts those expert scores into a concrete intervention plan.
-5. `4_export_experiment_report.py`
-   Produces a human-readable Markdown summary for collaborators.
+## Top-level entrypoints
 
-There is also one utility script outside the numbered pipeline:
-
-- `inspect_reference_data.py`
-  Summarizes the imported attention-guided steering text assets under `data/`.
-- `collect_attention_to_prefix.py`
-  Runs the real-model attention-to-prefix collection stage on a Hugging Face chat model.
 - `prepare_manual_fear_review.py`
-  Samples fears and evaluation questions for a three-condition manual comparison.
+  Samples concepts and evaluation questions into a reproducible qualitative
+  review plan.
+- `run_olmoe_steermoe_review.py`
+  Main stage-1 runner. It collects span-based router traces, builds SteerMoE
+  plans, generates baseline vs steered outputs, and renders HTML/Markdown.
+- `render_manual_review_report.py`
+  Re-renders a saved manual review plan into Markdown + HTML.
+- `collect_attention_to_prefix.py`
+  Dense-model attention collector kept for future same-model comparisons against
+  an attention-based method.
+- `inspect_reference_data.py`
+  Lightweight sanity-check tool for the imported upstream text assets.
 
 ## Shared package
 
 The reusable logic lives in `src/moe_attention_guided_steering/`.
 
 - `config.py`
-  Small dataclasses for the knobs we expect to tune during experiments.
+  Dataclasses for experiment knobs such as thresholds and top-k settings.
 - `types.py`
-  Dataclasses for the structured records flowing through the pipeline.
+  Typed records for examples, layers, token statistics, and steering plans.
 - `datasets.py`
-  Input loading and validation.
-- `attention_utils.py`
-  Representative-token selection.
+  Loading and validation helpers for the generic experiment dataset schema.
 - `moe_utils.py`
-  Expert scoring and steering-plan construction.
+  Core expert-delta scoring and sparse steering-plan construction.
 - `pipeline.py`
-  A thin orchestration layer that wires the pieces together.
-- `io_utils.py`
-  Output helpers for JSON and Markdown reports.
+  Thin orchestration layer that turns a typed dataset into score artifacts and a
+  steering plan.
 - `reference_data.py`
-  Loaders and adapters for the imported attention-guided steering text assets.
+  Loaders for the vendored upstream concept lists, statement pools, and
+  evaluation prompts.
 - `upstream_prompt_datasets.py`
-  Recreates the upstream prefixed-vs-unprefixed statement prompts.
+  Helpers that rebuild the upstream prefixed-vs-unprefixed statement prompts.
 - `attention_collection.py`
-  Real-model attention extraction and layerwise token selection.
+  Dense-model attention-to-prefix extraction plus shared token-span helpers.
+- `olmoe_backend.py`
+  The stage-1 OLMoE backend. This is where router logits are collected,
+  aggregated over a token span, converted into a SteerMoE plan, and injected
+  back into generation.
 - `manual_review.py`
-  Builds the manual worksheet for baseline, MoESteer, and attention-guided MoESteer.
+  Condition-agnostic qualitative review plan + HTML/Markdown rendering.
+- `io_utils.py`
+  Generic JSON / Markdown output helpers used by multiple entrypoints.
+
+## The stage-1 tensor flow
+
+For one prompt on OLMoE:
+
+1. The tokenizer converts the chat-formatted prompt into a sequence of length
+   `S`.
+2. OLMoE returns router logits per layer with shape `(L, S, E)`.
+   Here:
+   - `L` = number of MoE layers
+   - `S` = sequence length
+   - `E` = number of experts
+3. We identify the full **user-content span** inside that sequence and slice the
+   router tensor down to `(L, P, E)`, where `P` is the number of tokens in that
+   span.
+4. For each token row `(E,)`, we mark which experts were actually selected by
+   top-k routing, giving a binary activation indicator over the span.
+5. We average those token-level indicators across the `P` span tokens to get one
+   activation-rate vector `(E,)` per layer.
+6. Across positive and negative prompt sets, we compare those layerwise
+   activation-rate vectors and turn the deltas into sparse expert activation /
+   deactivation plans.
+
+So the main stage-1 readout is **span-level expert activation rate**, not
+single-token router state.
 
 ## Why this split matters
 
-Research code becomes hard to reason about when the data schema, selection logic, scoring logic, and output formatting all live in the same script. This repo splits those concerns so collaborators can answer very specific questions:
+This layout keeps the repo honest about what is generic and what is model-
+specific:
 
-- "How are representative tokens chosen?" -> `attention_utils.py`
-- "How do we decide which experts to activate?" -> `moe_utils.py`
-- "What exactly is in the input file?" -> `types.py` and `datasets.py`
-- "What did a specific run produce?" -> `outputs/...` and `io_utils.py`
+- `moe_utils.py` and `pipeline.py` are generic scoring / planning code.
+- `olmoe_backend.py` is the OLMoE-specific instrumentation and intervention
+  layer.
+- `attention_collection.py` is future-facing support for same-model
+  attention-based comparisons.
 
-## Toy mode versus real-model mode
-
-Right now the repo is deliberately in **toy mode**. That means the input is a JSON file containing pre-computed attention weights and expert loads. This keeps the core research logic understandable before we introduce heavy framework dependencies.
-
-That said, the repo is no longer toy-only. The new attention collector is the
-first real-model stage:
-
-- it loads an actual chat model,
-- reconstructs the upstream prefixed statement prompts,
-- computes attention-to-prefix scores for the shared suffix candidate tokens,
-- writes a per-layer token index map that future MoE tracing can consume.
-
-When we move to a real MoE model, the main changes should be:
-
-- add a model-instrumentation module that records expert loads,
-- use `reference_data.py` to pick concept catalogs and evaluation templates from the imported upstream `data/` tree,
-- use `attention_collection.py` to pick the layerwise token positions,
-- write the resulting attention-plus-expert traces into the same schema used by the toy dataset,
-- keep the rest of the pipeline unchanged.
-
-That separation is useful because it lets us debug model collection and intervention planning independently.
+That means later comparisons can add a new backend or a new readout rule without
+rewriting the whole repo.

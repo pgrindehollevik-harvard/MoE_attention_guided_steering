@@ -2,84 +2,73 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
-from .attention_collection import HFModelResources
+from .attention_collection import HFModelResources, compute_inserted_token_span_from_ids
 from .config import ExperimentConfig, InterventionConfig
 from .datasets import validate_dataset
 from .manual_review import ManualReviewPlan
-from .types import ExperimentDataset, LayerRecord, PromptRecord, SelectedToken, TokenRecord, SteeringPlan
+from .types import ExperimentDataset, LayerRecord, PromptRecord, SteeringPlan, TokenRecord
 from .upstream_prompt_datasets import StatementPromptPair
 
 
 @dataclass
-class OLMoERouterTrace:
-    """Per-prompt OLMoE router probabilities on the shared suffix candidates.
+class OLMoESpanActivationTrace:
+    """Per-prompt OLMoE expert activation rates over a meaningful token span.
 
     Shapes:
     - chat-formatted `input_ids`: `(1, S)`
-    - Hugging Face `outputs.router_logits[layer]`: `(B * S, E)` for OLMoE
+    - raw per-layer OLMoE router logits: `(B * S, E)` or `(B, S, E)`
     - reshaped per-layer router logits: `(B, S, E)`
-    - candidate suffix slice for one prompt: `(N, E)`
-    - full `layer_router_probabilities`: `(L, N, E)`
+    - chosen readout span for one prompt: `(P, E)`
+    - top-k routed-expert indicator matrix over the span: `(P, E)`
+    - per-layer activation-rate vector after averaging over span tokens: `(E,)`
+    - full `layer_expert_activation_rates`: `(L, E)`
 
     where:
     - `B` is the batch size. The first implementation assumes `B = 1`.
-    - `S` is the tokenized prompt length after applying the chat template.
-    - `L` is the number of decoder layers in OLMoE.
-    - `N` is the number of shared candidate suffix tokens at the end of the
-      prompt, matching the attention-guided token-selection stage.
-    - `E` is the number of experts in each OLMoE sparse layer.
+    - `S` is the full sequence length after applying the chat template.
+    - `P` is the number of tokens inside the readout span.
+    - `L` is the number of sparse decoder layers in OLMoE.
+    - `E` is the number of experts in each sparse layer.
 
     Meaning:
-    - Each `layer_router_probabilities[layer][token][expert]` value is the
-      router probability assigned to one expert for one candidate suffix token.
-    - These are the MoE-side features that later become the expert-load vectors
-      in the generic steering pipeline.
+    - `layer_expert_activation_rates[layer][expert]` is the fraction of tokens in
+      the chosen readout span whose top-k router decision included that expert.
+    - This mirrors the paper's "is the expert routed to for tokens in the span?"
+      logic more closely than the earlier single-token prototype.
     """
 
     prompt_id: str
     label: str
     prompt_text: str
-    candidate_token_texts: List[str]
-    candidate_token_relative_indices: List[int]
-    layer_router_probabilities: List[List[List[float]]]
+    span_name: str
+    span_token_start: int
+    span_token_end: int
+    span_token_texts: List[str]
+    top_k_experts_per_token: int
+    layer_expert_activation_rates: List[List[float]]
 
 
 @dataclass
 class SteeringConditionArtifacts:
-    """All steering artifacts for one condition and one concept.
+    """Reusable steering artifacts for one concept under one readout rule.
 
     Shapes:
-    - `dataset.examples[e].layers[l].tokens[t].expert_loads`: `(E,)`
-    - `selected_tokens_by_layer[layer][label]`: implicit matrices
-      `(N_positive, E)` and `(N_negative, E)` after selection
-    - `steering_plan.layers[layer].scores`: dense delta vector `(E,)`
+    - `dataset.examples[e].layers[l].tokens[0].expert_loads`: `(E,)`
+    - `steering_plan.layers[layer].scores`: dense expert-delta vector `(E,)`
 
     Meaning:
-    - `dataset` stores the collected OLMoE router probabilities in the generic
-      experiment schema.
-    - `selected_tokens_by_layer` shows which candidate suffix token row was used
-      in each positive/negative example.
-    - `steering_plan` is the sparse intervention recommendation derived from the
-      dense expert-delta vectors.
+    - the dataset stores one span-aggregated expert-activation vector per layer
+      and example,
+    - the steering plan sparsifies those dense per-layer vectors into a small
+      list of experts to favor or suppress at generation time.
     """
 
     dataset: ExperimentDataset
-    selected_tokens_by_layer: Dict[int, Dict[str, List[SelectedToken]]]
     steering_plan: SteeringPlan
 
 
 def _flatten_token_ids(token_ids: Any) -> List[int]:
-    """Convert tokenizer output ids into a flat Python list.
-
-    Inputs:
-    - `token_ids`: tokenizer output that may be:
-      - a tensor shaped `(1, S)`,
-      - a nested list shaped `(1, S)`,
-      - a mapping containing `input_ids`.
-
-    Returns:
-    - `List[int]` of length `S`.
-    """
+    """Convert tokenizer output ids into a flat Python list."""
     if isinstance(token_ids, dict):
         token_ids = token_ids["input_ids"]
     elif hasattr(token_ids, "keys") and "input_ids" in token_ids:
@@ -95,12 +84,7 @@ def _flatten_token_ids(token_ids: Any) -> List[int]:
 
 
 def _normalize_model_inputs(encoded_inputs: Any) -> Dict[str, Any]:
-    """Convert tokenizer outputs into a plain mapping for Hugging Face models.
-
-    Output shape meaning:
-    - `input_ids`: `(1, S)`
-    - optional `attention_mask`: `(1, S)`
-    """
+    """Convert tokenizer outputs into a plain mapping for Hugging Face models."""
     if isinstance(encoded_inputs, dict):
         normalized = dict(encoded_inputs)
     elif hasattr(encoded_inputs, "keys"):
@@ -128,10 +112,6 @@ def _reshape_router_logits_for_prompt(
 
     Returns:
     - tensor-like object with shape `(B, S, E)`.
-
-    Raises:
-    - `ValueError` if the returned router tensor does not match the expected OLMoE
-      layout.
     """
     shape = tuple(layer_router_logits.shape)
     if len(shape) == 2 and shape[0] == batch_size * sequence_length:
@@ -145,63 +125,68 @@ def _reshape_router_logits_for_prompt(
     )
 
 
-def build_fixed_layer_to_token_index(
-    num_layers: int,
-    fixed_token_index: int = -1,
-) -> Dict[int, int]:
-    """Create the original MoESteer-style fixed token map.
+def find_user_content_token_span(tokenizer: Any, prompt_text: str) -> tuple[int, int]:
+    """Recover the chat-token span occupied by the user's literal prompt text.
 
     Inputs:
-    - `num_layers`: number of decoder layers `L`.
-    - `fixed_token_index`: shared negative token index used for every layer.
-      `-1` means "the final shared suffix token", which is the blind fixed-token
-      baseline that attention-guided steering is meant to improve upon.
+    - `prompt_text`: raw user-visible prompt text, before chat templating.
 
     Returns:
-    - `Dict[int, int]` with `L` entries, mapping every layer to the same selected
-      candidate suffix token index.
+    - `(start, end)` token indices for the user-content span inside the
+      chat-formatted input sequence.
+
+    Method:
+    - tokenize the normal chat-formatted prompt,
+    - tokenize the same chat template with an empty user message,
+    - compute the exact inserted token interval.
     """
-    return {layer_index: fixed_token_index for layer_index in range(num_layers)}
+    full_chat = [{"role": "user", "content": prompt_text}]
+    empty_chat = [{"role": "user", "content": ""}]
+
+    full_ids = _flatten_token_ids(
+        tokenizer.apply_chat_template(
+            full_chat,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_tensors="pt",
+        )
+    )
+    empty_ids = _flatten_token_ids(
+        tokenizer.apply_chat_template(
+            empty_chat,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_tensors="pt",
+        )
+    )
+    return compute_inserted_token_span_from_ids(full_ids, empty_ids)
 
 
-def load_layer_to_token_index(path: str) -> Dict[int, int]:
-    """Load a JSON layer-to-token map and normalize string keys into ints."""
-    import json
-    from pathlib import Path
-
-    payload = json.loads(Path(path).read_text())
-    return {int(layer_index): int(token_index) for layer_index, token_index in payload.items()}
-
-
-def collect_olmoe_router_trace_for_prompt(
+def collect_olmoe_span_activation_trace_for_prompt(
     prompt_id: str,
     label: str,
     prompt_text: str,
     resources: HFModelResources,
-) -> OLMoERouterTrace:
-    """Run one chat prompt through OLMoE and collect suffix-token router loads.
+    span_name: str = "user_content",
+) -> OLMoESpanActivationTrace:
+    """Run one prompt through OLMoE and summarize routing over a token span.
 
     Shape flow:
     1. Apply the model's chat template and tokenize the prompt:
        - `input_ids`: `(1, S)`
     2. Ask OLMoE to return per-layer router logits:
        - raw layer tensor: `(1 * S, E)` or `(1, S, E)`
-    3. Reshape each layer to `(1, S, E)` and keep the last shared suffix tokens:
-       - `(1, N, E)`
-    4. Drop the singleton batch dimension and convert to probabilities:
-       - `(N, E)`
-    5. Stack over layers conceptually:
-       - `(L, N, E)`
-
-    Inputs:
-    - `prompt_id`: stable identifier used for trace files and datasets.
-    - `label`: `positive` or `negative`.
-    - `prompt_text`: raw user-facing text inserted into the chat template.
-    - `resources`: loaded OLMoE model, tokenizer, and shared token metadata.
+    3. Reshape each layer to `(1, S, E)` and slice the chosen readout span:
+       - `(P, E)`
+    4. For each token row, mark the top-k routed experts:
+       - indicator matrix `(P, E)`
+    5. Average those indicators over the span tokens:
+       - activation-rate vector `(E,)`
+    6. Stack over layers conceptually:
+       - `(L, E)`
 
     Returns:
-    - `OLMoERouterTrace` containing one router-probability vector of length `E`
-      for every `(layer, candidate suffix token)` pair.
+    - `OLMoESpanActivationTrace` with one activation-rate vector per layer.
     """
     import torch
 
@@ -220,7 +205,12 @@ def collect_olmoe_router_trace_for_prompt(
 
     batch_size, sequence_length = encoded_inputs["input_ids"].shape
     if batch_size != 1:
-        raise ValueError("The first OLMoE collector only supports batch_size=1.")
+        raise ValueError("The OLMoE collector currently supports batch_size=1 only.")
+
+    span_start, span_end = find_user_content_token_span(tokenizer, prompt_text)
+    input_ids = _flatten_token_ids(encoded_inputs["input_ids"])
+    span_token_ids = input_ids[span_start:span_end]
+    span_token_texts = tokenizer.convert_ids_to_tokens(span_token_ids)
 
     model_kwargs: Dict[str, Any] = {
         "input_ids": encoded_inputs["input_ids"],
@@ -234,103 +224,94 @@ def collect_olmoe_router_trace_for_prompt(
     with torch.no_grad():
         outputs = model(**model_kwargs)
 
-    input_ids = _flatten_token_ids(encoded_inputs["input_ids"])
-    candidate_token_ids = input_ids[-resources.num_candidate_suffix_tokens :]
-    candidate_token_texts = tokenizer.convert_ids_to_tokens(candidate_token_ids)
-    candidate_token_relative_indices = list(range(-resources.num_candidate_suffix_tokens, 0))
-
-    layer_router_probabilities: List[List[List[float]]] = []
+    top_k_experts_per_token = int(getattr(model.config, "num_experts_per_tok", 1))
+    layer_expert_activation_rates: List[List[float]] = []
     for layer_router_logits in outputs.router_logits:
         reshaped = _reshape_router_logits_for_prompt(
             layer_router_logits=layer_router_logits,
             batch_size=batch_size,
             sequence_length=sequence_length,
         )
-        candidate_router_logits = reshaped[0, -resources.num_candidate_suffix_tokens :, :]
-        candidate_router_probabilities = torch.softmax(candidate_router_logits, dim=-1)
-        layer_router_probabilities.append(
-            candidate_router_probabilities.detach().cpu().tolist()
-        )
+        span_router_logits = reshaped[0, span_start:span_end, :]
+        top_k_indices = torch.topk(span_router_logits, k=top_k_experts_per_token, dim=-1).indices
+        activation_indicator = torch.zeros_like(span_router_logits, dtype=torch.float32)
+        activation_indicator.scatter_(dim=-1, index=top_k_indices, value=1.0)
+        activation_rates = activation_indicator.mean(dim=0)
+        layer_expert_activation_rates.append(activation_rates.detach().cpu().tolist())
 
-    return OLMoERouterTrace(
+    return OLMoESpanActivationTrace(
         prompt_id=prompt_id,
         label=label,
         prompt_text=prompt_text,
-        candidate_token_texts=list(candidate_token_texts),
-        candidate_token_relative_indices=candidate_token_relative_indices,
-        layer_router_probabilities=layer_router_probabilities,
+        span_name=span_name,
+        span_token_start=span_start,
+        span_token_end=span_end,
+        span_token_texts=list(span_token_texts),
+        top_k_experts_per_token=top_k_experts_per_token,
+        layer_expert_activation_rates=layer_expert_activation_rates,
     )
 
 
-def build_selection_scores_for_candidates(
-    candidate_token_relative_indices: Sequence[int],
-    selected_token_index: int,
-) -> List[float]:
-    """Encode one externally chosen token position as an argmax-ready score row.
-
-    The generic pipeline currently expects each token row to have an
-    `attention_weight` and then chooses the maximum-weight token in each layer.
-    For live OLMoE traces, the selection policy is already known externally:
-
-    - original MoESteer: use one fixed suffix token for every layer,
-    - attention-guided MoESteer: use the per-layer token from `layer_to_token.json`.
-
-    Rather than rewriting the downstream selection code, we encode that choice as
-    a one-hot selector over the shared suffix candidate tokens.
-
-    Inputs:
-    - `candidate_token_relative_indices`: list of the candidate suffix token
-      indices, usually `[-N, ..., -1]`.
-    - `selected_token_index`: the chosen negative token index for this layer.
+def collect_olmoe_span_activation_traces_for_prompt_pairs(
+    prompt_pairs: Sequence[StatementPromptPair],
+    resources: HFModelResources,
+    span_name: str = "user_content",
+) -> List[OLMoESpanActivationTrace]:
+    """Collect positive and negative span activation traces once per prompt pair.
 
     Returns:
-    - `List[float]` of length `N` with a single `1.0` at the chosen token and
-      `0.0` elsewhere.
+    - `List[OLMoESpanActivationTrace]` with length `2 * len(prompt_pairs)`,
+      ordered as positive trace, negative trace, positive trace, negative trace.
     """
-    if selected_token_index not in candidate_token_relative_indices:
-        available = ", ".join(str(index) for index in candidate_token_relative_indices)
-        raise ValueError(
-            f"Selected token index {selected_token_index} is not in the candidate set [{available}]."
+    try:
+        from tqdm import tqdm
+    except ImportError:  # pragma: no cover - fallback only used on minimal envs
+        tqdm = lambda iterable, **_: iterable
+
+    prompt_traces: List[OLMoESpanActivationTrace] = []
+    concept_name = prompt_pairs[0].concept_value if prompt_pairs else "unknown"
+    for prompt_pair in tqdm(prompt_pairs, desc=f"Collecting OLMoE span traces for {concept_name}"):
+        prompt_traces.append(
+            collect_olmoe_span_activation_trace_for_prompt(
+                prompt_id=f"{prompt_pair.prompt_id}:positive",
+                label="positive",
+                prompt_text=prompt_pair.positive_full_prompt,
+                resources=resources,
+                span_name=span_name,
+            )
         )
-    return [
-        1.0 if candidate_index == selected_token_index else 0.0
-        for candidate_index in candidate_token_relative_indices
-    ]
+        prompt_traces.append(
+            collect_olmoe_span_activation_trace_for_prompt(
+                prompt_id=f"{prompt_pair.prompt_id}:negative",
+                label="negative",
+                prompt_text=prompt_pair.negative_full_prompt,
+                resources=resources,
+                span_name=span_name,
+            )
+        )
+    return prompt_traces
 
 
-def build_experiment_dataset_from_router_traces(
-    prompt_traces: Sequence[OLMoERouterTrace],
+def build_experiment_dataset_from_span_traces(
+    prompt_traces: Sequence[OLMoESpanActivationTrace],
     concept: str,
     contrast_concept: str,
     concept_type: str,
     model_id: str,
     model_tag: str,
-    selection_layer_to_token_index: Dict[int, int],
-    selection_source: str,
+    readout_span: str,
 ) -> ExperimentDataset:
-    """Convert OLMoE router traces into the repo's generic experiment schema.
+    """Convert span-level OLMoE traces into the repo's generic experiment schema.
 
     Shape mapping:
-    - input `prompt_traces[p].layer_router_probabilities[layer]`: `(N, E)`
-    - output `dataset.examples[p].layers[layer].tokens[token].expert_loads`: `(E,)`
-    - output `attention_weight`: scalar one-hot selection score used only for the
-      argmax token-selection step in the generic pipeline
+    - input `prompt_traces[p].layer_expert_activation_rates[layer]`: `(E,)`
+    - output `dataset.examples[p].layers[layer].tokens[0].expert_loads`: `(E,)`
 
-    Inputs:
-    - `prompt_traces`: collected positive and negative OLMoE router traces.
-    - `concept`: target concept associated with positive prompts.
-    - `contrast_concept`: label for the negative control prompts.
-    - `concept_type`: family such as `fears`.
-    - `model_id`: Hugging Face model identifier.
-    - `model_tag`: filesystem-safe model short name.
-    - `selection_layer_to_token_index`: one selected negative token index per
-      layer, e.g. fixed `-1` or the attention-guided map.
-    - `selection_source`: human-readable label such as `fixed_last_token` or
-      `attention_guided`.
-
-    Returns:
-    - `ExperimentDataset` whose expert-load vectors can flow through the existing
-      model-agnostic selection, scoring, and steering-plan code.
+    Meaning:
+    - each layer now contributes exactly one row per example: the span-aggregated
+      expert activation-rate vector,
+    - the generic downstream pipeline can still operate unchanged, because it sees
+      one trivially selected row per layer.
     """
     if not prompt_traces:
         raise ValueError("prompt_traces must be non-empty.")
@@ -338,23 +319,21 @@ def build_experiment_dataset_from_router_traces(
     examples: List[PromptRecord] = []
     for trace in prompt_traces:
         layers: List[LayerRecord] = []
-        for layer_index, token_expert_matrix in enumerate(trace.layer_router_probabilities):
-            selected_token_index = selection_layer_to_token_index[layer_index]
-            selection_scores = build_selection_scores_for_candidates(
-                candidate_token_relative_indices=trace.candidate_token_relative_indices,
-                selected_token_index=selected_token_index,
-            )
-
-            tokens = [
-                TokenRecord(
-                    token_index=trace.candidate_token_relative_indices[token_position],
-                    token_text=trace.candidate_token_texts[token_position],
-                    attention_weight=selection_scores[token_position],
-                    expert_loads=[float(value) for value in token_expert_matrix[token_position]],
+        for layer_index, expert_activation_rates in enumerate(trace.layer_expert_activation_rates):
+            span_token_count = trace.span_token_end - trace.span_token_start
+            layers.append(
+                LayerRecord(
+                    layer_index=layer_index,
+                    tokens=[
+                        TokenRecord(
+                            token_index=trace.span_token_start,
+                            token_text=f"[{trace.span_name}_activation_rate over {span_token_count} tokens]",
+                            attention_weight=1.0,
+                            expert_loads=[float(value) for value in expert_activation_rates],
+                        )
+                    ],
                 )
-                for token_position in range(len(trace.candidate_token_texts))
-            ]
-            layers.append(LayerRecord(layer_index=layer_index, tokens=tokens))
+            )
 
         examples.append(
             PromptRecord(
@@ -372,7 +351,8 @@ def build_experiment_dataset_from_router_traces(
             "concept_type": concept_type,
             "model_id": model_id,
             "model_tag": model_tag,
-            "selection_source": selection_source,
+            "readout_span": readout_span,
+            "readout_statistic": "topk_activation_rate",
         },
         examples=examples,
     )
@@ -383,179 +363,124 @@ def build_experiment_dataset_from_router_traces(
 def collect_olmoe_experiment_dataset_for_prompt_pairs(
     prompt_pairs: Sequence[StatementPromptPair],
     resources: HFModelResources,
-    selection_layer_to_token_index: Dict[int, int],
-    selection_source: str,
+    readout_span: str = "user_content",
     contrast_concept: str = "generic_statement_control",
 ) -> ExperimentDataset:
-    """Collect positive/negative OLMoE traces and adapt them into one dataset.
+    """Collect a faithful-ish SteerMoE dataset from OLMoE prompt pairs.
 
     Inputs:
-    - `prompt_pairs`: upstream-style concept prompt pairs.
+    - `prompt_pairs`: upstream-style positive/negative statement prompt pairs.
     - `resources`: loaded OLMoE model and tokenizer.
-    - `selection_layer_to_token_index`: one chosen candidate suffix token per
-      layer.
-    - `selection_source`: short label describing how those token choices were
-      obtained.
-    - `contrast_concept`: textual label for the negative, unprefixed prompt set.
+    - `readout_span`: name of the span whose routing statistics are aggregated.
+      The current implementation uses the full user-content span in the
+      chat-formatted prompt.
+    - `contrast_concept`: textual label for the negative unprefixed prompts.
 
     Returns:
-    - `ExperimentDataset` with two labels:
-      - `positive`: prefixed concept prompts
-      - `negative`: unprefixed statement controls
+    - `ExperimentDataset` with one span-aggregated expert-activation vector per
+      layer and example.
     """
-    try:
-        from tqdm import tqdm
-    except ImportError:  # pragma: no cover - fallback only used on minimal envs
-        tqdm = lambda iterable, **_: iterable
-
-    prompt_traces = collect_olmoe_router_traces_for_prompt_pairs(
+    prompt_traces = collect_olmoe_span_activation_traces_for_prompt_pairs(
         prompt_pairs=prompt_pairs,
         resources=resources,
+        span_name=readout_span,
     )
-
-    return build_experiment_dataset_from_router_traces(
+    return build_experiment_dataset_from_span_traces(
         prompt_traces=prompt_traces,
         concept=prompt_pairs[0].concept_value,
         contrast_concept=contrast_concept,
         concept_type=prompt_pairs[0].concept_type,
         model_id=resources.model_id,
         model_tag=resources.model_tag,
-        selection_layer_to_token_index=selection_layer_to_token_index,
-        selection_source=selection_source,
+        readout_span=readout_span,
     )
 
 
-def collect_olmoe_router_traces_for_prompt_pairs(
-    prompt_pairs: Sequence[StatementPromptPair],
-    resources: HFModelResources,
-) -> List[OLMoERouterTrace]:
-    """Collect positive and negative OLMoE router traces once per prompt pair.
-
-    Returns:
-    - `List[OLMoERouterTrace]` with length `2 * len(prompt_pairs)`, ordered as:
-      - positive trace for pair 0
-      - negative trace for pair 0
-      - positive trace for pair 1
-      - negative trace for pair 1
-      - ...
-    """
-    try:
-        from tqdm import tqdm
-    except ImportError:  # pragma: no cover - fallback only used on minimal envs
-        tqdm = lambda iterable, **_: iterable
-
-    prompt_traces: List[OLMoERouterTrace] = []
-    for prompt_pair in tqdm(prompt_pairs, desc=f"Collecting OLMoE router traces for {prompt_pairs[0].concept_value}"):
-        prompt_traces.append(
-            collect_olmoe_router_trace_for_prompt(
-                prompt_id=f"{prompt_pair.prompt_id}:positive",
-                label="positive",
-                prompt_text=prompt_pair.positive_full_prompt,
-                resources=resources,
-            )
-        )
-        prompt_traces.append(
-            collect_olmoe_router_trace_for_prompt(
-                prompt_id=f"{prompt_pair.prompt_id}:negative",
-                label="negative",
-                prompt_text=prompt_pair.negative_full_prompt,
-                resources=resources,
-            )
-        )
-    return prompt_traces
-
-
-def run_olmoe_steering_pipeline(
+def run_olmoe_steermoe_pipeline(
     dataset: ExperimentDataset,
     config: Optional[ExperimentConfig] = None,
 ) -> SteeringConditionArtifacts:
-    """Run the generic steering pipeline on a live-collected OLMoE dataset.
+    """Run the generic steering pipeline on a span-aggregated OLMoE dataset.
 
     Inputs:
-    - `dataset`: OLMoE-derived experiment dataset with:
-      - labels `positive` and `negative`,
-      - one-hot selection scores over suffix candidates,
-      - router-probability vectors of shape `(E,)` in `expert_loads`.
-    - `config`: thresholds and top-k settings. If omitted, a sparse but
-      probability-scale-friendly default is used.
+    - `dataset`: OLMoE-derived experiment dataset with one per-layer activation
+      vector `(E,)` per example.
+    - `config`: thresholds and sparsity settings for the steering plan.
 
     Returns:
-    - `SteeringConditionArtifacts`: selected token rows plus the resulting sparse
-      expert intervention plan.
+    - `SteeringConditionArtifacts` containing the dataset and sparse steering
+      plan.
     """
     from .pipeline import run_pipeline
 
     if config is None:
         config = ExperimentConfig(
             intervention=InterventionConfig(
-                top_k_experts=4,
-                activation_threshold=0.002,
-                deactivation_threshold=-0.002,
+                top_k_experts=2,
+                activation_threshold=0.01,
+                deactivation_threshold=-0.01,
             )
         )
 
     artifacts = run_pipeline(dataset, config)
     return SteeringConditionArtifacts(
         dataset=dataset,
-        selected_tokens_by_layer=artifacts.selected_tokens_by_layer,
         steering_plan=artifacts.steering_plan,
     )
 
 
 def steering_plan_to_router_bias_by_layer(
     steering_plan: SteeringPlan,
-    coefficient: float = 8.0,
+    coefficient: float = 1.0,
 ) -> Dict[int, List[float]]:
     """Convert a sparse steering plan into dense router-logit bias vectors.
 
     Shapes:
-    - input per-layer sparse expert sets:
+    - input sparse expert sets per layer:
       - `experts_to_activate`: length `<= K`
       - `experts_to_deactivate`: length `<= K`
-    - output per-layer dense bias vector:
+    - output dense bias vector per layer:
       - `(E,)`
 
     Meaning:
-    - Each activated expert receives `+coefficient`.
-    - Each deactivated expert receives `-coefficient`.
-    - Every untouched expert receives `0.0`.
+    - the selected experts receive biases scaled by their relative delta
+      magnitudes within the selected set,
+    - untouched experts receive `0.0`,
+    - `coefficient` is the maximum absolute bias magnitude in a layer.
 
-    This sign-based bias is intentionally simple for the first runnable OLMoE
-    backend. It keeps the runtime intervention easy to explain while preserving
-    the original sparse expert choices from the steering plan.
+    This is gentler than the earlier constant `±8` prototype and better matched
+    to a first faithful SteerMoE transfer experiment.
     """
     bias_by_layer: Dict[int, List[float]] = {}
     for layer in steering_plan.layers:
         if layer.scores:
             num_experts = max(score.expert_index for score in layer.scores) + 1
         else:
-            num_experts = 1 + max(
-                layer.experts_to_activate + layer.experts_to_deactivate + [0]
-            )
+            num_experts = 1 + max(layer.experts_to_activate + layer.experts_to_deactivate + [0])
 
         bias_vector = [0.0] * num_experts
+        score_map = {score.expert_index: score.delta for score in layer.scores}
+        selected_experts = layer.experts_to_activate + layer.experts_to_deactivate
+        max_abs_selected_delta = max(
+            (abs(score_map.get(expert_index, 0.0)) for expert_index in selected_experts),
+            default=1.0,
+        )
+        if max_abs_selected_delta == 0:
+            max_abs_selected_delta = 1.0
+
         for expert_index in layer.experts_to_activate:
-            bias_vector[expert_index] += coefficient
+            delta = max(score_map.get(expert_index, 0.0), 0.0)
+            bias_vector[expert_index] = coefficient * (delta / max_abs_selected_delta)
         for expert_index in layer.experts_to_deactivate:
-            bias_vector[expert_index] -= coefficient
+            delta = min(score_map.get(expert_index, 0.0), 0.0)
+            bias_vector[expert_index] = coefficient * (delta / max_abs_selected_delta)
+
         bias_by_layer[layer.layer_index] = bias_vector
     return bias_by_layer
 
 
 def _apply_bias_to_last_router_row(router_logits: Any, bias_vector: Any) -> Any:
-    """Add a dense expert bias vector to the final token row of router logits.
-
-    Inputs:
-    - `router_logits`: `(T, E)` for one forward call through one layer's gate.
-      During generation with batch size `1`, `T` is the number of token rows
-      processed in that call:
-      - prompt prefill: `T = S_prompt`
-      - cached decode step: `T = 1`
-    - `bias_vector`: `(E,)`
-
-    Returns:
-    - new router-logit tensor with the bias added only to row `T - 1`.
-    """
+    """Add a dense expert bias vector to the final token row of router logits."""
     router_logits = router_logits.clone()
     router_logits[-1, :] = router_logits[-1, :] + bias_vector
     return router_logits
@@ -566,36 +491,13 @@ def _recompute_topk_from_biased_router_logits(
     original_topk_weights: Any,
     original_topk_indices: Any,
 ) -> Any:
-    """Recompute routed experts from biased router logits for tuple-style gates.
-
-    Some OLMoE implementations expose the gate as a higher-level module whose
-    forward pass returns a tuple rather than a single router-logit tensor:
-
-    - `router_logits`: `(T, E)`
-    - `top_k_weights`: `(T, K)`
-    - `top_k_indices`: `(T, K)`
-
-    where:
-    - `T` is the number of token rows processed in that call,
-    - `E` is the number of experts,
-    - `K` is the number of selected experts per token.
-
-    After we bias the final router-logit row, the previously returned top-k
-    experts are no longer valid. This helper recomputes the top-k routing result
-    from the biased router logits while trying to preserve the original
-    normalization convention:
-
-    - if the original `top_k_weights` summed to approximately `1`, we renormalize
-      the recomputed weights to sum to `1`,
-    - otherwise we leave them as plain top-k probabilities.
-    """
+    """Recompute routed experts from biased router logits for tuple-style gates."""
     import torch
 
     routing_probabilities = torch.softmax(router_logits, dim=-1, dtype=torch.float)
     top_k = original_topk_indices.shape[-1]
     top_k_weights, top_k_indices = torch.topk(routing_probabilities, k=top_k, dim=-1)
 
-    # Preserve the original gate's apparent normalization convention.
     row_sums = original_topk_weights.sum(dim=-1)
     should_normalize = torch.allclose(
         row_sums,
@@ -612,23 +514,7 @@ def _recompute_topk_from_biased_router_logits(
 
 
 def _apply_bias_to_gate_output(output: Any, bias_vector: Any) -> Any:
-    """Apply router steering to either legacy-tensor or tuple-style gate outputs.
-
-    Supported output layouts:
-
-    1. legacy gate output:
-       - tensor `router_logits` with shape `(T, E)`
-
-    2. tuple-style gate output used by newer OLMoE implementations:
-       - `router_logits`: `(T, E)`
-       - `top_k_weights`: `(T, K)`
-       - `top_k_indices`: `(T, K)`
-
-    Returns:
-    - output in the same structural layout, but with the last token row biased
-      and, for tuple-style outputs, with top-k routing recomputed from the biased
-      router logits.
-    """
+    """Apply router steering to either legacy-tensor or tuple-style gate outputs."""
     if hasattr(output, "device") and hasattr(output, "dtype"):
         return _apply_bias_to_last_router_row(
             router_logits=output,
@@ -661,31 +547,20 @@ def olmoe_router_bias_hooks(
 ) -> Iterator[None]:
     """Temporarily inject router-logit biases into OLMoE's sparse blocks.
 
-    The hook point is `model.model.layers[layer_index].mlp.gate`, which is the
-    linear gate producing per-expert router logits before top-k routing.
-
     Important runtime assumption:
-    - generation is run with batch size `1`
-    - we bias only the *last* token row of each forward pass, because that is the
-      token whose hidden state determines the next autoregressive step
-
-    Inputs:
-    - `model`: `OlmoeForCausalLM` or another object exposing the same layer path.
-    - `bias_by_layer`: dense router-logit bias vectors of shape `(E,)` per layer.
+    - generation runs with batch size `1`
+    - we bias only the *last* token row of each forward pass, because that token
+      controls the next autoregressive step
     """
     import torch
 
     handles = []
-
     for layer_index, bias_values in bias_by_layer.items():
         gate_module = model.model.layers[layer_index].mlp.gate
         bias_tensor = torch.tensor(list(bias_values), dtype=torch.float32)
 
         def hook(module: Any, inputs: Any, output: Any, bias_tensor: Any = bias_tensor) -> Any:
-            return _apply_bias_to_gate_output(
-                output=output,
-                bias_vector=bias_tensor,
-            )
+            return _apply_bias_to_gate_output(output=output, bias_vector=bias_tensor)
 
         handles.append(gate_module.register_forward_hook(hook))
 
@@ -710,17 +585,6 @@ def generate_with_olmoe_steering(
     - tokenized prompt: `(1, S_prompt)`
     - generated ids returned by Hugging Face: `(1, S_prompt + S_new)`
     - decoded output slice: tokens `S_prompt : S_prompt + S_new`
-
-    Inputs:
-    - `prompt_text`: user-visible question or request.
-    - `resources`: loaded OLMoE model and tokenizer.
-    - `bias_by_layer`: optional dense expert bias vectors `(E,)` per layer.
-    - `max_new_tokens`: generation budget for the answer.
-    - `temperature`: `0.0` means greedy decoding.
-    - `top_p`: nucleus-sampling cutoff used only when `temperature > 0`.
-
-    Returns:
-    - decoded assistant continuation with surrounding whitespace stripped.
     """
     import torch
 
@@ -748,13 +612,7 @@ def generate_with_olmoe_steering(
         generate_kwargs["attention_mask"] = encoded_inputs["attention_mask"]
 
     if temperature > 0:
-        generate_kwargs.update(
-            {
-                "do_sample": True,
-                "temperature": temperature,
-                "top_p": top_p,
-            }
-        )
+        generate_kwargs.update({"do_sample": True, "temperature": temperature, "top_p": top_p})
     else:
         generate_kwargs["do_sample"] = False
 
@@ -770,31 +628,24 @@ def generate_with_olmoe_steering(
     return tokenizer.decode(response_ids, skip_special_tokens=True).strip()
 
 
-def fill_manual_review_plan_with_olmoe_generations(
+def fill_manual_review_plan_with_steermoe_generations(
     plan: ManualReviewPlan,
     resources: HFModelResources,
-    moesteer_plans_by_concept: Dict[str, SteeringPlan],
-    attention_guided_plans_by_concept: Dict[str, SteeringPlan],
-    steering_coefficient: float = 8.0,
+    steermoe_plans_by_concept: Dict[str, SteeringPlan],
+    steering_coefficient: float = 1.0,
     max_new_tokens: int = 48,
     temperature: float = 0.0,
     top_p: float = 1.0,
 ) -> ManualReviewPlan:
-    """Populate a manual review plan with baseline and two steered generations.
+    """Populate a manual review plan with baseline and SteerMoE generations.
 
     Inputs:
-    - `plan`: manual review grid whose `evaluation_question` field supplies the
-      neutral prompt asked to the model.
+    - `plan`: qualitative review grid whose `evaluation_question` field supplies
+      the neutral prompt asked to the model.
     - `resources`: loaded OLMoE model and tokenizer.
-    - `moesteer_plans_by_concept`: sparse steering plans computed with the fixed
-      token-selection rule.
-    - `attention_guided_plans_by_concept`: sparse steering plans computed with
-      the attention-selected token rule.
-    - `steering_coefficient`: dense router-logit bias magnitude used at runtime.
+    - `steermoe_plans_by_concept`: one sparse SteerMoE plan per concept.
+    - `steering_coefficient`: maximum router-logit bias magnitude used at runtime.
     - generation controls: `max_new_tokens`, `temperature`, `top_p`.
-
-    Returns:
-    - the same `ManualReviewPlan` instance with response fields filled in.
     """
     try:
         from tqdm import tqdm
@@ -802,14 +653,13 @@ def fill_manual_review_plan_with_olmoe_generations(
         tqdm = lambda iterable, **_: iterable
 
     baseline_cache: Dict[str, str] = {}
-    moesteer_bias_cache = {
+    steermoe_bias_cache = {
         concept: steering_plan_to_router_bias_by_layer(steering_plan, coefficient=steering_coefficient)
-        for concept, steering_plan in moesteer_plans_by_concept.items()
+        for concept, steering_plan in steermoe_plans_by_concept.items()
     }
-    attention_bias_cache = {
-        concept: steering_plan_to_router_bias_by_layer(steering_plan, coefficient=steering_coefficient)
-        for concept, steering_plan in attention_guided_plans_by_concept.items()
-    }
+
+    if "baseline" not in plan.condition_order or "steermoe" not in plan.condition_order:
+        raise ValueError("ManualReviewPlan must declare 'baseline' and 'steermoe' conditions.")
 
     for case in tqdm(plan.cases, desc="Generating qualitative review responses"):
         if case.evaluation_question not in baseline_cache:
@@ -822,19 +672,11 @@ def fill_manual_review_plan_with_olmoe_generations(
                 top_p=top_p,
             )
 
-        case.baseline_response = baseline_cache[case.evaluation_question]
-        case.moesteer_response = generate_with_olmoe_steering(
+        case.responses["baseline"] = baseline_cache[case.evaluation_question]
+        case.responses["steermoe"] = generate_with_olmoe_steering(
             prompt_text=case.evaluation_question,
             resources=resources,
-            bias_by_layer=moesteer_bias_cache[case.concept],
-            max_new_tokens=max_new_tokens,
-            temperature=temperature,
-            top_p=top_p,
-        )
-        case.attention_guided_moesteer_response = generate_with_olmoe_steering(
-            prompt_text=case.evaluation_question,
-            resources=resources,
-            bias_by_layer=attention_bias_cache[case.concept],
+            bias_by_layer=steermoe_bias_cache[case.concept],
             max_new_tokens=max_new_tokens,
             temperature=temperature,
             top_p=top_p,

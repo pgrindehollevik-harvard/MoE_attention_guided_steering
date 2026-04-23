@@ -1,73 +1,32 @@
 # Slurm Runbook
 
-This repo now includes a real attention-collection stage intended to be runnable
-on a GPU cluster. The template job script lives at:
+This repo currently has one primary GPU experiment:
 
-- `slurm/collect_attention_to_prefix.sbatch`
-- `slurm/run_olmoe_manual_review.sbatch`
+- `slurm/run_olmoe_steermoe_review.sbatch`
 
-## Expected workflow
+That script runs the **stage-1 OLMoE SteerMoE transfer experiment**:
+
+1. load a manual review plan,
+2. collect span-based router traces on `allenai/OLMoE-1B-7B-0125-Instruct`,
+3. build SteerMoE plans from positive-vs-negative expert activation deltas,
+4. generate baseline and SteerMoE responses,
+5. render `qualitative_review.md` and `qualitative_review.html`.
+
+The dense attention collector is still available for future same-model
+comparisons, but it is no longer the main path for this repo.
+
+## Expected stage-1 workflow
 
 1. Create or activate a Python environment on the cluster.
-2. Install the GPU dependencies from `requirements-gpu.txt`.
-3. Set Hugging Face auth if your chosen model requires it.
-4. Run `collect_attention_to_prefix.py` on one or more concepts.
-5. Inspect the saved `.npy`, `.metadata.json`, and `.layer_to_token.json` files.
-6. Feed those layerwise token indices into the next MoE-trace stage later.
-
-For the first end-to-end MoE qualitative run, the workflow is now:
-
-1. Prepare a manual review plan with `prepare_manual_fear_review.py`.
-2. Launch `run_olmoe_manual_review.py` on a GPU node.
-3. Let the script:
-   - collect or reuse attention maps,
-   - build fixed-token and attention-guided steering plans,
-   - generate baseline / MoESteer / attention-guided MoESteer responses,
-   - render the qualitative HTML and Markdown review page.
-
-## Example command
+2. Install `requirements-gpu.txt`.
+3. Ensure Hugging Face auth works for your chosen model.
+4. Prepare the qualitative review plan:
 
 ```bash
-python3 collect_attention_to_prefix.py \
-  --model-id meta-llama/Llama-3.1-8B-Instruct \
-  --model-tag llama_3_1_8b_instruct \
-  --concept-type fears \
-  --sample-concepts 5 \
-  --seed 7 \
-  --statement-stride 2 \
-  --head-aggregation mean \
-  --output-dir outputs/attention_to_prefix
+python3 prepare_manual_fear_review.py
 ```
 
-## Notes for the first fear experiment
-
-To stay aligned with the manual review bundle already in this repo, a good first
-cluster run is:
-
-- concept family: `fears`
-- sample size: `5`
-- seed: `7`
-- statement stride: `2`
-- head aggregation: `mean`
-
-That produces attention-selection artifacts for a small but representative set of
-fear concepts before scaling to the full concept list.
-
-## OLMoE qualitative run
-
-The first real MoE backend targets:
-
-- `allenai/OLMoE-1B-7B-0125-Instruct`
-
-Local command:
-
-```bash
-python3 run_olmoe_manual_review.py \
-  --plan-json outputs/manual_fear_review/manual_review_plan.json \
-  --output-dir experiments/olmoe_fears_seed7
-```
-
-Slurm command:
+5. Launch the OLMoE run:
 
 ```bash
 REPO_DIR=$PWD \
@@ -75,30 +34,68 @@ HF_HOME=$HOME/.cache/huggingface \
 MODEL_ID=allenai/OLMoE-1B-7B-0125-Instruct \
 MODEL_TAG=olmoe_1b_7b_0125_instruct \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
-OUTPUT_DIR=experiments/olmoe_fears_seed7 \
-sbatch slurm/run_olmoe_manual_review.sbatch
+OUTPUT_DIR=experiments/olmoe_steermoe_fears_seed7 \
+sbatch --partition=mit_normal_gpu --time=06:00:00 slurm/run_olmoe_steermoe_review.sbatch
 ```
 
-Important runtime defaults in that script:
+## MIT-cluster-friendly defaults
 
-- original MoESteer fixed token index: `-1`
-- top-k experts per layer: `4`
-- activation threshold: `0.002`
-- deactivation threshold: `-0.002`
-- steering coefficient: `8.0`
+The Slurm script defaults are intentionally conservative:
 
-Those defaults are tuned for router probabilities rather than the larger toy
-numbers in the synthetic JSON example.
+- partition: `mit_normal_gpu`
+- GPU count: `1`
+- CPUs: `8`
+- memory: `64G`
+- wall time: `06:00:00`
 
-## Practical cluster notes
+Stage-1 runner defaults:
 
-- Use `--attn-implementation eager` unless you have confirmed another attention
-  backend still returns the full attention tensors you need.
-- If VRAM is tight, try a smaller model first or use `--load-in-4bit`.
-- Set a writable cache directory with `--cache-dir` or by exporting `HF_HOME`.
-  Reusing `HF_HOME=$HOME/.cache/huggingface` is often the easiest way to make
-  Slurm jobs see the same auth token created by `hf auth login`.
-- The collector currently runs batch size `1`, intentionally matching the
-  upstream attention extraction style and keeping tensor bookkeeping simple.
-- Many clusters require partition and wall-time overrides at submit time, for
-  example `sbatch --partition=<gpu_partition> --time=<hh:mm:ss> ...`.
+- readout span: `user_content`
+- top-k steered experts per sign: `2`
+- activation threshold: `0.01`
+- deactivation threshold: `-0.01`
+- steering coefficient: `1.0`
+
+These are much gentler than the retired single-token hybrid prototype and are
+meant to preserve fluency while we test whether SteerMoE transfers at all.
+
+## Monitoring
+
+While the job is queued or running:
+
+```bash
+squeue -u $USER
+```
+
+For one specific job:
+
+```bash
+squeue -j <JOBID>
+tail -n 80 logs/olmoe-review-<JOBID>.out
+```
+
+After the job leaves the queue:
+
+```bash
+sacct -j <JOBID> --format=JobID,JobName,State,Elapsed,ExitCode
+```
+
+## Expected outputs
+
+The stage-1 run writes:
+
+- `experiments/olmoe_steermoe_fears_seed7/router_datasets/`
+- `experiments/olmoe_steermoe_fears_seed7/steering_plans/`
+- `experiments/olmoe_steermoe_fears_seed7/manual_review_plan.json`
+- `experiments/olmoe_steermoe_fears_seed7/qualitative_review.md`
+- `experiments/olmoe_steermoe_fears_seed7/qualitative_review.html`
+
+## Optional future attention stage
+
+For the later same-model comparison against an attention-based method, the repo
+still keeps:
+
+- `collect_attention_to_prefix.py`
+- `slurm/collect_attention_to_prefix.sbatch`
+
+That stage is now supporting infrastructure rather than the main experiment.

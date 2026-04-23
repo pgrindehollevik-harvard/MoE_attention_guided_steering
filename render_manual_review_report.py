@@ -18,7 +18,7 @@ from moe_attention_guided_steering.manual_review import (  # noqa: E402
 def main() -> None:
     """Read a manual review plan JSON and write HTML + Markdown reports."""
     parser = argparse.ArgumentParser(
-        description="Render a qualitative review report for baseline vs MoESteer vs attention-guided MoESteer."
+        description="Render a qualitative review report from a manual review plan."
     )
     parser.add_argument(
         "--plan-json",
@@ -54,7 +54,7 @@ def main() -> None:
         build_manual_review_html(
             plan,
             title=args.title,
-            companion_attention_report=args.attention_report,
+            companion_report=args.attention_report,
         )
     )
 

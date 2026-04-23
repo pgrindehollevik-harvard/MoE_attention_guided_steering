@@ -1,92 +1,103 @@
-# OLMoE Backend
+# OLMoE SteerMoE Backend
 
-This document explains the first real Mixture-of-Experts backend implemented in
-this repo: `allenai/OLMoE-1B-7B-0125-Instruct`.
+This document explains the current real MoE backend implemented in this repo:
 
-The goal of this backend is to make the three-condition qualitative experiment
-actually runnable on a real MoE checkpoint:
+`allenai/OLMoE-1B-7B-0125-Instruct`
+
+The current backend is intentionally focused on **stage 1**:
 
 1. baseline generation,
-2. original MoESteer using one fixed suffix token,
-3. attention-guided MoESteer using the per-layer token choices from the
-   attention collector.
+2. span-based SteerMoE on our own prompt data.
 
-## Why OLMoE is a good first backend
+It does **not** treat the earlier single-token attention-guided OLMoE prototype
+as the main experiment anymore.
 
-OLMoE is a strong bring-up target because:
+## Why this backend exists
 
-- it is an actual sparse MoE model exposed in Hugging Face Transformers,
-- it returns per-layer `router_logits`,
-- the instruct checkpoint uses a normal chat template,
-- and it is much lighter to iterate on than larger MoE checkpoints.
+The goal of stage 1 is straightforward:
+
+> Before comparing SteerMoE to anything else, verify that a SteerMoE-style
+> intervention works at all on our own fear dataset.
+
+That means the backend should stay close to the paper's spirit:
+
+- collect routing behavior over a **token span**,
+- compare positive and negative examples,
+- steer generation by favoring or suppressing experts.
 
 ## Shape overview
 
-There are three different tensor families in the OLMoE path.
+There are three important tensor families in the OLMoE path.
 
-### 1. Attention-guided token selection
+### 1. OLMoE router logits
 
-This is still handled by the generic attention collector:
+For one prompt, Hugging Face returns per-layer router logits:
 
-- model attentions per layer: `(1, H, S, S)`
-- reduced per-layer suffix-token scores: `(N,)`
-- stacked attention run: `(P, L, N)`
+- raw layer output: `(B * S, E)` or `(B, S, E)`
 
 where:
 
-- `H` = number of attention heads,
-- `S` = full prompt length after chat templating,
-- `N` = number of shared suffix candidate tokens,
-- `P` = number of prompt pairs.
+- `B` = batch size,
+- `S` = full tokenized prompt length after chat templating,
+- `E` = number of experts in the sparse layer.
 
-The result is one negative token index per layer:
-
-- `layer_to_token_index[layer] -> {-N, ..., -1}`
-
-### 2. OLMoE router traces
-
-For one prompt, OLMoE returns router logits for each layer:
-
-- raw Hugging Face output per layer: `(B * S, E)`
-
-The backend reshapes that into:
+The backend reshapes the common flattened case into:
 
 - `(B, S, E)`
 
-and then slices the final shared suffix candidate tokens:
+The current implementation assumes:
 
-- `(B, N, E)`
+- `B = 1`
 
-For batch size `1`, we drop the singleton batch dimension:
+so each layer becomes:
 
-- `(N, E)`
+- `(1, S, E)`
 
-Stacking over layers gives:
+### 2. Span-level expert activation rates
 
-- `(L, N, E)`
+The current readout span is the **full user-content span** inside the
+chat-formatted prompt.
+
+For one prompt and one layer:
+
+1. slice the router logits to the chosen span:
+   - `(P, E)`
+2. take the top-k routed experts for each token in the span:
+   - indices `(P, K)`
+3. convert those routed experts into a binary activation matrix:
+   - `(P, E)`
+4. average over span tokens:
+   - `(E,)`
 
 where:
 
-- `L` = number of decoder layers,
-- `E` = number of experts in each sparse layer.
+- `P` = number of tokens in the chosen span,
+- `K` = number of experts routed per token by OLMoE.
 
-These are converted into the repo's generic dataset schema by storing each
-candidate suffix token as one `TokenRecord` whose:
+So each layer ends up with one vector of length `E`, where each entry answers:
 
-- `attention_weight` is a one-hot selection score used only for argmax token
-  choice in the generic pipeline,
-- `expert_loads` is the router-probability vector `(E,)`.
+> For what fraction of span tokens was this expert selected by the router?
+
+Over many prompts, the resulting data can be viewed as:
+
+- positive matrix `(N_pos, E)`
+- negative matrix `(N_neg, E)`
+
+for each layer separately.
 
 ### 3. Runtime steering
 
-The sparse steering plan says which experts to favor or suppress in each layer.
-At generation time, the OLMoE backend converts that into one dense bias vector
-per layer:
+After the positive-vs-negative comparison, the steering plan says which experts
+to favor or suppress in each layer.
+
+At generation time, the backend converts that sparse plan into one dense bias
+vector per layer:
 
 - router bias vector: `(E,)`
 
-During generation, that vector is added to the final token row of the gate
-output inside `model.model.layers[layer].mlp.gate`.
+During generation, that bias is injected into the gate output inside:
+
+- `model.model.layers[layer_index].mlp.gate`
 
 For one generation forward pass, the gate output has shape:
 
@@ -97,45 +108,65 @@ where:
 - `T = S_prompt` during prompt prefill,
 - `T = 1` during cached autoregressive decoding.
 
-The backend only biases row `T - 1`, so the intervention applies to the token
-that controls the next generated step.
+The backend biases only row `T - 1`, because that is the token whose hidden
+state determines the next generated step.
 
-## Original vs attention-guided MoESteer
+## How this differs from the earlier prototype
 
-The only difference between the two steered conditions is how the steering plan
-chooses its representative token per layer.
+The retired prototype did this:
 
-### Original MoESteer
+- choose one suffix token per layer,
+- read router probabilities only at that token,
+- build expert deltas from those single-token vectors.
 
-- Use one fixed suffix token index for every layer.
-- Default choice in this repo: `-1` (the final shared suffix token).
+The current backend does this instead:
 
-### Attention-guided MoESteer
+- define a meaningful prompt span,
+- inspect routing over **every token in that span**,
+- build expert deltas from span-aggregated activation rates.
 
-- Use `layer_to_token.json` from the attention collector.
-- Each layer may pick a different suffix token index.
-
-After that choice, both conditions share the exact same downstream steps:
-
-1. collect OLMoE router probabilities,
-2. compute positive-vs-negative expert deltas,
-3. keep sparse top-k expert interventions,
-4. apply router-logit bias during generation.
+That is closer to the paper's framing and avoids collapsing the problem to a
+single chat-template boundary token.
 
 ## Main entrypoint
 
-The end-to-end experiment script is:
+The current end-to-end experiment script is:
 
-`run_olmoe_manual_review.py`
+`run_olmoe_steermoe_review.py`
 
 It:
 
 1. loads a manual review plan,
-2. collects or reuses attention token maps,
-3. builds fixed-token and attention-guided steering plans,
-4. generates baseline / MoESteer / attention-guided MoESteer outputs,
-5. writes an updated JSON plan plus HTML and Markdown review reports.
+2. builds positive/negative statement prompt pairs,
+3. collects span-based OLMoE routing statistics,
+4. builds one SteerMoE plan per concept,
+5. generates baseline and SteerMoE outputs,
+6. writes an updated JSON plan plus HTML and Markdown review reports.
 
-The matching Slurm template is:
+The matching MIT-cluster Slurm template is:
 
-`slurm/run_olmoe_manual_review.sbatch`
+`slurm/run_olmoe_steermoe_review.sbatch`
+
+## Current design choices
+
+These are implementation choices, not paper claims:
+
+- readout span: full user-content span
+- routing statistic: top-k expert activation rate
+- default top-k intervention sparsity: `2`
+- default activation threshold: `0.01`
+- default deactivation threshold: `-0.01`
+- default steering coefficient: `1.0`
+
+Those defaults are intentionally gentler than the earlier OLMoE prototype,
+because the previous stronger biasing regime produced visibly degenerate text.
+
+## What this backend does not yet claim
+
+This backend is **not yet**:
+
+- a same-model comparison against an attention-based steering method,
+- a full reproduction of every intervention detail in the SteerMoE paper,
+- a final answer about whether attention helps MoE steering.
+
+It is the clean stage-1 baseline we need before making those later claims.

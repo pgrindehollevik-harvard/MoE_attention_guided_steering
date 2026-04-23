@@ -1,49 +1,87 @@
 # Research Synthesis
 
-This document is the plain-English bridge between the two reference projects.
+This document is the plain-English bridge between the two reference projects and
+explains how the repo is staged now.
 
 ## 1. What SteerMoE contributes
 
-The MoE steering work tells us that the intervention target does not have to be a dense hidden-state direction alone. In an MoE architecture, routing and expert contribution are meaningful control surfaces. That suggests a steering method where we identify experts associated with a target concept and then selectively increase or suppress them.
+SteerMoE tells us that the intervention target in a sparse MoE is not just a
+dense hidden-state direction. We can instead:
+
+- inspect which experts are being routed to,
+- compare those routing patterns across contrastive prompt sets,
+- and bias routing toward or away from the experts that seem behavior-linked.
+
+That is the core idea behind the current stage-1 experiment.
 
 ## 2. What attention-guided steering contributes
 
-The attention-guided steering work challenges a common shortcut in steering pipelines: using a fixed token position, often the final token, as the representation source. Instead, it uses attention patterns to identify the token position that most strongly reflects the concept at a given layer.
+Attention-guided steering contributes a different idea: fixed token positions are
+often a crude readout rule. Attention patterns can help identify **where** a
+concept signal is most strongly expressed.
 
-## 3. Why the ideas fit together
+That is still interesting for this repo, but it is no longer the first thing we
+are trying to prove.
 
-These two ideas solve different parts of the problem:
+## 3. What changed after rereading SteerMoE
 
-- SteerMoE helps answer: "*what* should we intervene on?"
-- Attention guidance helps answer: "*where* should we measure the signal that defines the intervention?"
+Our first hybrid prototype treated SteerMoE as if it should read from one
+selected token per layer. After rereading the paper, that was too aggressive a
+compression.
 
-Combining them gives a stronger method than either idea alone:
+SteerMoE is better thought of as a **token-span routing-statistics** method:
 
-- the measured signal becomes more semantically aligned,
-- the resulting expert scores should become easier to interpret,
-- the steering plan becomes layer-specific rather than globally averaged.
+- routing matters across many tokens,
+- a behavior-relevant span is often more appropriate than one single token,
+- the intervention plan should be built from those broader routing statistics.
 
-## 4. Hybrid pipeline proposed in this repo
+That is why the repo now starts with a span-based OLMoE SteerMoE reproduction
+attempt on our own fear data.
 
-The repo currently assumes the following pipeline:
+## 4. Current staged plan
 
-1. Build a contrastive dataset with positive and negative prompts.
-2. For each example and layer, compute token-level attention statistics.
-3. Select the most representative token per layer using those statistics.
-4. Read MoE expert loads at those selected positions.
-5. Compare average expert usage between the positive and negative groups.
-6. Activate experts with large positive deltas and deactivate experts with large negative deltas.
+### Stage 1: transfer SteerMoE to our own data
 
-## 5. Main open research questions
+Run baseline vs SteerMoE on `allenai/OLMoE-1B-7B-0125-Instruct` using a
+behavior-relevant token span and measure whether the intervention changes outputs
+without destroying fluency.
 
-These are the questions we should answer as the repo grows:
+### Stage 2: compare against an attention-based method on the same model
 
-- Should representative-token selection use raw attention, attention-to-instruction, or another aggregation?
-- Should expert scores come from router probabilities, post-routing expert outputs, or both?
-- Do we want hard top-k intervention plans or continuous expert scaling coefficients?
-- Is the best intervention layer-specific, concept-specific, or prompt-adaptive?
-- How do we handle cases where attention picks different tokens for different heads in the same layer?
+Only after stage 1 is trustworthy do we make the method comparison:
 
-## 6. Practical engineering direction
+- baseline OLMoE
+- span-based SteerMoE on OLMoE
+- an attention-based steering alternative on the same OLMoE model
 
-For the next iteration, the highest-value implementation step is a real collector that exports actual traces from an MoE checkpoint into this repo's dataset format. The newly imported `data/` tree from the attention-guided steering repo gives us a ready-made concept catalog and evaluation prompt bank, and the new `collect_attention_to_prefix.py` stage now mirrors the upstream attention-selection step on a real model. That means the remaining major gap is the MoE-specific collector: reading router or expert-load signals at the selected token positions and writing them into this repo's typed schema. Once that exists, the rest of the code can already score experts and write reports.
+This avoids the bad comparison where the method and model architecture change at
+the same time.
+
+## 5. What the current OLMoE backend does
+
+The committed stage-1 backend:
+
+1. builds positive/negative prompt pairs from the imported fear dataset,
+2. finds the full user-content token span in each prompt,
+3. reads OLMoE router logits for every token in that span,
+4. marks which experts were actually selected by routing,
+5. averages those token-level selections into one activation-rate vector per
+   layer,
+6. compares positive vs negative activation rates,
+7. turns those deltas into a sparse SteerMoE plan,
+8. generates baseline vs steered outputs for qualitative review.
+
+So the current experiment is not "SteerMoE plus attention guidance." It is
+"Does SteerMoE transfer to our data when we implement it in a way that is much
+closer to the paper?"
+
+## 6. What remains open
+
+Once stage 1 is solid, the main research question becomes:
+
+- Should attention replace the span readout rule entirely?
+- Or should attention weight or prioritize tokens **within** a behavior-relevant
+  span?
+
+That later comparison is the place for the real innovation, not the current
+baseline-establishing run.

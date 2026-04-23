@@ -42,21 +42,21 @@ class ManualReviewTestCase(unittest.TestCase):
 
     def test_manual_review_plan_roundtrip_and_html(self) -> None:
         plan = build_manual_review_plan(self.suite, concept_sample_size=2, question_sample_size=2, seed=7)
-        plan.cases[0].baseline_response = "Baseline answer."
-        plan.cases[0].moesteer_response = "MoESteer answer."
+        plan.cases[0].responses["baseline"] = "Baseline answer."
+        plan.cases[0].responses["steermoe"] = "SteerMoE answer."
 
         restored = manual_review_plan_from_dict(manual_review_plan_to_dict(plan))
         html = build_manual_review_html(
             restored,
             title="Demo Review",
-            companion_attention_report="attention_report.html",
+            companion_report="steermoe_notes.html",
         )
 
-        self.assertEqual(restored.cases[0].baseline_response, "Baseline answer.")
+        self.assertEqual(restored.cases[0].responses["baseline"], "Baseline answer.")
         self.assertIn("Demo Review", html)
         self.assertIn("Baseline (no steering)", html)
-        self.assertIn("MoESteer answer.", html)
-        self.assertIn("attention_report.html", html)
+        self.assertIn("SteerMoE answer.", html)
+        self.assertIn("steermoe_notes.html", html)
 
 
 if __name__ == "__main__":
