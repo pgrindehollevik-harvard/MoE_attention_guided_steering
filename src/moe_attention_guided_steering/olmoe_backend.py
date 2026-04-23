@@ -7,7 +7,10 @@ from .config import ExperimentConfig, InterventionConfig
 from .datasets import validate_dataset
 from .manual_review import ManualReviewPlan
 from .types import ExperimentDataset, LayerRecord, PromptRecord, SteeringPlan, TokenRecord
-from .upstream_prompt_datasets import StatementPromptPair
+from .upstream_prompt_datasets import (
+    StatementPromptPair,
+    build_concept_conditioned_evaluation_prompt,
+)
 
 
 @dataclass
@@ -640,8 +643,8 @@ def fill_manual_review_plan_with_steermoe_generations(
     """Populate a manual review plan with baseline and SteerMoE generations.
 
     Inputs:
-    - `plan`: qualitative review grid whose `evaluation_question` field supplies
-      the neutral prompt asked to the model.
+    - `plan`: qualitative review grid whose `concept` plus
+      `evaluation_question` identify the model-facing prompt.
     - `resources`: loaded OLMoE model and tokenizer.
     - `steermoe_plans_by_concept`: one sparse SteerMoE plan per concept.
     - `steering_coefficient`: maximum router-logit bias magnitude used at runtime.
@@ -662,9 +665,15 @@ def fill_manual_review_plan_with_steermoe_generations(
         raise ValueError("ManualReviewPlan must declare 'baseline' and 'steermoe' conditions.")
 
     for case in tqdm(plan.cases, desc="Generating qualitative review responses"):
-        if case.evaluation_question not in baseline_cache:
-            baseline_cache[case.evaluation_question] = generate_with_olmoe_steering(
-                prompt_text=case.evaluation_question,
+        prompt_text = build_concept_conditioned_evaluation_prompt(
+            concept_type=plan.concept_type,
+            concept_value=case.concept,
+            evaluation_question=case.evaluation_question,
+        )
+
+        if prompt_text not in baseline_cache:
+            baseline_cache[prompt_text] = generate_with_olmoe_steering(
+                prompt_text=prompt_text,
                 resources=resources,
                 bias_by_layer=None,
                 max_new_tokens=max_new_tokens,
@@ -672,9 +681,9 @@ def fill_manual_review_plan_with_steermoe_generations(
                 top_p=top_p,
             )
 
-        case.responses["baseline"] = baseline_cache[case.evaluation_question]
+        case.responses["baseline"] = baseline_cache[prompt_text]
         case.responses["steermoe"] = generate_with_olmoe_steering(
-            prompt_text=case.evaluation_question,
+            prompt_text=prompt_text,
             resources=resources,
             bias_by_layer=steermoe_bias_cache[case.concept],
             max_new_tokens=max_new_tokens,

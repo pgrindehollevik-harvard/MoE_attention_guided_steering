@@ -16,6 +16,7 @@ from moe_attention_guided_steering.attention_collection import (
 )
 from moe_attention_guided_steering.upstream_prompt_datasets import (
     StatementPromptPair,
+    build_concept_conditioned_evaluation_prompt,
     build_upstream_statement_prompt_pairs,
     get_upstream_positive_prefix,
 )
@@ -111,6 +112,17 @@ class AttentionCollectionTestCase(unittest.TestCase):
         self.assertEqual(len(pairs), 2)
         self.assertTrue(pairs[0].positive_full_prompt.startswith("Personify someone who is terrified of Bugs."))
         self.assertTrue(pairs[0].negative_full_prompt.startswith("What are your thoughts"))
+
+    def test_build_concept_conditioned_evaluation_prompt_reuses_upstream_prefix(self) -> None:
+        prompt = build_concept_conditioned_evaluation_prompt(
+            concept_type="fears",
+            concept_value="Bugs",
+            evaluation_question="What is the scariest thing in the world?",
+        )
+        self.assertEqual(
+            prompt,
+            "Personify someone who is terrified of Bugs.  What is the scariest thing in the world?",
+        )
 
     def test_collect_attention_trace_uses_chat_formatted_inputs(self) -> None:
         class DummyEncoding(dict):

@@ -26,6 +26,7 @@ from .reference_data import (
     load_reference_data,
 )
 from .upstream_prompt_datasets import build_upstream_statement_prompt_pairs
+from .upstream_prompt_datasets import build_concept_conditioned_evaluation_prompt
 
 __all__ = [
     "ExperimentConfig",
@@ -35,6 +36,7 @@ __all__ = [
     "ReferenceDataBundle",
     "SelectionConfig",
     "build_manual_review_plan",
+    "build_concept_conditioned_evaluation_prompt",
     "build_experiment_dataset_from_span_traces",
     "build_upstream_statement_prompt_pairs",
     "collect_attention_run",

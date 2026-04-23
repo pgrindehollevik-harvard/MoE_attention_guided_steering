@@ -46,6 +46,30 @@ def get_upstream_positive_prefix(concept_type: str, concept_value: str) -> str:
     return UPSTREAM_POSITIVE_PREFIX_TEMPLATES[concept_type].format(concept=concept_value)
 
 
+def build_concept_conditioned_evaluation_prompt(
+    concept_type: str,
+    concept_value: str,
+    evaluation_question: str,
+) -> str:
+    """Build the actual concept-conditioned evaluation prompt used at generation time.
+
+    Inputs:
+    - `concept_type`: concept family such as `fears` or `personas`.
+    - `concept_value`: sampled concept instance such as `Bugs`.
+    - `evaluation_question`: short evaluator question extracted from the upstream
+      evaluation prompt file.
+
+    Returns:
+    - `str`: the model-facing prompt obtained by prepending the upstream
+      concept prefix to the evaluation question.
+
+    This keeps the manual review JSON human-readable while still ensuring the
+    generator sees the concept-conditioned prompt. Without this prefix, all
+    concepts would share nearly identical baseline prompts during review.
+    """
+    return get_upstream_positive_prefix(concept_type, concept_value) + evaluation_question
+
+
 def combine_general_statements(general_statements_by_class: Dict[str, Sequence[str]]) -> List[str]:
     """Concatenate upstream statement pools in a stable order.
 
