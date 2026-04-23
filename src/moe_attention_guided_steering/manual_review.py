@@ -1,7 +1,10 @@
 from dataclasses import asdict, dataclass
+import html
+import json
+from pathlib import Path
 import random
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from .reference_data import ReferenceConceptSuite
 
@@ -138,8 +141,37 @@ def manual_review_plan_to_dict(plan: ManualReviewPlan) -> Dict[str, Any]:
     }
 
 
+def manual_review_plan_from_dict(data: Dict[str, Any]) -> ManualReviewPlan:
+    """Rehydrate a `ManualReviewPlan` from JSON-friendly serialized data."""
+    return ManualReviewPlan(
+        concept_type=data["concept_type"],
+        evaluation_family=data["evaluation_family"],
+        seed=int(data["seed"]),
+        sampled_concepts=list(data["sampled_concepts"]),
+        sampled_evaluation_versions=[int(version) for version in data["sampled_evaluation_versions"]],
+        evaluation_questions_by_version={
+            int(version): question
+            for version, question in data["evaluation_questions_by_version"].items()
+        },
+        cases=[ManualReviewCase(**case) for case in data["cases"]],
+    )
+
+
+def load_manual_review_plan(path: Union[str, Path]) -> ManualReviewPlan:
+    """Load a serialized manual review plan from disk."""
+    return manual_review_plan_from_dict(json.loads(Path(path).read_text()))
+
+
 def build_manual_review_markdown(plan: ManualReviewPlan) -> str:
-    """Render a collaborator-friendly Markdown worksheet for manual inspection."""
+    """Render a collaborator-friendly Markdown review sheet or filled report.
+
+    If response fields are still blank, this reads like a worksheet. If the plan
+    has already been populated with model generations, the same renderer becomes a
+    lightweight qualitative report.
+    """
+    def display_response(value: str) -> str:
+        return value if value.strip() else "Pending generation"
+
     lines = [
         "# Manual Fear Review",
         "",
@@ -164,19 +196,173 @@ def build_manual_review_markdown(plan: ManualReviewPlan) -> str:
     for concept in plan.sampled_concepts:
         lines.extend(["", f"## {concept}", ""])
         for version in plan.sampled_evaluation_versions:
-            question = plan.evaluation_questions_by_version[version]
+            matching_case = next(
+                case
+                for case in plan.cases
+                if case.concept == concept and case.evaluation_version == version
+            )
+            question = matching_case.evaluation_question
             lines.extend(
                 [
                     f"### Eval v{version}",
                     "",
                     f"- Question: {question}",
                     "- Baseline response:",
+                    f"  {display_response(matching_case.baseline_response)}",
                     "- Original MoESteer response:",
+                    f"  {display_response(matching_case.moesteer_response)}",
                     "- Attention-guided MoESteer response:",
+                    f"  {display_response(matching_case.attention_guided_moesteer_response)}",
                     "- Comparison notes:",
+                    f"  {matching_case.comparison_notes.strip() or 'Pending annotation'}",
                     "- Preferred condition:",
+                    f"  {matching_case.preferred_condition.strip() or 'Not chosen yet'}",
                     "",
                 ]
             )
 
     return "\n".join(lines)
+
+
+def build_manual_review_html(
+    plan: ManualReviewPlan,
+    title: str = "Qualitative Review",
+    companion_attention_report: str = "",
+) -> str:
+    """Render a browsable HTML report for qualitative response inspection.
+
+    This report is intentionally centered on the manual comparison task rather
+    than the raw attention numbers. If response fields are still blank, the HTML
+    makes that explicit so the next missing step is obvious.
+    """
+    def display_response(value: str) -> str:
+        return html.escape(value) if value.strip() else "<span class='pending'>Pending generation</span>"
+
+    completed_cases = sum(
+        int(
+            bool(case.baseline_response.strip())
+            or bool(case.moesteer_response.strip())
+            or bool(case.attention_guided_moesteer_response.strip())
+        )
+        for case in plan.cases
+    )
+
+    summary_rows = []
+    for concept in plan.sampled_concepts:
+        concept_cases = [case for case in plan.cases if case.concept == concept]
+        completed = sum(
+            int(
+                bool(case.baseline_response.strip())
+                or bool(case.moesteer_response.strip())
+                or bool(case.attention_guided_moesteer_response.strip())
+            )
+            for case in concept_cases
+        )
+        summary_rows.append(
+            f"<tr><td><strong>{html.escape(concept)}</strong></td><td>{completed}/{len(concept_cases)}</td></tr>"
+        )
+    summary_rows.append(
+        f"<tr style='border-top:2px solid #333'><td><strong>Overall</strong></td><td><strong>{completed_cases}/{len(plan.cases)}</strong></td></tr>"
+    )
+
+    concept_sections: List[str] = []
+    for concept in plan.sampled_concepts:
+        concept_cases = [case for case in plan.cases if case.concept == concept]
+        for rank, case in enumerate(concept_cases, start=1):
+            moesteer_filled = bool(case.moesteer_response.strip())
+            attention_filled = bool(case.attention_guided_moesteer_response.strip())
+            moesteer_badge = (
+                "<span class='badge b1'>Filled</span>"
+                if moesteer_filled
+                else "<span class='badge b0'>Pending</span>"
+            )
+            attention_badge = (
+                "<span class='badge b1'>Filled</span>"
+                if attention_filled
+                else "<span class='badge b0'>Pending</span>"
+            )
+            comparison_note = (
+                html.escape(case.comparison_notes)
+                if case.comparison_notes.strip()
+                else "<span class='pending'>Pending annotation</span>"
+            )
+            preferred_condition = (
+                html.escape(case.preferred_condition)
+                if case.preferred_condition.strip()
+                else "<span class='pending'>Not chosen yet</span>"
+            )
+
+            concept_sections.append(
+                f"""
+                <section>
+                <h2>#{rank} &mdash; <strong>{html.escape(concept)}</strong> &middot; prompt v{case.evaluation_version}</h2>
+                <p><strong>Prompt:</strong> {html.escape(case.evaluation_question)}</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>{display_response(case.baseline_response)}</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer {moesteer_badge}</p>
+                    <pre>{display_response(case.moesteer_response)}</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer {attention_badge}</p>
+                    <pre>{display_response(case.attention_guided_moesteer_response)}</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> {comparison_note}<br>
+                  <strong>Preferred condition:</strong> {preferred_condition}
+                </div>
+                </section>
+                """
+            )
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{html.escape(title)}</title>
+  <style>
+body{{font-family:system-ui,sans-serif;max-width:1100px;margin:2rem auto;line-height:1.5;color:#24292f;padding:0 1rem;}}
+h1{{font-size:1.45rem;}} h2{{font-size:1.05rem;margin:2rem 0 .5rem;}}
+section{{border:1px solid #d0d7de;border-radius:8px;padding:1rem;margin-bottom:1.5rem;background:#fafafa;}}
+.cols{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}}
+.col{{min-width:0;}}
+.col-ms{{border-left:4px solid #0550ae;padding-left:.75rem;}}
+.col-ag{{border-left:4px solid #cf222e;padding-left:.75rem;}}
+.lbl{{font-weight:700;font-size:.9rem;margin-bottom:.3rem;}}
+.lbl-ms{{color:#0550ae;}} .lbl-ag{{color:#cf222e;}} .lbl-bl{{color:#555;}}
+pre{{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #ddd;padding:.6rem;border-radius:6px;font-size:.85rem;margin:.3rem 0 .6rem;min-height:4.5rem;}}
+.badge{{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-weight:600;font-size:.82rem;margin-left:.3rem;}}
+.b1{{background:#d4edda;color:#155724;}} .b0{{background:#f8d7da;color:#721c24;}}
+.meta{{color:#57606a;font-size:.85rem;}}
+table{{border-collapse:collapse;margin:1rem 0;}}
+td,th{{padding:.4rem .8rem;border:1px solid #d0d7de;text-align:left;}}
+th{{background:#f6f8fa;}}
+.note{{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.6rem 1rem;margin:1rem 0;font-size:.9rem;}}
+.pending{{color:#8a5a00;font-style:italic;}}
+code{{background:#f6f8fa;padding:.1rem .3rem;border-radius:4px;}}
+@media (max-width: 820px){{.cols{{grid-template-columns:1fr;}}}}
+  </style>
+</head>
+<body>
+<h1>{html.escape(title)}</h1>
+<div class='note'>
+<strong>What are we comparing?</strong>
+<ul style='margin:.4rem 0 .2rem;padding-left:1.3rem;'>
+<li><span style='color:#555;font-weight:700;'>Baseline</span> &mdash; the model with no steering intervention at all.</li>
+<li><span style='color:#0550ae;font-weight:700;'>Original MoESteer</span> &mdash; the future MoE steering condition using the original token-choice strategy.</li>
+<li><span style='color:#cf222e;font-weight:700;'>Attention-guided MoESteer</span> &mdash; the future MoE steering condition using the attention-selected token positions from this repo.</li>
+</ul>
+<strong>How to use this page:</strong> compare the three answers for each (fear, question) pair, then annotate which steered version feels more faithful to the target fear without becoming incoherent.
+</div>
+<p class='meta'>Concept family: <code>{html.escape(plan.concept_type)}</code> &middot; Evaluation family: <code>{html.escape(plan.evaluation_family)}</code> &middot; Seed: <code>{plan.seed}</code> &middot; Companion attention report: <code>{html.escape(companion_attention_report) if companion_attention_report else 'not linked'}</code></p>
+<h2>Summary</h2>
+<table><tr><th>Concept</th><th>Cases with any filled response</th></tr>
+{''.join(summary_rows)}
+</table>
+{''.join(concept_sections)}
+</body>
+</html>
+"""

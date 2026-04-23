@@ -4,6 +4,7 @@ This repo now includes a real attention-collection stage intended to be runnable
 on a GPU cluster. The template job script lives at:
 
 - `slurm/collect_attention_to_prefix.sbatch`
+- `slurm/run_olmoe_manual_review.sbatch`
 
 ## Expected workflow
 
@@ -13,6 +14,16 @@ on a GPU cluster. The template job script lives at:
 4. Run `collect_attention_to_prefix.py` on one or more concepts.
 5. Inspect the saved `.npy`, `.metadata.json`, and `.layer_to_token.json` files.
 6. Feed those layerwise token indices into the next MoE-trace stage later.
+
+For the first end-to-end MoE qualitative run, the workflow is now:
+
+1. Prepare a manual review plan with `prepare_manual_fear_review.py`.
+2. Launch `run_olmoe_manual_review.py` on a GPU node.
+3. Let the script:
+   - collect or reuse attention maps,
+   - build fixed-token and attention-guided steering plans,
+   - generate baseline / MoESteer / attention-guided MoESteer responses,
+   - render the qualitative HTML and Markdown review page.
 
 ## Example command
 
@@ -41,6 +52,43 @@ cluster run is:
 
 That produces attention-selection artifacts for a small but representative set of
 fear concepts before scaling to the full concept list.
+
+## OLMoE qualitative run
+
+The first real MoE backend targets:
+
+- `allenai/OLMoE-1B-7B-0125-Instruct`
+
+Local command:
+
+```bash
+python3 run_olmoe_manual_review.py \
+  --plan-json outputs/manual_fear_review/manual_review_plan.json \
+  --output-dir experiments/olmoe_fears_seed7
+```
+
+Slurm command:
+
+```bash
+REPO_DIR=$PWD \
+HF_HOME=$HOME/.cache/huggingface \
+MODEL_ID=allenai/OLMoE-1B-7B-0125-Instruct \
+MODEL_TAG=olmoe_1b_7b_0125_instruct \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/olmoe_fears_seed7 \
+sbatch slurm/run_olmoe_manual_review.sbatch
+```
+
+Important runtime defaults in that script:
+
+- original MoESteer fixed token index: `-1`
+- top-k experts per layer: `4`
+- activation threshold: `0.002`
+- deactivation threshold: `-0.002`
+- steering coefficient: `8.0`
+
+Those defaults are tuned for router probabilities rather than the larger toy
+numbers in the synthetic JSON example.
 
 ## Practical cluster notes
 

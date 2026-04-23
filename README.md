@@ -35,6 +35,7 @@ This is the bridge between the two papers:
 
 - `0_validate_dataset.py` through `4_export_experiment_report.py`: numbered scripts inspired by the attention-guided steering repo.
 - `collect_attention_to_prefix.py`: real-model GPU script for collecting upstream-style attention-to-prefix scores and per-layer token choices.
+- `run_olmoe_manual_review.py`: end-to-end OLMoE experiment runner for baseline vs original MoESteer vs attention-guided MoESteer.
 - `inspect_reference_data.py`: quick summary tool for the imported attention-guided steering text assets under `data/`.
 - `prepare_manual_fear_review.py`: builds a manual three-way worksheet for baseline vs MoESteer vs attention-guided MoESteer.
 - `args.py`: shared CLI flags used by the scripts.
@@ -44,6 +45,7 @@ This is the bridge between the two papers:
 - `docs/ARCHITECTURE.md`: codebase walkthrough.
 - `docs/RESEARCH_SYNTHESIS.md`: plain-English mapping from the reference papers to this repo.
 - `docs/REAL_MODEL_ATTENTION.md`: explanation of the new real-model attention collection stage.
+- `docs/OLMOE_BACKEND.md`: explanation of the first real MoE backend and its tensor shapes.
 - `docs/SLURM_RUNBOOK.md`: generic cluster launch notes.
 - `docs/UPSTREAM_DATA.md`: provenance and usage notes for the imported attention-guided steering data.
 - `slurm/`: Slurm submission templates for GPU runs.
@@ -118,10 +120,46 @@ remains the runnable toy trace dataset.
 - a validated dataset schema for attention + expert-load traces,
 - attention-based representative-token selection,
 - a real-model attention-to-prefix collector aligned with the upstream attention-guided steering repo,
+- a first real OLMoE backend that collects router probabilities and applies sparse router-logit steering during generation,
 - positive-vs-negative expert score computation,
 - a thresholded layerwise intervention planner,
 - JSON + Markdown report generation,
 - unit tests that prove the toy example behaves as expected.
+
+## OLMoE Three-Way Qualitative Run
+
+The first real MoE backend in the repo targets:
+
+```bash
+allenai/OLMoE-1B-7B-0125-Instruct
+```
+
+The full qualitative run:
+
+1. collects or reuses attention-guided token maps,
+2. builds an original MoESteer plan using one fixed suffix token,
+3. builds an attention-guided MoESteer plan using per-layer token choices,
+4. generates baseline / MoESteer / attention-guided MoESteer answers into the
+   manual review report.
+
+Main command:
+
+```bash
+python3 run_olmoe_manual_review.py \
+  --plan-json outputs/manual_fear_review/manual_review_plan.json \
+  --output-dir experiments/olmoe_fears_seed7
+```
+
+Outputs land under:
+
+- `experiments/olmoe_fears_seed7/attention_to_prefix/`
+- `experiments/olmoe_fears_seed7/router_datasets/`
+- `experiments/olmoe_fears_seed7/steering_plans/`
+- `experiments/olmoe_fears_seed7/manual_review_plan.json`
+- `experiments/olmoe_fears_seed7/qualitative_review.html`
+- `experiments/olmoe_fears_seed7/qualitative_review.md`
+
+See [docs/OLMOE_BACKEND.md](/Users/peterflo/Desktop/MoE_attention_guided_steering/docs/OLMOE_BACKEND.md) for the shape-level walkthrough.
 
 ## What should be implemented next
 
@@ -133,4 +171,6 @@ The next engineering step is to replace the toy JSON input with a real instrumen
 - extracts expert router loads or expert activations at the selected token positions,
 - applies the resulting intervention plan during generation.
 
-The repo is set up so that those changes should mostly land in a future model-integration module, while the scoring and planning logic can stay stable.
+The repo is now set up so that model-specific logic can mostly land in backend
+modules like the new OLMoE adapter, while the scoring and planning logic stays
+stable and model-agnostic.
