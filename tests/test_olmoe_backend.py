@@ -8,6 +8,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from moe_attention_guided_steering.config import ExperimentConfig, InterventionConfig
 from moe_attention_guided_steering.olmoe_backend import (
     OLMoERouterTrace,
+    _apply_bias_to_gate_output,
     _reshape_router_logits_for_prompt,
     build_experiment_dataset_from_router_traces,
     build_fixed_layer_to_token_index,
@@ -188,6 +189,41 @@ class OLMoEBackendTestCase(unittest.TestCase):
 
         bias = steering_plan_to_router_bias_by_layer(artifacts.steering_plan, coefficient=3.5)
         self.assertEqual(bias, {0: [3.5, -3.5, 0.0]})
+
+    def test_apply_bias_to_gate_output_supports_tuple_style_gate_outputs(self) -> None:
+        import torch
+
+        router_logits = torch.tensor(
+            [
+                [0.0, 0.0, 0.0],
+                [0.1, 0.2, 0.3],
+            ],
+            dtype=torch.float32,
+        )
+        top_k_weights = torch.tensor(
+            [
+                [0.5, 0.5],
+                [0.5250, 0.4750],
+            ],
+            dtype=torch.float32,
+        )
+        top_k_indices = torch.tensor(
+            [
+                [0, 1],
+                [2, 1],
+            ],
+            dtype=torch.long,
+        )
+
+        biased_output = _apply_bias_to_gate_output(
+            output=(router_logits, top_k_weights, top_k_indices),
+            bias_vector=torch.tensor([0.0, 0.8, 0.0], dtype=torch.float32),
+        )
+
+        biased_router_logits, biased_top_k_weights, biased_top_k_indices = biased_output[:3]
+        self.assertTrue(torch.allclose(biased_router_logits[-1], torch.tensor([0.1, 1.0, 0.3])))
+        self.assertEqual(tuple(biased_top_k_indices[-1].tolist()), (1, 2))
+        self.assertAlmostEqual(float(biased_top_k_weights[-1].sum()), 1.0, places=5)
 
 
 if __name__ == "__main__":

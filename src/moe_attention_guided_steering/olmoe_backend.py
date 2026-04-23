@@ -561,6 +561,99 @@ def _apply_bias_to_last_router_row(router_logits: Any, bias_vector: Any) -> Any:
     return router_logits
 
 
+def _recompute_topk_from_biased_router_logits(
+    router_logits: Any,
+    original_topk_weights: Any,
+    original_topk_indices: Any,
+) -> Any:
+    """Recompute routed experts from biased router logits for tuple-style gates.
+
+    Some OLMoE implementations expose the gate as a higher-level module whose
+    forward pass returns a tuple rather than a single router-logit tensor:
+
+    - `router_logits`: `(T, E)`
+    - `top_k_weights`: `(T, K)`
+    - `top_k_indices`: `(T, K)`
+
+    where:
+    - `T` is the number of token rows processed in that call,
+    - `E` is the number of experts,
+    - `K` is the number of selected experts per token.
+
+    After we bias the final router-logit row, the previously returned top-k
+    experts are no longer valid. This helper recomputes the top-k routing result
+    from the biased router logits while trying to preserve the original
+    normalization convention:
+
+    - if the original `top_k_weights` summed to approximately `1`, we renormalize
+      the recomputed weights to sum to `1`,
+    - otherwise we leave them as plain top-k probabilities.
+    """
+    import torch
+
+    routing_probabilities = torch.softmax(router_logits, dim=-1, dtype=torch.float)
+    top_k = original_topk_indices.shape[-1]
+    top_k_weights, top_k_indices = torch.topk(routing_probabilities, k=top_k, dim=-1)
+
+    # Preserve the original gate's apparent normalization convention.
+    row_sums = original_topk_weights.sum(dim=-1)
+    should_normalize = torch.allclose(
+        row_sums,
+        torch.ones_like(row_sums),
+        atol=1e-4,
+        rtol=1e-4,
+    )
+    if should_normalize:
+        top_k_weights = top_k_weights / top_k_weights.sum(dim=-1, keepdim=True)
+
+    top_k_weights = top_k_weights.to(dtype=original_topk_weights.dtype, device=original_topk_weights.device)
+    top_k_indices = top_k_indices.to(dtype=original_topk_indices.dtype, device=original_topk_indices.device)
+    return top_k_weights, top_k_indices
+
+
+def _apply_bias_to_gate_output(output: Any, bias_vector: Any) -> Any:
+    """Apply router steering to either legacy-tensor or tuple-style gate outputs.
+
+    Supported output layouts:
+
+    1. legacy gate output:
+       - tensor `router_logits` with shape `(T, E)`
+
+    2. tuple-style gate output used by newer OLMoE implementations:
+       - `router_logits`: `(T, E)`
+       - `top_k_weights`: `(T, K)`
+       - `top_k_indices`: `(T, K)`
+
+    Returns:
+    - output in the same structural layout, but with the last token row biased
+      and, for tuple-style outputs, with top-k routing recomputed from the biased
+      router logits.
+    """
+    if hasattr(output, "device") and hasattr(output, "dtype"):
+        return _apply_bias_to_last_router_row(
+            router_logits=output,
+            bias_vector=bias_vector.to(device=output.device, dtype=output.dtype),
+        )
+
+    if isinstance(output, tuple) and len(output) >= 3:
+        router_logits, top_k_weights, top_k_indices = output[:3]
+        biased_router_logits = _apply_bias_to_last_router_row(
+            router_logits=router_logits,
+            bias_vector=bias_vector.to(device=router_logits.device, dtype=router_logits.dtype),
+        )
+        biased_top_k_weights, biased_top_k_indices = _recompute_topk_from_biased_router_logits(
+            router_logits=biased_router_logits,
+            original_topk_weights=top_k_weights,
+            original_topk_indices=top_k_indices,
+        )
+        return (biased_router_logits, biased_top_k_weights, biased_top_k_indices, *output[3:])
+
+    raise TypeError(
+        "Unsupported OLMoE gate output type for steering hook: "
+        f"{type(output).__name__}."
+    )
+
+
 @contextmanager
 def olmoe_router_bias_hooks(
     model: Any,
@@ -589,9 +682,9 @@ def olmoe_router_bias_hooks(
         bias_tensor = torch.tensor(list(bias_values), dtype=torch.float32)
 
         def hook(module: Any, inputs: Any, output: Any, bias_tensor: Any = bias_tensor) -> Any:
-            return _apply_bias_to_last_router_row(
-                router_logits=output,
-                bias_vector=bias_tensor.to(device=output.device, dtype=output.dtype),
+            return _apply_bias_to_gate_output(
+                output=output,
+                bias_vector=bias_tensor,
             )
 
         handles.append(gate_module.register_forward_hook(hook))
