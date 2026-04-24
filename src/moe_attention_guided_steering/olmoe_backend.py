@@ -1,77 +1,183 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Optional, Sequence
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 from .attention_collection import HFModelResources, compute_inserted_token_span_from_ids
-from .config import ExperimentConfig, InterventionConfig
-from .datasets import validate_dataset
 from .manual_review import ManualReviewPlan
-from .types import ExperimentDataset, LayerRecord, PromptRecord, SteeringPlan, TokenRecord
 from .upstream_prompt_datasets import (
-    StatementPromptPair,
+    CustomSteeringExample,
     build_concept_conditioned_evaluation_prompt,
 )
 
 
 @dataclass
-class OLMoESpanActivationTrace:
-    """Per-prompt OLMoE expert activation rates over a meaningful token span.
+class OLMoETargetRoutingTrace:
+    """Routing statistics for one message sequence over one explicit target span.
 
-    Shapes:
+    Shape flow:
     - chat-formatted `input_ids`: `(1, S)`
     - raw per-layer OLMoE router logits: `(B * S, E)` or `(B, S, E)`
-    - reshaped per-layer router logits: `(B, S, E)`
-    - chosen readout span for one prompt: `(P, E)`
+    - reshaped per-layer router logits: `(1, S, E)`
+    - chosen target span inside the prompt: `(P, E)`
     - top-k routed-expert indicator matrix over the span: `(P, E)`
-    - per-layer activation-rate vector after averaging over span tokens: `(E,)`
-    - full `layer_expert_activation_rates`: `(L, E)`
+    - per-layer activation counts after summing over the target tokens: `(E,)`
+    - per-layer activation rates after dividing by `P`: `(E,)`
+    - full trace over all layers: `(L, E)`
 
     where:
-    - `B` is the batch size. The first implementation assumes `B = 1`.
-    - `S` is the full sequence length after applying the chat template.
-    - `P` is the number of tokens inside the readout span.
+    - `S` is the full chat-formatted sequence length.
+    - `P` is the number of tokens in the matched target span.
     - `L` is the number of sparse decoder layers in OLMoE.
-    - `E` is the number of experts in each sparse layer.
+    - `E` is the number of experts per sparse layer.
 
     Meaning:
-    - `layer_expert_activation_rates[layer][expert]` is the fraction of tokens in
-      the chosen readout span whose top-k router decision included that expert.
-    - This mirrors the paper's "is the expert routed to for tokens in the span?"
-      logic more closely than the earlier single-token prototype.
+    - `layer_expert_activation_counts[layer][expert]` is how many target tokens
+      in this prompt routed to that expert.
+    - `layer_expert_activation_rates[layer][expert]` is the corresponding
+      activation fraction in `[0, 1]`.
+
+    This is the direct evidence that later feeds the SteerMoE-style
+    risk-difference calculation.
     """
 
-    prompt_id: str
-    label: str
-    prompt_text: str
-    span_name: str
-    span_token_start: int
-    span_token_end: int
-    span_token_texts: List[str]
+    trace_id: str
+    subset_label: str
+    messages: List[Dict[str, str]]
+    target_name: str
+    target_text: str
+    target_token_start: int
+    target_token_end: int
+    target_token_texts: List[str]
     top_k_experts_per_token: int
+    layer_expert_activation_counts: List[List[int]]
     layer_expert_activation_rates: List[List[float]]
 
 
 @dataclass
-class SteeringConditionArtifacts:
-    """Reusable steering artifacts for one concept under one readout rule.
-
-    Shapes:
-    - `dataset.examples[e].layers[l].tokens[0].expert_loads`: `(E,)`
-    - `steering_plan.layers[layer].scores`: dense expert-delta vector `(E,)`
+class OLMoEPairedRoutingTrace:
+    """Matched routing traces for one custom steering example.
 
     Meaning:
-    - the dataset stores one span-aggregated expert-activation vector per layer
-      and example,
-    - the steering plan sparsifies those dense per-layer vectors into a small
-      list of experts to favor or suppress at generation time.
+    - `messages_0_trace` is the concept-conditioned example.
+    - `messages_1_trace` is the matched control example.
+    - both traces target the same shared statement body.
+
+    This is the closest local analogue to the paired activation records used in
+    Adobe's custom SteerMoE workflow, adapted to our fears prompt pairs.
     """
 
-    dataset: ExperimentDataset
-    steering_plan: SteeringPlan
+    example_id: str
+    concept_type: str
+    concept_value: str
+    statement_index: int
+    statement_text: str
+    body_text: str
+    messages_0_trace: OLMoETargetRoutingTrace
+    messages_1_trace: OLMoETargetRoutingTrace
+
+
+@dataclass
+class SteerMoERiskDifferenceScore:
+    """One layer/expert score in the custom SteerMoE activation table.
+
+    Shapes:
+    - activation counts aggregated from each trace: scalar counts over all
+      matched target tokens.
+    - activation rates: scalars in `[0, 1]`.
+
+    Meaning:
+    - `messages_0_activation_rate` is the fraction of all concept-conditioned
+      target tokens routed to this expert.
+    - `messages_1_activation_rate` is the same fraction for the matched control
+      target tokens.
+    - `risk_difference = messages_0_activation_rate - messages_1_activation_rate`.
+
+    Positive values indicate an expert is more associated with the
+    concept-conditioned subset; negative values indicate the opposite.
+    """
+
+    layer_index: int
+    expert_index: int
+    messages_0_activation_count: int
+    messages_1_activation_count: int
+    messages_0_token_count: int
+    messages_1_token_count: int
+    messages_0_activation_rate: float
+    messages_1_activation_rate: float
+    risk_difference: float
+    abs_risk_difference: float
+
+
+@dataclass
+class SteerMoESelectedExpert:
+    """One globally selected expert from the risk-difference table.
+
+    Meaning:
+    - `direction='activate'` means routing should be biased *toward* this
+      expert, because it appears more often in the concept-conditioned subset.
+    - `direction='deactivate'` means routing should be biased *away* from this
+      expert, because it appears more often in the control subset.
+    """
+
+    direction: str
+    score: SteerMoERiskDifferenceScore
+
+
+@dataclass
+class SteerMoELayerPlan:
+    """Selected SteerMoE interventions for one OLMoE layer.
+
+    Shapes:
+    - `experts_to_activate`: sparse list of expert indices for this layer.
+    - `experts_to_deactivate`: sparse list of expert indices for this layer.
+
+    Meaning:
+    - only experts appearing in the global top positive/negative selections are
+      listed here.
+    - all other experts receive zero router bias at generation time.
+    """
+
+    layer_index: int
+    experts_to_activate: List[int]
+    experts_to_deactivate: List[int]
+    selected_scores: List[SteerMoESelectedExpert]
+
+
+@dataclass
+class SteerMoEReplicationPlan:
+    """A custom-steering plan tailored to our fears-data SteerMoE transfer test.
+
+    Meaning:
+    - the plan stores the full activation table plus the globally selected
+      positive and negative experts used for steering.
+    - `layers` is the runtime-ready grouped view used to bias OLMoE routing.
+
+    This is intentionally more notebook-like than the repo's older generic
+    `SteeringPlan` abstraction: it keeps the direct risk-difference evidence
+    visible instead of immediately compressing everything into a per-layer
+    thresholded delta vector.
+    """
+
+    concept: str
+    concept_type: str
+    contrast_label: str
+    model_id: str
+    model_tag: str
+    target_name: str
+    pair_count: int
+    num_layers: int
+    num_experts: int
+    top_positive_experts: int
+    top_negative_experts: int
+    minimum_abs_risk_difference: float
+    activation_table: List[SteerMoERiskDifferenceScore]
+    selected_positive_experts: List[SteerMoESelectedExpert]
+    selected_negative_experts: List[SteerMoESelectedExpert]
+    layers: List[SteerMoELayerPlan]
 
 
 def _flatten_token_ids(token_ids: Any) -> List[int]:
-    """Convert tokenizer output ids into a flat Python list."""
+    """Convert tokenizer outputs into a flat Python list of token ids."""
     if isinstance(token_ids, dict):
         token_ids = token_ids["input_ids"]
     elif hasattr(token_ids, "keys") and "input_ids" in token_ids:
@@ -87,7 +193,13 @@ def _flatten_token_ids(token_ids: Any) -> List[int]:
 
 
 def _normalize_model_inputs(encoded_inputs: Any) -> Dict[str, Any]:
-    """Convert tokenizer outputs into a plain mapping for Hugging Face models."""
+    """Convert tokenizer outputs into a plain mapping for Hugging Face models.
+
+    Output shape meaning:
+    - `input_ids`: `(1, S)`
+    - optional `attention_mask`: `(1, S)`
+    """
+
     if isinstance(encoded_inputs, dict):
         normalized = dict(encoded_inputs)
     elif hasattr(encoded_inputs, "keys"):
@@ -105,17 +217,7 @@ def _reshape_router_logits_for_prompt(
     batch_size: int,
     sequence_length: int,
 ) -> Any:
-    """Recover `(B, S, E)` router tensors from OLMoE's flattened layer outputs.
-
-    Inputs:
-    - `layer_router_logits`: one per-layer router tensor from Hugging Face.
-      OLMoE commonly returns this in flattened shape `(B * S, E)`.
-    - `batch_size`: `B` from the tokenized model input.
-    - `sequence_length`: `S` from the tokenized model input.
-
-    Returns:
-    - tensor-like object with shape `(B, S, E)`.
-    """
+    """Recover `(B, S, E)` router tensors from OLMoE's flattened layer outputs."""
     shape = tuple(layer_router_logits.shape)
     if len(shape) == 2 and shape[0] == batch_size * sequence_length:
         return layer_router_logits.view(batch_size, sequence_length, shape[1])
@@ -128,68 +230,106 @@ def _reshape_router_logits_for_prompt(
     )
 
 
-def find_user_content_token_span(tokenizer: Any, prompt_text: str) -> tuple[int, int]:
-    """Recover the chat-token span occupied by the user's literal prompt text.
+def _remove_target_once_from_messages(
+    messages: Sequence[Dict[str, str]],
+    target_text: str,
+) -> List[Dict[str, str]]:
+    """Return a copy of `messages` with the first target occurrence removed.
+
+    This powers exact target-span recovery:
+    - tokenize the original message list,
+    - tokenize the same messages with the target removed,
+    - recover the inserted span via token-level diff.
+    """
+
+    reduced_messages: List[Dict[str, str]] = []
+    found = False
+    for message in messages:
+        role = message["role"]
+        content = message["content"]
+        if not found and target_text in content:
+            start = content.index(target_text)
+            end = start + len(target_text)
+            reduced_messages.append({"role": role, "content": content[:start] + content[end:]})
+            found = True
+        else:
+            reduced_messages.append({"role": role, "content": content})
+
+    if not found:
+        raise ValueError("Target text was not found in the provided messages.")
+
+    return reduced_messages
+
+
+def find_chat_target_token_span(
+    tokenizer: Any,
+    messages: Sequence[Dict[str, str]],
+    target_text: str,
+) -> Tuple[int, int]:
+    """Find the token span occupied by an explicit target string inside messages.
 
     Inputs:
-    - `prompt_text`: raw user-visible prompt text, before chat templating.
+    - `messages`: chat-style message list passed to `apply_chat_template`.
+    - `target_text`: literal substring whose routing activations we want to
+      analyze.
 
     Returns:
-    - `(start, end)` token indices for the user-content span inside the
+    - `(start, end)` token indices of the target span inside the
       chat-formatted input sequence.
 
     Method:
-    - tokenize the normal chat-formatted prompt,
-    - tokenize the same chat template with an empty user message,
-    - compute the exact inserted token interval.
+    - tokenize the original messages with generation prompt formatting,
+    - tokenize the same messages with the target text removed once,
+    - recover the inserted span via exact token diff.
     """
-    full_chat = [{"role": "user", "content": prompt_text}]
-    empty_chat = [{"role": "user", "content": ""}]
 
     full_ids = _flatten_token_ids(
         tokenizer.apply_chat_template(
-            full_chat,
+            list(messages),
             tokenize=True,
             add_generation_prompt=True,
             return_tensors="pt",
         )
     )
-    empty_ids = _flatten_token_ids(
+    reduced_ids = _flatten_token_ids(
         tokenizer.apply_chat_template(
-            empty_chat,
+            _remove_target_once_from_messages(messages, target_text),
             tokenize=True,
             add_generation_prompt=True,
             return_tensors="pt",
         )
     )
-    return compute_inserted_token_span_from_ids(full_ids, empty_ids)
+    return compute_inserted_token_span_from_ids(full_ids, reduced_ids)
 
 
-def collect_olmoe_span_activation_trace_for_prompt(
-    prompt_id: str,
-    label: str,
-    prompt_text: str,
+def collect_olmoe_target_routing_trace_for_messages(
+    trace_id: str,
+    subset_label: str,
+    messages: Sequence[Dict[str, str]],
+    target_text: str,
     resources: HFModelResources,
-    span_name: str = "user_content",
-) -> OLMoESpanActivationTrace:
-    """Run one prompt through OLMoE and summarize routing over a token span.
+    target_name: str = "statement_body",
+) -> OLMoETargetRoutingTrace:
+    """Run OLMoE once and summarize routing over a matched target span.
 
     Shape flow:
-    1. Apply the model's chat template and tokenize the prompt:
+    1. Tokenize the chat-formatted messages:
        - `input_ids`: `(1, S)`
-    2. Ask OLMoE to return per-layer router logits:
-       - raw layer tensor: `(1 * S, E)` or `(1, S, E)`
-    3. Reshape each layer to `(1, S, E)` and slice the chosen readout span:
+    2. Recover the exact token span for the requested target:
+       - target slice indices `(start, end)` with token count `P = end - start`
+    3. Ask OLMoE to return per-layer router logits:
+       - raw layer tensor `(1 * S, E)` or `(1, S, E)`
+    4. Slice each layer to the target span:
        - `(P, E)`
-    4. For each token row, mark the top-k routed experts:
+    5. Mark the top-k routed experts for each target token:
        - indicator matrix `(P, E)`
-    5. Average those indicators over the span tokens:
-       - activation-rate vector `(E,)`
-    6. Stack over layers conceptually:
-       - `(L, E)`
+    6. Summarize:
+       - counts `(E,)`
+       - rates `(E,)`
 
     Returns:
-    - `OLMoESpanActivationTrace` with one activation-rate vector per layer.
+    - `OLMoETargetRoutingTrace` containing the direct routing evidence later used
+      in the risk-difference table.
     """
     import torch
 
@@ -197,7 +337,7 @@ def collect_olmoe_span_activation_trace_for_prompt(
     model = resources.model
 
     encoded_inputs = tokenizer.apply_chat_template(
-        [{"role": "user", "content": prompt_text}],
+        list(messages),
         tokenize=True,
         add_generation_prompt=True,
         return_tensors="pt",
@@ -210,10 +350,14 @@ def collect_olmoe_span_activation_trace_for_prompt(
     if batch_size != 1:
         raise ValueError("The OLMoE collector currently supports batch_size=1 only.")
 
-    span_start, span_end = find_user_content_token_span(tokenizer, prompt_text)
+    target_start, target_end = find_chat_target_token_span(
+        tokenizer=tokenizer,
+        messages=messages,
+        target_text=target_text,
+    )
     input_ids = _flatten_token_ids(encoded_inputs["input_ids"])
-    span_token_ids = input_ids[span_start:span_end]
-    span_token_texts = tokenizer.convert_ids_to_tokens(span_token_ids)
+    target_token_ids = input_ids[target_start:target_end]
+    target_token_texts = tokenizer.convert_ids_to_tokens(target_token_ids)
 
     model_kwargs: Dict[str, Any] = {
         "input_ids": encoded_inputs["input_ids"],
@@ -228,6 +372,7 @@ def collect_olmoe_span_activation_trace_for_prompt(
         outputs = model(**model_kwargs)
 
     top_k_experts_per_token = int(getattr(model.config, "num_experts_per_tok", 1))
+    layer_expert_activation_counts: List[List[int]] = []
     layer_expert_activation_rates: List[List[float]] = []
     for layer_router_logits in outputs.router_logits:
         reshaped = _reshape_router_logits_for_prompt(
@@ -235,248 +380,283 @@ def collect_olmoe_span_activation_trace_for_prompt(
             batch_size=batch_size,
             sequence_length=sequence_length,
         )
-        span_router_logits = reshaped[0, span_start:span_end, :]
-        top_k_indices = torch.topk(span_router_logits, k=top_k_experts_per_token, dim=-1).indices
-        activation_indicator = torch.zeros_like(span_router_logits, dtype=torch.float32)
+        target_router_logits = reshaped[0, target_start:target_end, :]
+        top_k_indices = torch.topk(target_router_logits, k=top_k_experts_per_token, dim=-1).indices
+        activation_indicator = torch.zeros_like(target_router_logits, dtype=torch.float32)
         activation_indicator.scatter_(dim=-1, index=top_k_indices, value=1.0)
+        activation_counts = activation_indicator.sum(dim=0)
         activation_rates = activation_indicator.mean(dim=0)
-        layer_expert_activation_rates.append(activation_rates.detach().cpu().tolist())
+        layer_expert_activation_counts.append([int(value) for value in activation_counts.detach().cpu().tolist()])
+        layer_expert_activation_rates.append([float(value) for value in activation_rates.detach().cpu().tolist()])
 
-    return OLMoESpanActivationTrace(
-        prompt_id=prompt_id,
-        label=label,
-        prompt_text=prompt_text,
-        span_name=span_name,
-        span_token_start=span_start,
-        span_token_end=span_end,
-        span_token_texts=list(span_token_texts),
+    return OLMoETargetRoutingTrace(
+        trace_id=trace_id,
+        subset_label=subset_label,
+        messages=[{"role": message["role"], "content": message["content"]} for message in messages],
+        target_name=target_name,
+        target_text=target_text,
+        target_token_start=target_start,
+        target_token_end=target_end,
+        target_token_texts=list(target_token_texts),
         top_k_experts_per_token=top_k_experts_per_token,
+        layer_expert_activation_counts=layer_expert_activation_counts,
         layer_expert_activation_rates=layer_expert_activation_rates,
     )
 
 
-def collect_olmoe_span_activation_traces_for_prompt_pairs(
-    prompt_pairs: Sequence[StatementPromptPair],
+def collect_olmoe_paired_routing_traces(
+    examples: Sequence[CustomSteeringExample],
     resources: HFModelResources,
-    span_name: str = "user_content",
-) -> List[OLMoESpanActivationTrace]:
-    """Collect positive and negative span activation traces once per prompt pair.
+    target_name: str = "statement_body",
+) -> List[OLMoEPairedRoutingTrace]:
+    """Collect matched routing traces for each custom steering example.
 
     Returns:
-    - `List[OLMoESpanActivationTrace]` with length `2 * len(prompt_pairs)`,
-      ordered as positive trace, negative trace, positive trace, negative trace.
+    - `List[OLMoEPairedRoutingTrace]` with one positive/control trace pair per
+      example.
     """
     try:
         from tqdm import tqdm
     except ImportError:  # pragma: no cover - fallback only used on minimal envs
         tqdm = lambda iterable, **_: iterable
 
-    prompt_traces: List[OLMoESpanActivationTrace] = []
-    concept_name = prompt_pairs[0].concept_value if prompt_pairs else "unknown"
-    for prompt_pair in tqdm(prompt_pairs, desc=f"Collecting OLMoE span traces for {concept_name}"):
-        prompt_traces.append(
-            collect_olmoe_span_activation_trace_for_prompt(
-                prompt_id=f"{prompt_pair.prompt_id}:positive",
-                label="positive",
-                prompt_text=prompt_pair.positive_full_prompt,
-                resources=resources,
-                span_name=span_name,
+    traces: List[OLMoEPairedRoutingTrace] = []
+    concept_name = examples[0].concept_value if examples else "unknown"
+    for example in tqdm(examples, desc=f"Collecting OLMoE routing traces for {concept_name}"):
+        messages_0_trace = collect_olmoe_target_routing_trace_for_messages(
+            trace_id=f"{example.example_id}:messages_0",
+            subset_label="messages_0",
+            messages=example.messages_0,
+            target_text=example.messages_0_target,
+            resources=resources,
+            target_name=target_name,
+        )
+        messages_1_trace = collect_olmoe_target_routing_trace_for_messages(
+            trace_id=f"{example.example_id}:messages_1",
+            subset_label="messages_1",
+            messages=example.messages_1,
+            target_text=example.messages_1_target,
+            resources=resources,
+            target_name=target_name,
+        )
+        traces.append(
+            OLMoEPairedRoutingTrace(
+                example_id=example.example_id,
+                concept_type=example.concept_type,
+                concept_value=example.concept_value,
+                statement_index=example.statement_index,
+                statement_text=example.statement_text,
+                body_text=example.body_text,
+                messages_0_trace=messages_0_trace,
+                messages_1_trace=messages_1_trace,
             )
         )
-        prompt_traces.append(
-            collect_olmoe_span_activation_trace_for_prompt(
-                prompt_id=f"{prompt_pair.prompt_id}:negative",
-                label="negative",
-                prompt_text=prompt_pair.negative_full_prompt,
-                resources=resources,
-                span_name=span_name,
-            )
-        )
-    return prompt_traces
+
+    return traces
 
 
-def build_experiment_dataset_from_span_traces(
-    prompt_traces: Sequence[OLMoESpanActivationTrace],
-    concept: str,
-    contrast_concept: str,
-    concept_type: str,
-    model_id: str,
-    model_tag: str,
-    readout_span: str,
-) -> ExperimentDataset:
-    """Convert span-level OLMoE traces into the repo's generic experiment schema.
+def build_steermoe_activation_table_from_paired_traces(
+    paired_traces: Sequence[OLMoEPairedRoutingTrace],
+) -> List[SteerMoERiskDifferenceScore]:
+    """Aggregate paired routing traces into an Adobe-style risk-difference table.
 
-    Shape mapping:
-    - input `prompt_traces[p].layer_expert_activation_rates[layer]`: `(E,)`
-    - output `dataset.examples[p].layers[layer].tokens[0].expert_loads`: `(E,)`
+    Shape logic:
+    - each trace contributes integer activation counts `(L, E)` plus token
+      counts `P`.
+    - counts are summed across the full custom steering dataset:
+      - `messages_0_activation_count[layer, expert]`
+      - `messages_1_activation_count[layer, expert]`
+    - token totals are summed likewise:
+      - `messages_0_token_count`
+      - `messages_1_token_count`
+    - activation rates become scalar fractions for each `(layer, expert)`.
 
-    Meaning:
-    - each layer now contributes exactly one row per example: the span-aggregated
-      expert activation-rate vector,
-    - the generic downstream pipeline can still operate unchanged, because it sees
-      one trivially selected row per layer.
+    Returns:
+    - `List[SteerMoERiskDifferenceScore]` with one row per layer/expert pair.
     """
-    if not prompt_traces:
-        raise ValueError("prompt_traces must be non-empty.")
+    if not paired_traces:
+        raise ValueError("paired_traces must be non-empty.")
 
-    examples: List[PromptRecord] = []
-    for trace in prompt_traces:
-        layers: List[LayerRecord] = []
-        for layer_index, expert_activation_rates in enumerate(trace.layer_expert_activation_rates):
-            span_token_count = trace.span_token_end - trace.span_token_start
-            layers.append(
-                LayerRecord(
+    first_trace = paired_traces[0].messages_0_trace
+    num_layers = len(first_trace.layer_expert_activation_counts)
+    num_experts = len(first_trace.layer_expert_activation_counts[0])
+
+    messages_0_token_count = 0
+    messages_1_token_count = 0
+    messages_0_totals = [[0 for _ in range(num_experts)] for _ in range(num_layers)]
+    messages_1_totals = [[0 for _ in range(num_experts)] for _ in range(num_layers)]
+
+    for paired_trace in paired_traces:
+        positive_trace = paired_trace.messages_0_trace
+        negative_trace = paired_trace.messages_1_trace
+
+        messages_0_token_count += positive_trace.target_token_end - positive_trace.target_token_start
+        messages_1_token_count += negative_trace.target_token_end - negative_trace.target_token_start
+
+        for layer_index in range(num_layers):
+            for expert_index in range(num_experts):
+                messages_0_totals[layer_index][expert_index] += positive_trace.layer_expert_activation_counts[layer_index][expert_index]
+                messages_1_totals[layer_index][expert_index] += negative_trace.layer_expert_activation_counts[layer_index][expert_index]
+
+    scores: List[SteerMoERiskDifferenceScore] = []
+    for layer_index in range(num_layers):
+        for expert_index in range(num_experts):
+            positive_count = messages_0_totals[layer_index][expert_index]
+            negative_count = messages_1_totals[layer_index][expert_index]
+            positive_rate = positive_count / messages_0_token_count if messages_0_token_count else 0.0
+            negative_rate = negative_count / messages_1_token_count if messages_1_token_count else 0.0
+            risk_difference = positive_rate - negative_rate
+            scores.append(
+                SteerMoERiskDifferenceScore(
                     layer_index=layer_index,
-                    tokens=[
-                        TokenRecord(
-                            token_index=trace.span_token_start,
-                            token_text=f"[{trace.span_name}_activation_rate over {span_token_count} tokens]",
-                            attention_weight=1.0,
-                            expert_loads=[float(value) for value in expert_activation_rates],
-                        )
-                    ],
+                    expert_index=expert_index,
+                    messages_0_activation_count=positive_count,
+                    messages_1_activation_count=negative_count,
+                    messages_0_token_count=messages_0_token_count,
+                    messages_1_token_count=messages_1_token_count,
+                    messages_0_activation_rate=positive_rate,
+                    messages_1_activation_rate=negative_rate,
+                    risk_difference=risk_difference,
+                    abs_risk_difference=abs(risk_difference),
                 )
             )
 
-        examples.append(
-            PromptRecord(
-                prompt_id=trace.prompt_id,
-                label=trace.label,
-                prompt_text=trace.prompt_text,
-                layers=layers,
+    return scores
+
+
+def build_steermoe_replication_plan(
+    concept: str,
+    concept_type: str,
+    model_id: str,
+    model_tag: str,
+    target_name: str,
+    paired_traces: Sequence[OLMoEPairedRoutingTrace],
+    activation_table: Sequence[SteerMoERiskDifferenceScore],
+    top_positive_experts: int = 8,
+    top_negative_experts: int = 8,
+    minimum_abs_risk_difference: float = 0.01,
+    contrast_label: str = "generic_statement_control",
+) -> SteerMoEReplicationPlan:
+    """Select globally strongest experts from a SteerMoE risk-difference table.
+
+    Selection logic:
+    - keep positive candidates with `risk_difference > 0`
+    - keep negative candidates with `risk_difference < 0`
+    - require `abs(risk_difference) >= minimum_abs_risk_difference`
+    - sort globally, not layer-by-layer
+    - take the top `top_positive_experts` and `top_negative_experts`
+
+    This is intentionally closer to Adobe's custom steering notebook than the
+    repo's earlier per-layer thresholding path.
+    """
+    if top_positive_experts < 0 or top_negative_experts < 0:
+        raise ValueError("Expert budgets must be non-negative.")
+    if minimum_abs_risk_difference < 0:
+        raise ValueError("minimum_abs_risk_difference must be non-negative.")
+    if not activation_table:
+        raise ValueError("activation_table must be non-empty.")
+
+    positive_candidates = [
+        score
+        for score in activation_table
+        if score.risk_difference > 0 and score.abs_risk_difference >= minimum_abs_risk_difference
+    ]
+    negative_candidates = [
+        score
+        for score in activation_table
+        if score.risk_difference < 0 and score.abs_risk_difference >= minimum_abs_risk_difference
+    ]
+    positive_candidates.sort(key=lambda score: score.risk_difference, reverse=True)
+    negative_candidates.sort(key=lambda score: score.risk_difference)
+
+    selected_positive = [
+        SteerMoESelectedExpert(direction="activate", score=score)
+        for score in positive_candidates[:top_positive_experts]
+    ]
+    selected_negative = [
+        SteerMoESelectedExpert(direction="deactivate", score=score)
+        for score in negative_candidates[:top_negative_experts]
+    ]
+
+    all_selected = selected_positive + selected_negative
+    num_layers = 1 + max(score.layer_index for score in activation_table)
+    num_experts = 1 + max(score.expert_index for score in activation_table)
+    selected_by_layer: Dict[int, List[SteerMoESelectedExpert]] = {layer_index: [] for layer_index in range(num_layers)}
+    for selected in all_selected:
+        selected_by_layer[selected.score.layer_index].append(selected)
+
+    layers: List[SteerMoELayerPlan] = []
+    for layer_index in range(num_layers):
+        selected_scores = selected_by_layer[layer_index]
+        if not selected_scores:
+            continue
+        layers.append(
+            SteerMoELayerPlan(
+                layer_index=layer_index,
+                experts_to_activate=[
+                    selected.score.expert_index
+                    for selected in selected_scores
+                    if selected.direction == "activate"
+                ],
+                experts_to_deactivate=[
+                    selected.score.expert_index
+                    for selected in selected_scores
+                    if selected.direction == "deactivate"
+                ],
+                selected_scores=selected_scores,
             )
         )
 
-    dataset = ExperimentDataset(
-        metadata={
-            "concept": concept,
-            "contrast_concept": contrast_concept,
-            "concept_type": concept_type,
-            "model_id": model_id,
-            "model_tag": model_tag,
-            "readout_span": readout_span,
-            "readout_statistic": "topk_activation_rate",
-        },
-        examples=examples,
-    )
-    validate_dataset(dataset)
-    return dataset
-
-
-def collect_olmoe_experiment_dataset_for_prompt_pairs(
-    prompt_pairs: Sequence[StatementPromptPair],
-    resources: HFModelResources,
-    readout_span: str = "user_content",
-    contrast_concept: str = "generic_statement_control",
-) -> ExperimentDataset:
-    """Collect a faithful-ish SteerMoE dataset from OLMoE prompt pairs.
-
-    Inputs:
-    - `prompt_pairs`: upstream-style positive/negative statement prompt pairs.
-    - `resources`: loaded OLMoE model and tokenizer.
-    - `readout_span`: name of the span whose routing statistics are aggregated.
-      The current implementation uses the full user-content span in the
-      chat-formatted prompt.
-    - `contrast_concept`: textual label for the negative unprefixed prompts.
-
-    Returns:
-    - `ExperimentDataset` with one span-aggregated expert-activation vector per
-      layer and example.
-    """
-    prompt_traces = collect_olmoe_span_activation_traces_for_prompt_pairs(
-        prompt_pairs=prompt_pairs,
-        resources=resources,
-        span_name=readout_span,
-    )
-    return build_experiment_dataset_from_span_traces(
-        prompt_traces=prompt_traces,
-        concept=prompt_pairs[0].concept_value,
-        contrast_concept=contrast_concept,
-        concept_type=prompt_pairs[0].concept_type,
-        model_id=resources.model_id,
-        model_tag=resources.model_tag,
-        readout_span=readout_span,
+    return SteerMoEReplicationPlan(
+        concept=concept,
+        concept_type=concept_type,
+        contrast_label=contrast_label,
+        model_id=model_id,
+        model_tag=model_tag,
+        target_name=target_name,
+        pair_count=len(paired_traces),
+        num_layers=num_layers,
+        num_experts=num_experts,
+        top_positive_experts=top_positive_experts,
+        top_negative_experts=top_negative_experts,
+        minimum_abs_risk_difference=minimum_abs_risk_difference,
+        activation_table=list(activation_table),
+        selected_positive_experts=selected_positive,
+        selected_negative_experts=selected_negative,
+        layers=layers,
     )
 
 
-def run_olmoe_steermoe_pipeline(
-    dataset: ExperimentDataset,
-    config: Optional[ExperimentConfig] = None,
-) -> SteeringConditionArtifacts:
-    """Run the generic steering pipeline on a span-aggregated OLMoE dataset.
-
-    Inputs:
-    - `dataset`: OLMoE-derived experiment dataset with one per-layer activation
-      vector `(E,)` per example.
-    - `config`: thresholds and sparsity settings for the steering plan.
-
-    Returns:
-    - `SteeringConditionArtifacts` containing the dataset and sparse steering
-      plan.
-    """
-    from .pipeline import run_pipeline
-
-    if config is None:
-        config = ExperimentConfig(
-            intervention=InterventionConfig(
-                top_k_experts=2,
-                activation_threshold=0.01,
-                deactivation_threshold=-0.01,
-            )
-        )
-
-    artifacts = run_pipeline(dataset, config)
-    return SteeringConditionArtifacts(
-        dataset=dataset,
-        steering_plan=artifacts.steering_plan,
-    )
-
-
-def steering_plan_to_router_bias_by_layer(
-    steering_plan: SteeringPlan,
+def steermoe_plan_to_router_bias_by_layer(
+    steering_plan: SteerMoEReplicationPlan,
     coefficient: float = 1.0,
 ) -> Dict[int, List[float]]:
-    """Convert a sparse steering plan into dense router-logit bias vectors.
+    """Convert a custom SteerMoE plan into dense router-logit bias vectors.
 
     Shapes:
-    - input sparse expert sets per layer:
-      - `experts_to_activate`: length `<= K`
-      - `experts_to_deactivate`: length `<= K`
-    - output dense bias vector per layer:
-      - `(E,)`
+    - input selected experts: sparse global selections grouped by layer
+    - output bias vector for each touched layer: `(E,)`
 
     Meaning:
-    - the selected experts receive biases scaled by their relative delta
-      magnitudes within the selected set,
-    - untouched experts receive `0.0`,
-    - `coefficient` is the maximum absolute bias magnitude in a layer.
-
-    This is gentler than the earlier constant `±8` prototype and better matched
-    to a first faithful SteerMoE transfer experiment.
+    - positive-risk experts receive positive bias
+    - negative-risk experts receive negative bias
+    - bias magnitudes are scaled by the selected experts' relative
+      `abs_risk_difference` within each layer
     """
     bias_by_layer: Dict[int, List[float]] = {}
     for layer in steering_plan.layers:
-        if layer.scores:
-            num_experts = max(score.expert_index for score in layer.scores) + 1
-        else:
-            num_experts = 1 + max(layer.experts_to_activate + layer.experts_to_deactivate + [0])
-
-        bias_vector = [0.0] * num_experts
-        score_map = {score.expert_index: score.delta for score in layer.scores}
-        selected_experts = layer.experts_to_activate + layer.experts_to_deactivate
-        max_abs_selected_delta = max(
-            (abs(score_map.get(expert_index, 0.0)) for expert_index in selected_experts),
+        bias_vector = [0.0] * steering_plan.num_experts
+        max_abs_selected_risk = max(
+            (selected.score.abs_risk_difference for selected in layer.selected_scores),
             default=1.0,
         )
-        if max_abs_selected_delta == 0:
-            max_abs_selected_delta = 1.0
+        if max_abs_selected_risk == 0:
+            max_abs_selected_risk = 1.0
 
-        for expert_index in layer.experts_to_activate:
-            delta = max(score_map.get(expert_index, 0.0), 0.0)
-            bias_vector[expert_index] = coefficient * (delta / max_abs_selected_delta)
-        for expert_index in layer.experts_to_deactivate:
-            delta = min(score_map.get(expert_index, 0.0), 0.0)
-            bias_vector[expert_index] = coefficient * (delta / max_abs_selected_delta)
+        for selected in layer.selected_scores:
+            scale = coefficient * (selected.score.abs_risk_difference / max_abs_selected_risk)
+            sign = 1.0 if selected.direction == "activate" else -1.0
+            bias_vector[selected.score.expert_index] = sign * scale
 
         bias_by_layer[layer.layer_index] = bias_vector
     return bias_by_layer
@@ -550,10 +730,10 @@ def olmoe_router_bias_hooks(
 ) -> Iterator[None]:
     """Temporarily inject router-logit biases into OLMoE's sparse blocks.
 
-    Important runtime assumption:
+    Runtime assumption:
     - generation runs with batch size `1`
-    - we bias only the *last* token row of each forward pass, because that token
-      controls the next autoregressive step
+    - we bias only the final token row in each forward pass, because that row
+      determines the next autoregressive decision.
     """
     import torch
 
@@ -587,7 +767,7 @@ def generate_with_olmoe_steering(
     Shape flow:
     - tokenized prompt: `(1, S_prompt)`
     - generated ids returned by Hugging Face: `(1, S_prompt + S_new)`
-    - decoded output slice: tokens `S_prompt : S_prompt + S_new`
+    - decoded response slice: tokens `S_prompt : S_prompt + S_new`
     """
     import torch
 
@@ -634,7 +814,7 @@ def generate_with_olmoe_steering(
 def fill_manual_review_plan_with_steermoe_generations(
     plan: ManualReviewPlan,
     resources: HFModelResources,
-    steermoe_plans_by_concept: Dict[str, SteeringPlan],
+    steermoe_plans_by_concept: Dict[str, SteerMoEReplicationPlan],
     steering_coefficient: float = 1.0,
     max_new_tokens: int = 48,
     temperature: float = 0.0,
@@ -646,8 +826,9 @@ def fill_manual_review_plan_with_steermoe_generations(
     - `plan`: qualitative review grid whose `concept` plus
       `evaluation_question` identify the model-facing prompt.
     - `resources`: loaded OLMoE model and tokenizer.
-    - `steermoe_plans_by_concept`: one sparse SteerMoE plan per concept.
-    - `steering_coefficient`: maximum router-logit bias magnitude used at runtime.
+    - `steermoe_plans_by_concept`: one custom SteerMoE plan per concept.
+    - `steering_coefficient`: maximum absolute router-logit bias magnitude used
+      during generation.
     - generation controls: `max_new_tokens`, `temperature`, `top_p`.
     """
     try:
@@ -657,7 +838,7 @@ def fill_manual_review_plan_with_steermoe_generations(
 
     baseline_cache: Dict[str, str] = {}
     steermoe_bias_cache = {
-        concept: steering_plan_to_router_bias_by_layer(steering_plan, coefficient=steering_coefficient)
+        concept: steermoe_plan_to_router_bias_by_layer(steering_plan, coefficient=steering_coefficient)
         for concept, steering_plan in steermoe_plans_by_concept.items()
     }
 

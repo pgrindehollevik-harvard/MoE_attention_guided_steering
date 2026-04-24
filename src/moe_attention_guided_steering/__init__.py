@@ -9,14 +9,13 @@ from .attention_collection import (
 from .config import ExperimentConfig, InterventionConfig, SelectionConfig
 from .manual_review import build_manual_review_plan, extract_evaluation_question
 from .olmoe_backend import (
-    build_experiment_dataset_from_span_traces,
-    collect_olmoe_experiment_dataset_for_prompt_pairs,
-    collect_olmoe_span_activation_trace_for_prompt,
-    collect_olmoe_span_activation_traces_for_prompt_pairs,
+    build_steermoe_activation_table_from_paired_traces,
+    build_steermoe_replication_plan,
+    collect_olmoe_paired_routing_traces,
+    collect_olmoe_target_routing_trace_for_messages,
     fill_manual_review_plan_with_steermoe_generations,
     generate_with_olmoe_steering,
-    run_olmoe_steermoe_pipeline,
-    steering_plan_to_router_bias_by_layer,
+    steermoe_plan_to_router_bias_by_layer,
 )
 from .pipeline import PipelineArtifacts, run_pipeline
 from .reference_data import (
@@ -25,8 +24,11 @@ from .reference_data import (
     load_reference_concept_suite,
     load_reference_data,
 )
-from .upstream_prompt_datasets import build_upstream_statement_prompt_pairs
-from .upstream_prompt_datasets import build_concept_conditioned_evaluation_prompt
+from .upstream_prompt_datasets import (
+    build_concept_conditioned_evaluation_prompt,
+    build_custom_steering_examples_from_statement_prompt_pairs,
+    build_upstream_statement_prompt_pairs,
+)
 
 __all__ = [
     "ExperimentConfig",
@@ -37,12 +39,13 @@ __all__ = [
     "SelectionConfig",
     "build_manual_review_plan",
     "build_concept_conditioned_evaluation_prompt",
-    "build_experiment_dataset_from_span_traces",
+    "build_custom_steering_examples_from_statement_prompt_pairs",
+    "build_steermoe_activation_table_from_paired_traces",
+    "build_steermoe_replication_plan",
     "build_upstream_statement_prompt_pairs",
     "collect_attention_run",
-    "collect_olmoe_experiment_dataset_for_prompt_pairs",
-    "collect_olmoe_span_activation_trace_for_prompt",
-    "collect_olmoe_span_activation_traces_for_prompt_pairs",
+    "collect_olmoe_paired_routing_traces",
+    "collect_olmoe_target_routing_trace_for_messages",
     "extract_evaluation_question",
     "fill_manual_review_plan_with_steermoe_generations",
     "generate_with_olmoe_steering",
@@ -50,8 +53,7 @@ __all__ = [
     "load_hf_model_resources",
     "load_reference_concept_suite",
     "load_reference_data",
-    "run_olmoe_steermoe_pipeline",
     "run_pipeline",
     "save_attention_run",
-    "steering_plan_to_router_bias_by_layer",
+    "steermoe_plan_to_router_bias_by_layer",
 ]

@@ -7,7 +7,7 @@ This document explains the current real MoE backend implemented in this repo:
 The current backend is intentionally focused on **stage 1**:
 
 1. baseline generation,
-2. span-based SteerMoE on our own prompt data.
+2. SteerMoE-style custom steering on our own fears data.
 
 It does **not** treat the earlier single-token attention-guided OLMoE prototype
 as the main experiment anymore.
@@ -19,11 +19,12 @@ The goal of stage 1 is straightforward:
 > Before comparing SteerMoE to anything else, verify that a SteerMoE-style
 > intervention works at all on our own fear dataset.
 
-That means the backend should stay close to the paper's spirit:
+That means the backend should stay close to Adobe's custom-steering workflow:
 
-- collect routing behavior over a **token span**,
-- compare positive and negative examples,
-- steer generation by favoring or suppressing experts.
+- build paired custom steering examples,
+- collect routing behavior on an explicit shared target span,
+- compute per-layer/per-expert **risk difference**,
+- steer generation by favoring or suppressing globally selected experts.
 
 ## Shape overview
 
@@ -53,10 +54,10 @@ so each layer becomes:
 
 - `(1, S, E)`
 
-### 2. Span-level expert activation rates
+### 2. Target-level expert activation counts and rates
 
-The current readout span is the **full user-content span** inside the
-chat-formatted prompt.
+The current readout target is the **shared statement body** inside each paired
+fear/control prompt.
 
 For one prompt and one layer:
 
@@ -66,7 +67,9 @@ For one prompt and one layer:
    - indices `(P, K)`
 3. convert those routed experts into a binary activation matrix:
    - `(P, E)`
-4. average over span tokens:
+4. sum over target tokens:
+   - activation counts `(E,)`
+5. divide by the target token count:
    - `(E,)`
 
 where:
@@ -74,21 +77,32 @@ where:
 - `P` = number of tokens in the chosen span,
 - `K` = number of experts routed per token by OLMoE.
 
-So each layer ends up with one vector of length `E`, where each entry answers:
+So each layer ends up with two vectors of length `E`:
+
+- activation counts
+- activation rates
+
+Each activation-rate entry answers:
 
 > For what fraction of span tokens was this expert selected by the router?
 
-Over many prompts, the resulting data can be viewed as:
+Over many paired prompts, those counts are added across the full custom
+steering dataset, giving for each `(layer, expert)` pair:
 
-- positive matrix `(N_pos, E)`
-- negative matrix `(N_neg, E)`
+- `messages_0_activation_count`
+- `messages_1_activation_count`
+- `messages_0_activation_rate`
+- `messages_1_activation_rate`
+- `risk_difference = messages_0_rate - messages_1_rate`
 
-for each layer separately.
+That table is the main stage-1 scoring object.
 
 ### 3. Runtime steering
 
-After the positive-vs-negative comparison, the steering plan says which experts
-to favor or suppress in each layer.
+After the risk-difference table is built, the steering plan globally selects:
+
+- the strongest positive-risk experts to activate
+- the strongest negative-risk experts to deactivate
 
 At generation time, the backend converts that sparse plan into one dense bias
 vector per layer:
@@ -121,9 +135,11 @@ The retired prototype did this:
 
 The current backend does this instead:
 
-- define a meaningful prompt span,
-- inspect routing over **every token in that span**,
-- build expert deltas from span-aggregated activation rates.
+- define paired custom steering examples,
+- use the shared statement body as the matched target,
+- inspect routing over **every token in that target**,
+- compute risk difference directly on `(layer, expert)` activation rates,
+- globally select experts for intervention.
 
 That is closer to the paper's framing and avoids collapsing the problem to a
 single chat-template boundary token.
@@ -138,8 +154,9 @@ It:
 
 1. loads a manual review plan,
 2. builds positive/negative statement prompt pairs,
-3. collects span-based OLMoE routing statistics,
-4. builds one SteerMoE plan per concept,
+3. converts them into paired custom steering examples,
+4. collects target-level OLMoE routing traces,
+5. builds one SteerMoE risk-difference table and steering plan per concept,
 5. generates baseline and SteerMoE outputs,
 6. writes an updated JSON plan plus HTML and Markdown review reports.
 
@@ -151,11 +168,12 @@ The matching MIT-cluster Slurm template is:
 
 These are implementation choices, not paper claims:
 
-- readout span: full user-content span
-- routing statistic: top-k expert activation rate
-- default top-k intervention sparsity: `2`
-- default activation threshold: `0.01`
-- default deactivation threshold: `-0.01`
+- readout target: shared statement body
+- routing statistic: top-k expert activation count / rate
+- scoring table: risk difference over all target tokens in the paired dataset
+- default global activation budget: `8`
+- default global deactivation budget: `8`
+- default minimum absolute risk difference: `0.01`
 - default steering coefficient: `1.0`
 
 Those defaults are intentionally gentler than the earlier OLMoE prototype,

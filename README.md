@@ -18,16 +18,18 @@ The current repo is deliberately staged.
 
 ## Current research stance
 
-After rereading the SteerMoE paper and inspecting our first prototype, the repo
-now treats **faithful-ish span-based SteerMoE** as the main runnable path.
+After rereading the SteerMoE paper and Adobe's `custom_steering.ipynb`, the
+repo now treats a **custom-steering replication on our fears data** as the main
+runnable path.
 
 Why:
 
-- the SteerMoE paper measures routing behavior over token spans rather than
-  choosing one single representative token,
-- our first OLMoE hybrid prototype collapsed the problem to one token per layer,
-  which was too far from the original method and produced degenerate outputs,
-- a clean comparison later needs a strong SteerMoE baseline first.
+- the SteerMoE paper computes expert statistics from routing evidence collected
+  on a task-relevant target region, not from a single representative token,
+- Adobe's custom notebook saves paired routing activations and scores experts by
+  **risk difference** directly,
+- our earlier generic span-aggregation path was useful as a stepping stone, but
+  it was still too far from the paper's custom-steering workflow.
 
 So the repo is no longer presenting the failed single-token hybrid as the main
 experiment. That code path has been retired from the committed source.
@@ -37,10 +39,12 @@ experiment. That code path has been retired from the committed source.
 - a typed dataset / steering-plan library under `src/moe_attention_guided_steering/`,
 - a real-model attention-to-prefix collector kept for future same-model
   attention-based comparisons,
-- a span-based OLMoE backend that:
-  - collects router logits,
-  - computes expert activation rates over the full user-content span,
-  - builds sparse SteerMoE plans from positive-vs-negative deltas,
+- an OLMoE backend that:
+  - builds Adobe-style paired custom steering examples from our fears prompts,
+  - collects router traces on the shared statement-body target,
+  - computes a SteerMoE activation table with per-layer/per-expert risk
+    differences,
+  - selects globally strongest positive and negative experts,
   - applies router-logit bias during generation,
   - writes a qualitative baseline-vs-SteerMoE review report,
 - unit tests for the core logic.
@@ -97,7 +101,7 @@ allenai/OLMoE-1B-7B-0125-Instruct
 
 The current stage-1 experiment asks:
 
-> Can a span-based SteerMoE-style intervention produce meaningful qualitative
+> Can a SteerMoE-style custom steering pipeline produce meaningful qualitative
 > changes on our fear dataset without destroying fluency?
 
 ### Local command
@@ -115,10 +119,10 @@ python3 run_olmoe_steermoe_review.py \
 For each sampled concept, it:
 
 1. builds upstream-style positive/negative statement prompt pairs,
-2. runs OLMoE and collects router logits,
-3. computes **expert activation rates over the full user-content span**,
-4. compares positive and negative activation rates per layer,
-5. builds a sparse SteerMoE plan,
+2. converts those pairs into Adobe-style custom steering examples,
+3. runs OLMoE and collects router traces on the shared statement-body target,
+4. computes a per-layer/per-expert **risk-difference activation table**,
+5. selects the globally strongest positive and negative experts,
 6. generates:
    - baseline output,
    - SteerMoE output,
@@ -131,7 +135,9 @@ For each sampled concept, it:
 
 The stage-1 OLMoE run writes:
 
-- `experiments/olmoe_steermoe_fears_seed7/router_datasets/`
+- `experiments/olmoe_steermoe_fears_seed7/custom_steering_datasets/`
+- `experiments/olmoe_steermoe_fears_seed7/routing_traces/`
+- `experiments/olmoe_steermoe_fears_seed7/activation_tables/`
 - `experiments/olmoe_steermoe_fears_seed7/steering_plans/`
 - `experiments/olmoe_steermoe_fears_seed7/manual_review_plan.json`
 - `experiments/olmoe_steermoe_fears_seed7/qualitative_review.md`
@@ -162,13 +168,16 @@ for the shape walkthrough.
 ## Why the current SteerMoE backend is closer to the paper
 
 The old prototype used one selected suffix token per layer. The current OLMoE
-backend is closer to SteerMoE because it measures routing over a **token span**:
+backend is closer to SteerMoE because it now follows the custom-steering logic
+more directly:
 
-- router logits per layer are reshaped to `(B, S, E)`,
-- the user-content span is sliced to `(P, E)`,
-- top-k routed experts are marked for every span token,
-- those expert activations are averaged over the span into one vector `(E,)`,
-- those vectors are compared between positive and negative prompts.
+- paired concept/control prompts are built from the same statement body,
+- the shared statement body is used as the matched routing target,
+- routed-expert counts are collected for every token in that target,
+- activation rates and risk differences are computed directly for each
+  `(layer, expert)` pair,
+- the globally strongest positive and negative experts are selected for runtime
+  steering.
 
 See [docs/OLMOE_BACKEND.md](/Users/peterflo/Desktop/MoE_attention_guided_steering/docs/OLMOE_BACKEND.md)
 for the exact tensor story.

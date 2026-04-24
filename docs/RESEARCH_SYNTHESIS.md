@@ -29,14 +29,14 @@ Our first hybrid prototype treated SteerMoE as if it should read from one
 selected token per layer. After rereading the paper, that was too aggressive a
 compression.
 
-SteerMoE is better thought of as a **token-span routing-statistics** method:
+SteerMoE is better thought of as a **targeted routing-statistics** method:
 
 - routing matters across many tokens,
-- a behavior-relevant span is often more appropriate than one single token,
+- a behavior-relevant target region is often more appropriate than one single token,
 - the intervention plan should be built from those broader routing statistics.
 
-That is why the repo now starts with a span-based OLMoE SteerMoE reproduction
-attempt on our own fear data.
+That is why the repo now starts with an OLMoE SteerMoE custom-steering
+reproduction attempt on our own fear data.
 
 ## 4. Current staged plan
 
@@ -51,7 +51,7 @@ without destroying fluency.
 Only after stage 1 is trustworthy do we make the method comparison:
 
 - baseline OLMoE
-- span-based SteerMoE on OLMoE
+- SteerMoE on OLMoE
 - an attention-based steering alternative on the same OLMoE model
 
 This avoids the bad comparison where the method and model architecture change at
@@ -62,14 +62,14 @@ the same time.
 The committed stage-1 backend:
 
 1. builds positive/negative prompt pairs from the imported fear dataset,
-2. finds the full user-content token span in each prompt,
-3. reads OLMoE router logits for every token in that span,
-4. marks which experts were actually selected by routing,
-5. averages those token-level selections into one activation-rate vector per
-   layer,
-6. compares positive vs negative activation rates,
-7. turns those deltas into a sparse SteerMoE plan,
-8. generates baseline vs steered outputs for qualitative review.
+2. converts them into Adobe-style paired custom steering examples,
+3. uses the shared statement body as the matched target region,
+4. reads OLMoE router logits for every token in that target,
+5. marks which experts were actually selected by routing,
+6. aggregates those routed-expert counts over the full paired dataset,
+7. computes per-layer/per-expert **risk difference**,
+8. selects the globally strongest positive and negative experts,
+9. generates baseline vs steered outputs for qualitative review.
 
 So the current experiment is not "SteerMoE plus attention guidance." It is
 "Does SteerMoE transfer to our data when we implement it in a way that is much

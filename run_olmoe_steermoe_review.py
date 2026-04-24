@@ -9,7 +9,6 @@ import sys
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from moe_attention_guided_steering.config import ExperimentConfig, InterventionConfig  # noqa: E402
 from moe_attention_guided_steering.io_utils import write_json  # noqa: E402
 from moe_attention_guided_steering.manual_review import (  # noqa: E402
     build_manual_review_html,
@@ -18,13 +17,15 @@ from moe_attention_guided_steering.manual_review import (  # noqa: E402
     manual_review_plan_to_dict,
 )
 from moe_attention_guided_steering.olmoe_backend import (  # noqa: E402
-    collect_olmoe_experiment_dataset_for_prompt_pairs,
+    build_steermoe_activation_table_from_paired_traces,
+    build_steermoe_replication_plan,
+    collect_olmoe_paired_routing_traces,
     fill_manual_review_plan_with_steermoe_generations,
-    run_olmoe_steermoe_pipeline,
 )
 from moe_attention_guided_steering.reference_data import load_reference_data  # noqa: E402
 from moe_attention_guided_steering.attention_collection import load_hf_model_resources  # noqa: E402
 from moe_attention_guided_steering.upstream_prompt_datasets import (  # noqa: E402
+    build_custom_steering_examples_from_statement_prompt_pairs,
     build_upstream_statement_prompt_pairs,
 )
 
@@ -35,14 +36,14 @@ def main() -> None:
     High-level stages:
     1. Load the sampled manual review cases.
     2. For each concept, build upstream-style positive/negative statement pairs.
-    3. Collect OLMoE router traces over the full user-content span.
-    4. Aggregate those traces into span-level expert activation rates.
-    5. Build one sparse SteerMoE plan per concept.
+    3. Convert those pairs into Adobe-style custom steering examples.
+    4. Collect OLMoE router traces over the shared statement-body target.
+    5. Build the SteerMoE risk-difference table and select global experts.
     6. Generate baseline and SteerMoE answers into the review bundle.
     7. Write the filled JSON plan plus browsable HTML/Markdown reports.
     """
     parser = argparse.ArgumentParser(
-        description="Run baseline vs faithful-ish span-based SteerMoE on OLMoE and render a qualitative review page."
+        description="Run baseline vs SteerMoE on OLMoE using a custom-steering pipeline adapted to our fears data."
     )
     parser.add_argument(
         "--model-id",
@@ -76,28 +77,28 @@ def main() -> None:
         help="Stride over the upstream statement pool when building concept prompt pairs.",
     )
     parser.add_argument(
-        "--readout-span",
-        default="user_content",
-        choices=["user_content"],
-        help="Which prompt span to aggregate when computing SteerMoE routing statistics.",
+        "--readout-target",
+        default="statement_body",
+        choices=["statement_body"],
+        help="Which explicit target string inside each paired prompt should define the routing readout span.",
     )
     parser.add_argument(
-        "--top-k-experts",
+        "--top-positive-experts",
         type=int,
-        default=2,
-        help="Maximum number of experts to activate and deactivate in each layer.",
+        default=8,
+        help="Number of globally strongest positive-risk experts to activate.",
     )
     parser.add_argument(
-        "--activation-threshold",
+        "--top-negative-experts",
+        type=int,
+        default=8,
+        help="Number of globally strongest negative-risk experts to deactivate.",
+    )
+    parser.add_argument(
+        "--minimum-abs-risk-difference",
         type=float,
         default=0.01,
-        help="Minimum activation-rate delta required to activate an expert.",
-    )
-    parser.add_argument(
-        "--deactivation-threshold",
-        type=float,
-        default=-0.01,
-        help="Maximum activation-rate delta required to deactivate an expert.",
+        help="Minimum absolute risk difference required for an expert to be eligible for steering.",
     )
     parser.add_argument(
         "--steering-coefficient",
@@ -167,10 +168,14 @@ def main() -> None:
 
     reference_data = load_reference_data(args.data_dir)
     output_dir = Path(args.output_dir)
-    dataset_dir = output_dir / "router_datasets"
+    dataset_dir = output_dir / "custom_steering_datasets"
+    trace_dir = output_dir / "routing_traces"
+    activation_dir = output_dir / "activation_tables"
     steering_dir = output_dir / "steering_plans"
     output_dir.mkdir(parents=True, exist_ok=True)
     dataset_dir.mkdir(parents=True, exist_ok=True)
+    trace_dir.mkdir(parents=True, exist_ok=True)
+    activation_dir.mkdir(parents=True, exist_ok=True)
     steering_dir.mkdir(parents=True, exist_ok=True)
 
     resources = load_hf_model_resources(
@@ -183,40 +188,54 @@ def main() -> None:
         attn_implementation=args.attn_implementation,
     )
 
-    config = ExperimentConfig(
-        intervention=InterventionConfig(
-            top_k_experts=args.top_k_experts,
-            activation_threshold=args.activation_threshold,
-            deactivation_threshold=args.deactivation_threshold,
-        )
-    )
-
     steermoe_plans_by_concept = {}
     for concept in plan.sampled_concepts:
         print(f"=== Building SteerMoE plan for {plan.concept_type}:{concept} ===")
-        prompt_pairs = build_upstream_statement_prompt_pairs(
+        statement_prompt_pairs = build_upstream_statement_prompt_pairs(
             concept_type=plan.concept_type,
             concept_value=concept,
             general_statements_by_class=reference_data.general_statements_by_class,
             statement_stride=args.statement_stride,
         )
-
-        dataset = collect_olmoe_experiment_dataset_for_prompt_pairs(
-            prompt_pairs=prompt_pairs,
+        custom_examples = build_custom_steering_examples_from_statement_prompt_pairs(
+            statement_prompt_pairs
+        )
+        paired_traces = collect_olmoe_paired_routing_traces(
+            examples=custom_examples,
             resources=resources,
-            readout_span=args.readout_span,
+            target_name=args.readout_target,
         )
-        dataset.metadata["statement_stride"] = str(args.statement_stride)
-        dataset.metadata["readout_span"] = args.readout_span
-        artifacts = run_olmoe_steermoe_pipeline(dataset, config=config)
-        steermoe_plans_by_concept[concept] = artifacts.steering_plan
+        activation_table = build_steermoe_activation_table_from_paired_traces(
+            paired_traces=paired_traces
+        )
+        steering_plan = build_steermoe_replication_plan(
+            concept=concept,
+            concept_type=plan.concept_type,
+            model_id=resources.model_id,
+            model_tag=resources.model_tag,
+            target_name=args.readout_target,
+            paired_traces=paired_traces,
+            activation_table=activation_table,
+            top_positive_experts=args.top_positive_experts,
+            top_negative_experts=args.top_negative_experts,
+            minimum_abs_risk_difference=args.minimum_abs_risk_difference,
+        )
+        steermoe_plans_by_concept[concept] = steering_plan
 
         write_json(
-            asdict(dataset),
-            dataset_dir / f"{resources.model_tag}_{concept}_steermoe_dataset.json",
+            [asdict(example) for example in custom_examples],
+            dataset_dir / f"{resources.model_tag}_{concept}_custom_steering_dataset.json",
         )
         write_json(
-            asdict(artifacts.steering_plan),
+            [asdict(trace) for trace in paired_traces],
+            trace_dir / f"{resources.model_tag}_{concept}_routing_traces.json",
+        )
+        write_json(
+            [asdict(score) for score in activation_table],
+            activation_dir / f"{resources.model_tag}_{concept}_activation_table.json",
+        )
+        write_json(
+            asdict(steering_plan),
             steering_dir / f"{resources.model_tag}_{concept}_steering_plan.json",
         )
 

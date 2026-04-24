@@ -5,19 +5,27 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from moe_attention_guided_steering.config import ExperimentConfig, InterventionConfig
+from moe_attention_guided_steering.attention_collection import HFModelResources
 from moe_attention_guided_steering.olmoe_backend import (
-    OLMoESpanActivationTrace,
+    OLMoEPairedRoutingTrace,
+    OLMoETargetRoutingTrace,
+    SteerMoERiskDifferenceScore,
     _apply_bias_to_gate_output,
     _reshape_router_logits_for_prompt,
-    build_experiment_dataset_from_span_traces,
-    run_olmoe_steermoe_pipeline,
-    steering_plan_to_router_bias_by_layer,
+    build_steermoe_activation_table_from_paired_traces,
+    build_steermoe_replication_plan,
+    collect_olmoe_target_routing_trace_for_messages,
+    find_chat_target_token_span,
+    steermoe_plan_to_router_bias_by_layer,
+)
+from moe_attention_guided_steering.upstream_prompt_datasets import (
+    StatementPromptPair,
+    build_custom_steering_examples_from_statement_prompt_pairs,
 )
 
 
 class DummyRouterTensor:
-    """Tiny tensor stand-in for testing the flatten-to-(B,S,E) reshape logic."""
+    """Tiny tensor stand-in for testing flattened `(B*S, E)` router outputs."""
 
     def __init__(self, rows):
         self.rows = rows
@@ -36,7 +44,29 @@ class DummyRouterTensor:
 
 
 class OLMoEBackendTestCase(unittest.TestCase):
-    """Verify the stage-1 OLMoE backend without requiring a real model."""
+    """Verify the stage-1 OLMoE SteerMoE replication backend."""
+
+    def test_build_custom_steering_examples_preserves_shared_body_target(self) -> None:
+        examples = build_custom_steering_examples_from_statement_prompt_pairs(
+            [
+                StatementPromptPair(
+                    prompt_id="fears:Bugs:0",
+                    concept_type="fears",
+                    concept_value="Bugs",
+                    statement_index=0,
+                    statement_text="Life is what you make of it.",
+                    positive_prefix_text="Personify someone who is terrified of Bugs.  ",
+                    body_text="What are your thoughts? Statement: Life is what you make of it.",
+                    positive_full_prompt="Personify someone who is terrified of Bugs.  What are your thoughts? Statement: Life is what you make of it.",
+                    negative_full_prompt="What are your thoughts? Statement: Life is what you make of it.",
+                )
+            ]
+        )
+
+        self.assertEqual(len(examples), 1)
+        self.assertEqual(examples[0].messages_0_target, examples[0].messages_1_target)
+        self.assertIn("Bugs", examples[0].messages_0[0]["content"])
+        self.assertNotIn("Bugs", examples[0].messages_1[0]["content"])
 
     def test_reshape_router_logits_for_prompt_accepts_flattened_olmoe_output(self) -> None:
         tensor = DummyRouterTensor(
@@ -51,151 +81,204 @@ class OLMoEBackendTestCase(unittest.TestCase):
             [[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]],
         )
 
-    def test_build_experiment_dataset_from_span_traces_preserves_activation_vectors(self) -> None:
-        positive = OLMoESpanActivationTrace(
-            prompt_id="fears:Bugs:0:positive",
-            label="positive",
-            prompt_text="prompt+prefix",
-            span_name="user_content",
-            span_token_start=4,
-            span_token_end=8,
-            span_token_texts=["tok_a", "tok_b", "tok_c", "tok_d"],
-            top_k_experts_per_token=2,
-            layer_expert_activation_rates=[
-                [0.5, 0.25, 0.25],
-                [0.75, 0.25, 0.0],
-            ],
-        )
-        negative = OLMoESpanActivationTrace(
-            prompt_id="fears:Bugs:0:negative",
-            label="negative",
-            prompt_text="prompt",
-            span_name="user_content",
-            span_token_start=4,
-            span_token_end=6,
-            span_token_texts=["tok_a", "tok_b"],
-            top_k_experts_per_token=2,
-            layer_expert_activation_rates=[
-                [0.1, 0.4, 0.5],
-                [0.25, 0.5, 0.25],
-            ],
+    def test_find_chat_target_token_span_uses_removed_target_comparison(self) -> None:
+        class DummyTokenizer:
+            def apply_chat_template(
+                self,
+                messages,
+                tokenize: bool,
+                add_generation_prompt: bool,
+                return_tensors: str,
+            ):
+                text = messages[0]["content"]
+                mapping = {
+                    "prefixbody": [[10, 20, 21, 30, 31, 99]],
+                    "prefix": [[10, 20, 21, 99]],
+                }
+                return mapping[text]
+
+        self.assertEqual(
+            find_chat_target_token_span(
+                tokenizer=DummyTokenizer(),
+                messages=[{"role": "user", "content": "prefixbody"}],
+                target_text="body",
+            ),
+            (3, 5),
         )
 
-        dataset = build_experiment_dataset_from_span_traces(
-            prompt_traces=[positive, negative],
-            concept="Bugs",
-            contrast_concept="generic_statement_control",
+    def test_collect_olmoe_target_routing_trace_summarizes_target_rows(self) -> None:
+        import torch
+
+        class DummyEncoding(dict):
+            def to(self, device: str):
+                return self
+
+        class DummyTokenizer:
+            def apply_chat_template(
+                self,
+                messages,
+                tokenize: bool,
+                add_generation_prompt: bool,
+                return_tensors: str,
+            ):
+                text = messages[0]["content"]
+                mapping = {
+                    "prefixbody": DummyEncoding(
+                        {"input_ids": torch.tensor([[10, 20, 21, 30, 31, 99]]), "attention_mask": torch.tensor([[1, 1, 1, 1, 1, 1]])}
+                    ),
+                    "prefix": DummyEncoding(
+                        {"input_ids": torch.tensor([[10, 20, 21, 99]]), "attention_mask": torch.tensor([[1, 1, 1, 1]])}
+                    ),
+                }
+                return mapping[text]
+
+            def convert_ids_to_tokens(self, ids):
+                return [f"tok_{token_id}" for token_id in ids]
+
+        class DummyOutputs:
+            def __init__(self):
+                self.router_logits = [
+                    torch.tensor(
+                        [
+                            [0.0, 0.0, 0.0],
+                            [0.0, 0.0, 0.0],
+                            [0.0, 0.0, 0.0],
+                            [0.1, 0.7, 0.2],
+                            [0.5, 0.1, 0.4],
+                            [0.0, 0.0, 0.0],
+                        ],
+                        dtype=torch.float32,
+                    )
+                ]
+
+        class DummyModel:
+            device = "cpu"
+
+            def __init__(self):
+                self.config = type("Config", (), {"num_experts_per_tok": 1})()
+
+            def __call__(self, **kwargs):
+                self.last_kwargs = kwargs
+                return DummyOutputs()
+
+        trace = collect_olmoe_target_routing_trace_for_messages(
+            trace_id="demo",
+            subset_label="messages_0",
+            messages=[{"role": "user", "content": "prefixbody"}],
+            target_text="body",
+            resources=HFModelResources(
+                model=DummyModel(),
+                tokenizer=DummyTokenizer(),
+                model_id="demo",
+                model_tag="demo",
+                num_candidate_suffix_tokens=0,
+            ),
+            target_name="statement_body",
+        )
+
+        self.assertEqual((trace.target_token_start, trace.target_token_end), (3, 5))
+        self.assertEqual(trace.target_token_texts, ["tok_30", "tok_31"])
+        self.assertEqual(trace.layer_expert_activation_counts, [[1, 1, 0]])
+        self.assertEqual(trace.layer_expert_activation_rates, [[0.5, 0.5, 0.0]])
+
+    def test_build_steermoe_activation_table_computes_risk_difference(self) -> None:
+        paired_trace = OLMoEPairedRoutingTrace(
+            example_id="fears:Bugs:0",
             concept_type="fears",
-            model_id="allenai/OLMoE-1B-7B-0125-Instruct",
-            model_tag="olmoe",
-            readout_span="user_content",
-        )
-
-        self.assertEqual(dataset.metadata["readout_statistic"], "topk_activation_rate")
-        self.assertEqual(dataset.examples[0].layers[0].tokens[0].attention_weight, 1.0)
-        self.assertEqual(dataset.examples[0].layers[0].tokens[0].expert_loads, [0.5, 0.25, 0.25])
-        self.assertIn("user_content_activation_rate", dataset.examples[0].layers[0].tokens[0].token_text)
-
-    def test_run_olmoe_steermoe_pipeline_builds_sparse_expert_plan(self) -> None:
-        positive = OLMoESpanActivationTrace(
-            prompt_id="p",
-            label="positive",
-            prompt_text="prompt+prefix",
-            span_name="user_content",
-            span_token_start=2,
-            span_token_end=4,
-            span_token_texts=["tok_a", "tok_b"],
-            top_k_experts_per_token=2,
-            layer_expert_activation_rates=[
-                [0.8, 0.1, 0.1],
-            ],
-        )
-        negative = OLMoESpanActivationTrace(
-            prompt_id="n",
-            label="negative",
-            prompt_text="prompt",
-            span_name="user_content",
-            span_token_start=2,
-            span_token_end=4,
-            span_token_texts=["tok_a", "tok_b"],
-            top_k_experts_per_token=2,
-            layer_expert_activation_rates=[
-                [0.2, 0.6, 0.2],
-            ],
-        )
-        dataset = build_experiment_dataset_from_span_traces(
-            prompt_traces=[positive, negative],
-            concept="Bugs",
-            contrast_concept="generic_statement_control",
-            concept_type="fears",
-            model_id="allenai/OLMoE-1B-7B-0125-Instruct",
-            model_tag="olmoe",
-            readout_span="user_content",
-        )
-
-        artifacts = run_olmoe_steermoe_pipeline(
-            dataset,
-            config=ExperimentConfig(
-                intervention=InterventionConfig(
-                    top_k_experts=1,
-                    activation_threshold=0.2,
-                    deactivation_threshold=-0.2,
-                )
+            concept_value="Bugs",
+            statement_index=0,
+            statement_text="stmt",
+            body_text="body",
+            messages_0_trace=OLMoETargetRoutingTrace(
+                trace_id="p",
+                subset_label="messages_0",
+                messages=[{"role": "user", "content": "pos"}],
+                target_name="statement_body",
+                target_text="body",
+                target_token_start=3,
+                target_token_end=5,
+                target_token_texts=["tok_30", "tok_31"],
+                top_k_experts_per_token=1,
+                layer_expert_activation_counts=[[2, 0, 0], [0, 1, 1]],
+                layer_expert_activation_rates=[[1.0, 0.0, 0.0], [0.0, 0.5, 0.5]],
+            ),
+            messages_1_trace=OLMoETargetRoutingTrace(
+                trace_id="n",
+                subset_label="messages_1",
+                messages=[{"role": "user", "content": "neg"}],
+                target_name="statement_body",
+                target_text="body",
+                target_token_start=1,
+                target_token_end=3,
+                target_token_texts=["tok_30", "tok_31"],
+                top_k_experts_per_token=1,
+                layer_expert_activation_counts=[[0, 2, 0], [0, 0, 2]],
+                layer_expert_activation_rates=[[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
             ),
         )
 
-        self.assertEqual(artifacts.steering_plan.layers[0].experts_to_activate, [0])
-        self.assertEqual(artifacts.steering_plan.layers[0].experts_to_deactivate, [1])
+        scores = build_steermoe_activation_table_from_paired_traces([paired_trace])
+        layer0_expert0 = next(score for score in scores if score.layer_index == 0 and score.expert_index == 0)
+        layer0_expert1 = next(score for score in scores if score.layer_index == 0 and score.expert_index == 1)
+        layer1_expert2 = next(score for score in scores if score.layer_index == 1 and score.expert_index == 2)
 
-    def test_steering_plan_to_router_bias_by_layer_scales_by_selected_delta(self) -> None:
-        positive = OLMoESpanActivationTrace(
-            prompt_id="p",
-            label="positive",
-            prompt_text="prompt+prefix",
-            span_name="user_content",
-            span_token_start=2,
-            span_token_end=4,
-            span_token_texts=["tok_a", "tok_b"],
-            top_k_experts_per_token=2,
-            layer_expert_activation_rates=[
-                [0.8, 0.1, 0.1],
-            ],
-        )
-        negative = OLMoESpanActivationTrace(
-            prompt_id="n",
-            label="negative",
-            prompt_text="prompt",
-            span_name="user_content",
-            span_token_start=2,
-            span_token_end=4,
-            span_token_texts=["tok_a", "tok_b"],
-            top_k_experts_per_token=2,
-            layer_expert_activation_rates=[
-                [0.2, 0.6, 0.2],
-            ],
-        )
-        dataset = build_experiment_dataset_from_span_traces(
-            prompt_traces=[positive, negative],
+        self.assertEqual(layer0_expert0.messages_0_activation_rate, 1.0)
+        self.assertEqual(layer0_expert0.messages_1_activation_rate, 0.0)
+        self.assertEqual(layer0_expert0.risk_difference, 1.0)
+        self.assertEqual(layer0_expert1.risk_difference, -1.0)
+        self.assertEqual(layer1_expert2.risk_difference, -0.5)
+
+    def test_build_steermoe_replication_plan_selects_global_experts(self) -> None:
+        activation_table = [
+            SteerMoERiskDifferenceScore(0, 0, 6, 1, 10, 10, 0.6, 0.1, 0.5, 0.5),
+            SteerMoERiskDifferenceScore(0, 1, 1, 7, 10, 10, 0.1, 0.7, -0.6, 0.6),
+            SteerMoERiskDifferenceScore(1, 3, 5, 1, 10, 10, 0.5, 0.1, 0.4, 0.4),
+        ]
+
+        plan = build_steermoe_replication_plan(
             concept="Bugs",
-            contrast_concept="generic_statement_control",
             concept_type="fears",
             model_id="allenai/OLMoE-1B-7B-0125-Instruct",
             model_tag="olmoe",
-            readout_span="user_content",
-        )
-        artifacts = run_olmoe_steermoe_pipeline(
-            dataset,
-            config=ExperimentConfig(
-                intervention=InterventionConfig(
-                    top_k_experts=1,
-                    activation_threshold=0.2,
-                    deactivation_threshold=-0.2,
-                )
-            ),
+            target_name="statement_body",
+            paired_traces=[object()],
+            activation_table=activation_table,
+            top_positive_experts=1,
+            top_negative_experts=1,
+            minimum_abs_risk_difference=0.2,
         )
 
-        bias = steering_plan_to_router_bias_by_layer(artifacts.steering_plan, coefficient=1.5)
-        self.assertEqual(bias, {0: [1.5, -1.25, 0.0]})
+        self.assertEqual(
+            [(selected.score.layer_index, selected.score.expert_index) for selected in plan.selected_positive_experts],
+            [(0, 0)],
+        )
+        self.assertEqual(
+            [(selected.score.layer_index, selected.score.expert_index) for selected in plan.selected_negative_experts],
+            [(0, 1)],
+        )
+        self.assertEqual(plan.layers[0].experts_to_activate, [0])
+        self.assertEqual(plan.layers[0].experts_to_deactivate, [1])
+
+    def test_steermoe_plan_to_router_bias_by_layer_scales_selected_experts(self) -> None:
+        activation_table = [
+            SteerMoERiskDifferenceScore(0, 0, 6, 1, 10, 10, 0.6, 0.1, 0.5, 0.5),
+            SteerMoERiskDifferenceScore(0, 1, 1, 7, 10, 10, 0.1, 0.7, -0.6, 0.6),
+        ]
+        plan = build_steermoe_replication_plan(
+            concept="Bugs",
+            concept_type="fears",
+            model_id="allenai/OLMoE-1B-7B-0125-Instruct",
+            model_tag="olmoe",
+            target_name="statement_body",
+            paired_traces=[object()],
+            activation_table=activation_table,
+            top_positive_experts=1,
+            top_negative_experts=1,
+            minimum_abs_risk_difference=0.1,
+        )
+
+        bias = steermoe_plan_to_router_bias_by_layer(plan, coefficient=1.5)
+        self.assertEqual(bias, {0: [1.25, -1.5]})
 
     def test_apply_bias_to_gate_output_supports_tuple_style_gate_outputs(self) -> None:
         import torch

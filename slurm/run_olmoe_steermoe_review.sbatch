@@ -28,10 +28,10 @@ python3 run_olmoe_steermoe_review.py \
   --data-dir "${DATA_DIR:-data}" \
   --output-dir "${OUTPUT_DIR:-experiments/olmoe_steermoe_fears_seed7}" \
   --statement-stride "${STATEMENT_STRIDE:-2}" \
-  --readout-span "${READOUT_SPAN:-user_content}" \
-  --top-k-experts "${TOP_K_EXPERTS:-2}" \
-  --activation-threshold "${ACTIVATION_THRESHOLD:-0.01}" \
-  --deactivation-threshold "${DEACTIVATION_THRESHOLD:--0.01}" \
+  --readout-target "${READOUT_TARGET:-statement_body}" \
+  --top-positive-experts "${TOP_POSITIVE_EXPERTS:-8}" \
+  --top-negative-experts "${TOP_NEGATIVE_EXPERTS:-8}" \
+  --minimum-abs-risk-difference "${MINIMUM_ABS_RISK_DIFFERENCE:-0.01}" \
   --steering-coefficient "${STEERING_COEFFICIENT:-1.0}" \
   --max-new-tokens "${MAX_NEW_TOKENS:-48}" \
   --temperature "${TEMPERATURE:-0.0}" \
