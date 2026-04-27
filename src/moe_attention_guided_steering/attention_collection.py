@@ -192,7 +192,9 @@ def load_hf_model_resources(
     device_map: str = "auto",
     torch_dtype: str = "bfloat16",
     load_in_4bit: bool = False,
-    attn_implementation: str = "eager",
+    attn_implementation: Optional[str] = "eager",
+    trust_remote_code: bool = False,
+    infer_attention_suffix_tokens: bool = True,
 ) -> HFModelResources:
     """Load a causal LM plus tokenizer for attention collection.
 
@@ -203,10 +205,12 @@ def load_hf_model_resources(
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     model_kwargs: Dict[str, Any] = {
-        "attn_implementation": attn_implementation,
         "cache_dir": cache_dir,
         "device_map": device_map,
+        "trust_remote_code": trust_remote_code,
     }
+    if attn_implementation:
+        model_kwargs["attn_implementation"] = attn_implementation
 
     if torch_dtype:
         model_kwargs["dtype"] = getattr(torch, torch_dtype)
@@ -222,6 +226,7 @@ def load_hf_model_resources(
         cache_dir=cache_dir,
         legacy=False,
         padding_side="left",
+        trust_remote_code=trust_remote_code,
     )
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id or 0
@@ -231,7 +236,11 @@ def load_hf_model_resources(
         tokenizer=tokenizer,
         model_id=model_id,
         model_tag=model_tag or sanitize_model_tag(model_id),
-        num_candidate_suffix_tokens=infer_candidate_suffix_token_count(tokenizer),
+        num_candidate_suffix_tokens=(
+            infer_candidate_suffix_token_count(tokenizer)
+            if infer_attention_suffix_tokens
+            else 0
+        ),
     )
 
 

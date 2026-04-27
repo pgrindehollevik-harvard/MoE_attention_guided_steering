@@ -7,14 +7,15 @@ import re
 from typing import Any, Dict, List, Optional, Union
 
 from .reference_data import ReferenceConceptSuite
+from .upstream_prompt_datasets import build_concept_conditioned_evaluation_prompt
 
 
 QUESTION_PATTERN = re.compile(r'to the (?:question|request): "([^"]+)"')
 
 DEFAULT_CONDITION_ORDER = ["baseline", "steermoe"]
 DEFAULT_CONDITION_LABELS = {
-    "baseline": "Baseline (no steering)",
-    "steermoe": "SteerMoE",
+    "baseline": "OLMoE baseline (question only)",
+    "steermoe": "OLMoE + SteerMoE (question only)",
     "attention_guided_moesteer": "Attention-guided MoESteer",
 }
 
@@ -28,6 +29,12 @@ class ManualReviewCase:
     - `evaluation_version`: upstream evaluation prompt version id.
     - `evaluation_question`: literal model-facing question asked at generation
       time.
+    - `full_prompt_text`: exact prompt shown to the model for this review case.
+      For steering evaluation this intentionally equals `evaluation_question`
+      so the concept prefix is omitted at test time.
+    - `prefix_conditioned_prompt_text`: diagnostic prompt that includes the
+      upstream concept prefix. This is useful for model-suitability comparisons,
+      but it is not the steering-test prompt.
     - `responses`: mapping from condition key to generated text. Example keys:
       - `baseline`
       - `steermoe`
@@ -39,6 +46,8 @@ class ManualReviewCase:
     concept: str
     evaluation_version: int
     evaluation_question: str
+    full_prompt_text: str = ""
+    prefix_conditioned_prompt_text: str = ""
     responses: Dict[str, str] = field(default_factory=dict)
     comparison_notes: str = ""
     preferred_condition: str = ""
@@ -147,6 +156,12 @@ def build_manual_review_plan(
             concept=concept,
             evaluation_version=version,
             evaluation_question=evaluation_questions_by_version[version],
+            full_prompt_text=evaluation_questions_by_version[version],
+            prefix_conditioned_prompt_text=build_concept_conditioned_evaluation_prompt(
+                concept_type=concept_suite.concept_type,
+                concept_value=concept,
+                evaluation_question=evaluation_questions_by_version[version],
+            ),
             responses={condition: "" for condition in condition_order},
         )
         for concept in sampled_concepts
@@ -182,6 +197,8 @@ def manual_review_plan_to_dict(plan: ManualReviewPlan) -> Dict[str, Any]:
                 "concept": case.concept,
                 "evaluation_version": case.evaluation_version,
                 "evaluation_question": case.evaluation_question,
+                "full_prompt_text": case.full_prompt_text,
+                "prefix_conditioned_prompt_text": case.prefix_conditioned_prompt_text,
                 "responses": dict(case.responses),
                 "comparison_notes": case.comparison_notes,
                 "preferred_condition": case.preferred_condition,
@@ -218,6 +235,24 @@ def _responses_from_case_dict(case: Dict[str, Any], condition_order: List[str]) 
     return responses
 
 
+def _prefix_conditioned_prompt_from_case(data: Dict[str, Any], case: Dict[str, Any]) -> str:
+    """Recover the prefix-conditioned prompt for diagnostics and legacy plans."""
+    expected_prefix_prompt = build_concept_conditioned_evaluation_prompt(
+        concept_type=data["concept_type"],
+        concept_value=case["concept"],
+        evaluation_question=case["evaluation_question"],
+    )
+    stored_prefix_prompt = str(case.get("prefix_conditioned_prompt_text") or "")
+    if stored_prefix_prompt:
+        return stored_prefix_prompt
+
+    legacy_full_prompt = str(case.get("full_prompt_text") or "")
+    if legacy_full_prompt and legacy_full_prompt != case["evaluation_question"]:
+        return legacy_full_prompt
+
+    return expected_prefix_prompt
+
+
 def manual_review_plan_from_dict(data: Dict[str, Any]) -> ManualReviewPlan:
     """Rehydrate a `ManualReviewPlan` from JSON-friendly serialized data.
 
@@ -246,6 +281,16 @@ def manual_review_plan_from_dict(data: Dict[str, Any]) -> ManualReviewPlan:
                 concept=case["concept"],
                 evaluation_version=int(case["evaluation_version"]),
                 evaluation_question=case["evaluation_question"],
+                full_prompt_text=str(
+                    case.get("test_prompt_text")
+                    or case.get("question_only_prompt_text")
+                    or case.get("generation_prompt_text")
+                    or case["evaluation_question"]
+                ),
+                prefix_conditioned_prompt_text=_prefix_conditioned_prompt_from_case(
+                    data,
+                    case,
+                ),
                 responses=_responses_from_case_dict(case, condition_order),
                 comparison_notes=case.get("comparison_notes", ""),
                 preferred_condition=case.get("preferred_condition", ""),
@@ -277,6 +322,16 @@ def build_manual_review_markdown(plan: ManualReviewPlan) -> str:
         f"- Conditions per case: **{', '.join(plan.condition_labels[condition] for condition in plan.condition_order)}**",
         f"- Number of comparison cases: **{len(plan.cases)}**",
         "",
+        "## How To Read This Report",
+        "",
+        "- This is **not** a comparison of two different model checkpoints.",
+        "- Both columns use the same OLMoE model.",
+        "- `Question-only test prompt` is the exact prompt sent to both conditions.",
+        "- The concept prefix is intentionally omitted during this steering test.",
+        "- `Prefix-conditioned diagnostic prompt` is shown for context only.",
+        "- `Baseline` = same OLMoE model, question-only prompt, no steering.",
+        "- `SteerMoE` = same OLMoE model, question-only prompt, plus router bias from the saved SteerMoE plan.",
+        "",
         "## Sampled Concepts",
         "",
     ]
@@ -301,6 +356,8 @@ def build_manual_review_markdown(plan: ManualReviewPlan) -> str:
                     f"### Eval v{version}",
                     "",
                     f"- Question: {matching_case.evaluation_question}",
+                    f"- Question-only test prompt: {matching_case.full_prompt_text}",
+                    f"- Prefix-conditioned diagnostic prompt (not used here): {matching_case.prefix_conditioned_prompt_text}",
                 ]
             )
             for condition in plan.condition_order:
@@ -332,25 +389,6 @@ def build_manual_review_html(
 
     def display_response(value: str) -> str:
         return html.escape(value) if value.strip() else "<span class='pending'>Pending generation</span>"
-
-    completed_cases = sum(
-        int(any(case.responses.get(condition, "").strip() for condition in plan.condition_order))
-        for case in plan.cases
-    )
-
-    summary_rows = []
-    for concept in plan.sampled_concepts:
-        concept_cases = [case for case in plan.cases if case.concept == concept]
-        completed = sum(
-            int(any(case.responses.get(condition, "").strip() for condition in plan.condition_order))
-            for case in concept_cases
-        )
-        summary_rows.append(
-            f"<tr><td><strong>{html.escape(concept)}</strong></td><td>{completed}/{len(concept_cases)}</td></tr>"
-        )
-    summary_rows.append(
-        f"<tr style='border-top:2px solid #333'><td><strong>Overall</strong></td><td><strong>{completed_cases}/{len(plan.cases)}</strong></td></tr>"
-    )
 
     legend_items = "".join(
         f"<li><strong>{html.escape(plan.condition_labels[condition])}</strong> &mdash; generated output for condition key <code>{html.escape(condition)}</code>.</li>"
@@ -401,7 +439,9 @@ def build_manual_review_html(
                 f"""
                 <section>
                 <h2>#{rank} &mdash; <strong>{html.escape(concept)}</strong> &middot; prompt v{case.evaluation_version}</h2>
-                <p><strong>Prompt:</strong> {html.escape(case.evaluation_question)}</p>
+                <p><strong>Question:</strong> {html.escape(case.evaluation_question)}</p>
+                <p><strong>Question-only test prompt:</strong> <code>{html.escape(case.full_prompt_text)}</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>{html.escape(case.prefix_conditioned_prompt_text)}</code></p>
                 <div class='conditions'>
                   {''.join(condition_blocks)}
                 </div>
@@ -445,13 +485,15 @@ code{{background:#f6f8fa;padding:.1rem .3rem;border-radius:4px;}}
 <ul style='margin:.4rem 0 .2rem;padding-left:1.3rem;'>
 {legend_items}
 </ul>
-<strong>How to use this page:</strong> compare the condition outputs for each (concept, question) pair, then annotate whether the steered behavior becomes more concept-faithful without becoming incoherent.
+<strong>Important:</strong> these are <em>not two different model checkpoints</em>. Both columns use the same OLMoE model.<br>
+<strong>Question-only test prompt</strong> = the exact text both conditions receive, for example:<br>
+<code>What is the scariest thing in the world? Answer in 20 words or less.</code><br>
+<strong>Prefix-conditioned diagnostic prompt</strong> shows the omitted concept prefix for context, but is not sent in this steering test.<br>
+<strong>OLMoE baseline (question only)</strong> = same OLMoE model, question-only prompt, no steering.<br>
+<strong>OLMoE + SteerMoE (question only)</strong> = same OLMoE model, question-only prompt, plus router bias from the saved SteerMoE plan.<br>
+<strong>What is being evaluated:</strong> whether SteerMoE makes the response more concept-faithful without making it worse or less coherent.
 </div>
 <p class='meta'>Concept family: <code>{html.escape(plan.concept_type)}</code> &middot; Evaluation family: <code>{html.escape(plan.evaluation_family)}</code> &middot; Seed: <code>{plan.seed}</code> &middot; Companion report: <code>{html.escape(companion_report) if companion_report else 'not linked'}</code></p>
-<h2>Summary</h2>
-<table><tr><th>Concept</th><th>Cases with any filled response</th></tr>
-{''.join(summary_rows)}
-</table>
 {''.join(concept_sections)}
 </body>
 </html>

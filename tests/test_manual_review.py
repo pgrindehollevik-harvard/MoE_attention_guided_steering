@@ -39,6 +39,12 @@ class ManualReviewTestCase(unittest.TestCase):
             {case.evaluation_version for case in plan.cases},
             set(plan.sampled_evaluation_versions),
         )
+        self.assertTrue(all(case.full_prompt_text for case in plan.cases))
+        self.assertEqual(plan.cases[0].full_prompt_text, plan.cases[0].evaluation_question)
+        self.assertIn(
+            "Personify someone who is terrified of",
+            plan.cases[0].prefix_conditioned_prompt_text,
+        )
 
     def test_manual_review_plan_roundtrip_and_html(self) -> None:
         plan = build_manual_review_plan(self.suite, concept_sample_size=2, question_sample_size=2, seed=7)
@@ -54,9 +60,25 @@ class ManualReviewTestCase(unittest.TestCase):
 
         self.assertEqual(restored.cases[0].responses["baseline"], "Baseline answer.")
         self.assertIn("Demo Review", html)
-        self.assertIn("Baseline (no steering)", html)
+        self.assertIn("OLMoE baseline (question only)", html)
         self.assertIn("SteerMoE answer.", html)
         self.assertIn("steermoe_notes.html", html)
+        self.assertIn("Question-only test prompt:", html)
+        self.assertIn("Prefix-conditioned diagnostic prompt", html)
+
+    def test_legacy_prefixed_full_prompt_is_not_used_as_test_prompt(self) -> None:
+        plan = build_manual_review_plan(self.suite, concept_sample_size=1, question_sample_size=1, seed=7)
+        payload = manual_review_plan_to_dict(plan)
+        payload["cases"][0]["full_prompt_text"] = "Personify someone who is terrified of Bugs.  Question?"
+        payload["cases"][0].pop("prefix_conditioned_prompt_text")
+
+        restored = manual_review_plan_from_dict(payload)
+
+        self.assertEqual(restored.cases[0].full_prompt_text, restored.cases[0].evaluation_question)
+        self.assertEqual(
+            restored.cases[0].prefix_conditioned_prompt_text,
+            "Personify someone who is terrified of Bugs.  Question?",
+        )
 
 
 if __name__ == "__main__":

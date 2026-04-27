@@ -57,7 +57,9 @@ been removed so the repo reflects the experiment we actually want to run.
 - `collect_attention_to_prefix.py`
   Real-model GPU script for collecting upstream-style attention-to-prefix scores.
 - `run_olmoe_steermoe_review.py`
-  End-to-end OLMoE experiment runner for **baseline vs SteerMoE**.
+  End-to-end OLMoE experiment runner for **question-only baseline vs SteerMoE**.
+- `compare_prefix_conditioned_models.py`
+  Full-prefix diagnostic comparing unsteered Llama 3.1 8B, OLMoE, and LLaMA-MoE behavior.
 - `prepare_manual_fear_review.py`
   Builds a qualitative review worksheet for the currently configured conditions.
 - `render_manual_review_report.py`
@@ -102,7 +104,7 @@ allenai/OLMoE-1B-7B-0125-Instruct
 The current stage-1 experiment asks:
 
 > Can a SteerMoE-style custom steering pipeline produce meaningful qualitative
-> changes on our fear dataset without destroying fluency?
+> changes on our fear dataset without including the concept prefix at test time?
 
 ### Local command
 
@@ -113,6 +115,27 @@ python3 run_olmoe_steermoe_review.py \
   --plan-json outputs/manual_fear_review/manual_review_plan.json \
   --output-dir experiments/olmoe_steermoe_fears_seed7
 ```
+
+### Exact MIT cluster repeat
+
+```bash
+cd ~/MoE_attention_guided_steering
+git pull
+source .venv/bin/activate
+python3 prepare_manual_fear_review.py
+
+REPO_DIR=$PWD \
+HF_HOME=$HOME/.cache/huggingface \
+MODEL_ID=allenai/OLMoE-1B-7B-0125-Instruct \
+MODEL_TAG=olmoe_1b_7b_0125_instruct \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/olmoe_steermoe_fears_seed7 \
+sbatch --partition=mit_normal_gpu --time=06:00:00 slurm/run_olmoe_steermoe_review.sbatch
+```
+
+After completion, the main colleague-facing file is:
+
+- `experiments/olmoe_steermoe_fears_seed7/qualitative_review.html`
 
 ### What this runner does
 
@@ -131,6 +154,24 @@ For each sampled concept, it:
    - `qualitative_review.md`
    - `qualitative_review.html`
 
+Baseline and SteerMoE use the **same question-only test prompt** for each case.
+In the fears setting that prompt is:
+
+```text
+{evaluation_question}
+```
+
+For example:
+
+```text
+What is the scariest thing in the world? Answer in 20 words or less.
+```
+
+The concept prefix is still used to learn the SteerMoE routing plan from
+paired prefix/control statement prompts. It is intentionally omitted during
+baseline and steered generation, so any concept-specific effect in the SteerMoE
+column has to come from router bias rather than from the prompt text.
+
 ### Output structure
 
 The stage-1 OLMoE run writes:
@@ -139,9 +180,50 @@ The stage-1 OLMoE run writes:
 - `experiments/olmoe_steermoe_fears_seed7/routing_traces/`
 - `experiments/olmoe_steermoe_fears_seed7/activation_tables/`
 - `experiments/olmoe_steermoe_fears_seed7/steering_plans/`
+- `experiments/olmoe_steermoe_fears_seed7/generation_metadata.json`
 - `experiments/olmoe_steermoe_fears_seed7/manual_review_plan.json`
 - `experiments/olmoe_steermoe_fears_seed7/qualitative_review.md`
 - `experiments/olmoe_steermoe_fears_seed7/qualitative_review.html`
+
+## Prefix-conditioned model suitability diagnostic
+
+Parmida's model-quality question is handled as a separate diagnostic:
+
+> If we explicitly include the concept prefix, does OLMoE underperform a dense
+> Llama 3.1 8B baseline and another MoE model?
+
+The default config compares:
+
+- `meta-llama/Llama-3.1-8B-Instruct`
+- `allenai/OLMoE-1B-7B-0125-Instruct`
+- `llama-moe/LLaMA-MoE-v1-3_5B-2_8-sft`
+
+Run locally or on a GPU node:
+
+```bash
+python3 compare_prefix_conditioned_models.py \
+  --plan-json outputs/manual_fear_review/manual_review_plan.json \
+  --model-config-json configs/prefix_conditioned_model_comparison.json \
+  --output-dir experiments/prefix_conditioned_model_comparison_fears_seed7
+```
+
+MIT cluster repeat:
+
+```bash
+REPO_DIR=$PWD \
+HF_HOME=$HOME/.cache/huggingface \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/prefix_conditioned_model_comparison_fears_seed7 \
+sbatch --partition=mit_normal_gpu --time=12:00:00 slurm/compare_prefix_conditioned_models.sbatch
+```
+
+The main output is:
+
+- `experiments/prefix_conditioned_model_comparison_fears_seed7/model_comparison.html`
+
+This diagnostic does **not** test steering. It includes the prefix on purpose so
+we can judge whether OLMoE is a poor base model for this prompt family before
+interpreting the prefix-free steering results.
 
 ## Real-model attention collection
 

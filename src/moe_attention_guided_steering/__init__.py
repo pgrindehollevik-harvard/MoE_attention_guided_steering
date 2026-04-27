@@ -7,7 +7,14 @@ from .attention_collection import (
     save_attention_run,
 )
 from .config import ExperimentConfig, InterventionConfig, SelectionConfig
+from .generation import generate_unsteered_response
 from .manual_review import build_manual_review_plan, extract_evaluation_question
+from .model_comparison import (
+    ModelComparisonSpec,
+    build_empty_model_comparison_results,
+    fill_model_comparison_results_with_generations,
+    load_model_comparison_specs,
+)
 from .olmoe_backend import (
     build_steermoe_activation_table_from_paired_traces,
     build_steermoe_replication_plan,
@@ -37,6 +44,8 @@ __all__ = [
     "ReferenceConceptSuite",
     "ReferenceDataBundle",
     "SelectionConfig",
+    "ModelComparisonSpec",
+    "build_empty_model_comparison_results",
     "build_manual_review_plan",
     "build_concept_conditioned_evaluation_prompt",
     "build_custom_steering_examples_from_statement_prompt_pairs",
@@ -48,9 +57,12 @@ __all__ = [
     "collect_olmoe_target_routing_trace_for_messages",
     "extract_evaluation_question",
     "fill_manual_review_plan_with_steermoe_generations",
+    "fill_model_comparison_results_with_generations",
+    "generate_unsteered_response",
     "generate_with_olmoe_steering",
     "infer_candidate_suffix_token_count",
     "load_hf_model_resources",
+    "load_model_comparison_specs",
     "load_reference_concept_suite",
     "load_reference_data",
     "run_pipeline",

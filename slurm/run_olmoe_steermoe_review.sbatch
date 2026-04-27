@@ -1,5 +1,5 @@
 #!/bin/bash
-# MIT ORCD Slurm template for the stage-1 OLMoE SteerMoE transfer experiment.
+# MIT ORCD Slurm template for the question-only OLMoE SteerMoE transfer experiment.
 
 #SBATCH --job-name=olmoe-steermoe
 #SBATCH --partition=mit_normal_gpu

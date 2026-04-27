@@ -1,0 +1,29 @@
+{
+  "models": [
+    {
+      "label": "Llama 3.1 8B Instruct",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "model_tag": "llama_3_1_8b_instruct",
+      "prompt_format": "chat",
+      "trust_remote_code": false,
+      "attn_implementation": "eager"
+    },
+    {
+      "label": "OLMoE 1B-7B Instruct",
+      "model_id": "allenai/OLMoE-1B-7B-0125-Instruct",
+      "model_tag": "olmoe_1b_7b_0125_instruct",
+      "prompt_format": "chat",
+      "trust_remote_code": false,
+      "attn_implementation": "eager"
+    },
+    {
+      "label": "LLaMA-MoE v1 3.5B 2/8 SFT",
+      "model_id": "llama-moe/LLaMA-MoE-v1-3_5B-2_8-sft",
+      "model_tag": "llama_moe_v1_3_5b_2_8_sft",
+      "prompt_format": "plain",
+      "plain_template": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. human: {prompt} gpt:",
+      "trust_remote_code": true,
+      "attn_implementation": null
+    }
+  ]
+}

@@ -4,10 +4,7 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 from .attention_collection import HFModelResources, compute_inserted_token_span_from_ids
 from .manual_review import ManualReviewPlan
-from .upstream_prompt_datasets import (
-    CustomSteeringExample,
-    build_concept_conditioned_evaluation_prompt,
-)
+from .upstream_prompt_datasets import CustomSteeringExample
 
 
 @dataclass
@@ -824,7 +821,9 @@ def fill_manual_review_plan_with_steermoe_generations(
 
     Inputs:
     - `plan`: qualitative review grid whose `concept` plus
-      `evaluation_question` identify the model-facing prompt.
+      `full_prompt_text` identify the model-facing prompt. For the faithful
+      steering test, `full_prompt_text` is question-only and intentionally omits
+      the upstream concept prefix.
     - `resources`: loaded OLMoE model and tokenizer.
     - `steermoe_plans_by_concept`: one custom SteerMoE plan per concept.
     - `steering_coefficient`: maximum absolute router-logit bias magnitude used
@@ -846,11 +845,7 @@ def fill_manual_review_plan_with_steermoe_generations(
         raise ValueError("ManualReviewPlan must declare 'baseline' and 'steermoe' conditions.")
 
     for case in tqdm(plan.cases, desc="Generating qualitative review responses"):
-        prompt_text = build_concept_conditioned_evaluation_prompt(
-            concept_type=plan.concept_type,
-            concept_value=case.concept,
-            evaluation_question=case.evaluation_question,
-        )
+        prompt_text = case.full_prompt_text.strip() or case.evaluation_question
 
         if prompt_text not in baseline_cache:
             baseline_cache[prompt_text] = generate_with_olmoe_steering(

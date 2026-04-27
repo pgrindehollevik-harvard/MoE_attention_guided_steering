@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from moe_attention_guided_steering.attention_collection import HFModelResources
+from moe_attention_guided_steering.manual_review import ManualReviewCase, ManualReviewPlan
 from moe_attention_guided_steering.olmoe_backend import (
     OLMoEPairedRoutingTrace,
     OLMoETargetRoutingTrace,
@@ -279,6 +280,59 @@ class OLMoEBackendTestCase(unittest.TestCase):
 
         bias = steermoe_plan_to_router_bias_by_layer(plan, coefficient=1.5)
         self.assertEqual(bias, {0: [1.25, -1.5]})
+
+    def test_fill_manual_review_plan_uses_question_only_prompt(self) -> None:
+        import moe_attention_guided_steering.olmoe_backend as backend
+
+        plan = ManualReviewPlan(
+            concept_type="fears",
+            evaluation_family="phobia",
+            seed=7,
+            sampled_concepts=["Bugs"],
+            sampled_evaluation_versions=[1],
+            evaluation_questions_by_version={1: "What is scary?"},
+            condition_order=["baseline", "steermoe"],
+            condition_labels={"baseline": "Baseline", "steermoe": "SteerMoE"},
+            cases=[
+                ManualReviewCase(
+                    concept="Bugs",
+                    evaluation_version=1,
+                    evaluation_question="What is scary?",
+                    full_prompt_text="What is scary?",
+                    prefix_conditioned_prompt_text="Personify someone who is terrified of Bugs.  What is scary?",
+                    responses={"baseline": "", "steermoe": ""},
+                )
+            ],
+        )
+        prompts = []
+
+        def fake_generate(prompt_text, resources, bias_by_layer, **kwargs):
+            prompts.append(prompt_text)
+            return "steered" if bias_by_layer else "baseline"
+
+        old_generate = backend.generate_with_olmoe_steering
+        old_bias = backend.steermoe_plan_to_router_bias_by_layer
+        backend.generate_with_olmoe_steering = fake_generate
+        backend.steermoe_plan_to_router_bias_by_layer = lambda steering_plan, coefficient: {0: [1.0]}
+        try:
+            filled = backend.fill_manual_review_plan_with_steermoe_generations(
+                plan=plan,
+                resources=HFModelResources(
+                    model=object(),
+                    tokenizer=object(),
+                    model_id="demo",
+                    model_tag="demo",
+                    num_candidate_suffix_tokens=0,
+                ),
+                steermoe_plans_by_concept={"Bugs": object()},
+            )
+        finally:
+            backend.generate_with_olmoe_steering = old_generate
+            backend.steermoe_plan_to_router_bias_by_layer = old_bias
+
+        self.assertEqual(prompts, ["What is scary?", "What is scary?"])
+        self.assertEqual(filled.cases[0].responses["baseline"], "baseline")
+        self.assertEqual(filled.cases[0].responses["steermoe"], "steered")
 
     def test_apply_bias_to_gate_output_supports_tuple_style_gate_outputs(self) -> None:
         import torch

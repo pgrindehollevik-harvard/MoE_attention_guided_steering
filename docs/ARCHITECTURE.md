@@ -16,8 +16,11 @@ removed so the codebase lines up with that goal.
 - `run_olmoe_steermoe_review.py`
   Main stage-1 runner. It builds paired custom steering examples, collects
   routing traces on the shared statement-body target, computes a
-  risk-difference activation table, builds SteerMoE plans, generates baseline
-  vs steered outputs, and renders HTML/Markdown.
+  risk-difference activation table, builds SteerMoE plans, generates
+  question-only baseline vs steered outputs, and renders HTML/Markdown.
+- `compare_prefix_conditioned_models.py`
+  Separate base-model suitability diagnostic. It includes the concept prefix and
+  compares unsteered model outputs across Llama 3.1 8B, OLMoE, and LLaMA-MoE.
 - `render_manual_review_report.py`
   Re-renders a saved manual review plan into Markdown + HTML.
 - `collect_attention_to_prefix.py`
@@ -48,6 +51,11 @@ The reusable logic lives in `src/moe_attention_guided_steering/`.
   convert them into paired custom steering examples.
 - `attention_collection.py`
   Dense-model attention-to-prefix extraction plus shared token-span helpers.
+- `generation.py`
+  Generic unsteered Hugging Face generation helpers for chat-template and
+  plain-template models.
+- `model_comparison.py`
+  Prefix-conditioned model comparison scaffolding and report rendering.
 - `olmoe_backend.py`
   The stage-1 OLMoE backend. This is where matched target spans are located,
   routing traces are collected, risk-difference tables are built, and selected

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a baseline-vs-SteerMoE qualitative review experiment on OLMoE."""
+"""Run a question-only baseline-vs-SteerMoE qualitative review on OLMoE."""
 
 from dataclasses import asdict
 from pathlib import Path
@@ -25,6 +25,7 @@ from moe_attention_guided_steering.olmoe_backend import (  # noqa: E402
 from moe_attention_guided_steering.reference_data import load_reference_data  # noqa: E402
 from moe_attention_guided_steering.attention_collection import load_hf_model_resources  # noqa: E402
 from moe_attention_guided_steering.upstream_prompt_datasets import (  # noqa: E402
+    build_concept_conditioned_evaluation_prompt,
     build_custom_steering_examples_from_statement_prompt_pairs,
     build_upstream_statement_prompt_pairs,
 )
@@ -39,11 +40,11 @@ def main() -> None:
     3. Convert those pairs into Adobe-style custom steering examples.
     4. Collect OLMoE router traces over the shared statement-body target.
     5. Build the SteerMoE risk-difference table and select global experts.
-    6. Generate baseline and SteerMoE answers into the review bundle.
+    6. Generate baseline and SteerMoE answers from question-only prompts.
     7. Write the filled JSON plan plus browsable HTML/Markdown reports.
     """
     parser = argparse.ArgumentParser(
-        description="Run baseline vs SteerMoE on OLMoE using a custom-steering pipeline adapted to our fears data."
+        description="Run question-only baseline vs SteerMoE on OLMoE using a custom-steering pipeline adapted to our fears data."
     )
     parser.add_argument(
         "--model-id",
@@ -155,8 +156,8 @@ def main() -> None:
     if plan.condition_order != ["baseline", "steermoe"]:
         plan.condition_order = ["baseline", "steermoe"]
         plan.condition_labels = {
-            "baseline": "Baseline (no steering)",
-            "steermoe": "SteerMoE",
+            "baseline": "OLMoE baseline (question only)",
+            "steermoe": "OLMoE + SteerMoE (question only)",
         }
         for case in plan.cases:
             baseline_value = case.responses.get("baseline", "")
@@ -165,6 +166,22 @@ def main() -> None:
                 "baseline": baseline_value,
                 "steermoe": steermoe_value,
             }
+    else:
+        plan.condition_labels.update(
+            {
+                "baseline": "OLMoE baseline (question only)",
+                "steermoe": "OLMoE + SteerMoE (question only)",
+            }
+        )
+
+    for case in plan.cases:
+        case.full_prompt_text = case.evaluation_question
+        if not case.prefix_conditioned_prompt_text:
+            case.prefix_conditioned_prompt_text = build_concept_conditioned_evaluation_prompt(
+                concept_type=plan.concept_type,
+                concept_value=case.concept,
+                evaluation_question=case.evaluation_question,
+            )
 
     reference_data = load_reference_data(args.data_dir)
     output_dir = Path(args.output_dir)
@@ -250,6 +267,20 @@ def main() -> None:
     )
 
     write_json(manual_review_plan_to_dict(plan), output_dir / "manual_review_plan.json")
+    write_json(
+        {
+            "prompt_mode": "question_only",
+            "prompt_contract": "baseline and SteerMoE receive only the evaluation question; the concept prefix is omitted at test time",
+            "training_signal": "SteerMoE plans are still learned from prefix-conditioned vs unprefixed routing traces over matched statement bodies",
+            "model_id": resources.model_id,
+            "model_tag": resources.model_tag,
+            "steering_coefficient": args.steering_coefficient,
+            "max_new_tokens": args.max_new_tokens,
+            "temperature": args.temperature,
+            "top_p": args.top_p,
+        },
+        output_dir / "generation_metadata.json",
+    )
     (output_dir / "qualitative_review.md").write_text(build_manual_review_markdown(plan))
     (output_dir / "qualitative_review.html").write_text(
         build_manual_review_html(

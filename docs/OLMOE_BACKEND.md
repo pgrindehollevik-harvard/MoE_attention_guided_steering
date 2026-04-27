@@ -6,8 +6,8 @@ This document explains the current real MoE backend implemented in this repo:
 
 The current backend is intentionally focused on **stage 1**:
 
-1. baseline generation,
-2. SteerMoE-style custom steering on our own fears data.
+1. question-only baseline generation,
+2. question-only SteerMoE-style custom steering on our own fears data.
 
 It does **not** treat the earlier single-token attention-guided OLMoE prototype
 as the main experiment anymore.
@@ -125,6 +125,17 @@ where:
 The backend biases only row `T - 1`, because that is the token whose hidden
 state determines the next generated step.
 
+Generation prompts intentionally omit the concept prefix. For a fear concept
+such as `Bugs`, the learned steering plan comes from prefixed-vs-control routing
+traces, but the evaluation-time prompt is only:
+
+```text
+What is the scariest thing in the world? Answer in 20 words or less.
+```
+
+That keeps the test aligned with the steering goal: the intervention should
+replace the prefix, not receive help from it.
+
 ## How this differs from the earlier prototype
 
 The retired prototype did this:
@@ -157,7 +168,7 @@ It:
 3. converts them into paired custom steering examples,
 4. collects target-level OLMoE routing traces,
 5. builds one SteerMoE risk-difference table and steering plan per concept,
-5. generates baseline and SteerMoE outputs,
+5. generates baseline and SteerMoE outputs from question-only prompts,
 6. writes an updated JSON plan plus HTML and Markdown review reports.
 
 The matching MIT-cluster Slurm template is:

@@ -83,7 +83,7 @@ def build_concept_conditioned_evaluation_prompt(
     concept_value: str,
     evaluation_question: str,
 ) -> str:
-    """Build the actual concept-conditioned evaluation prompt used at generation time.
+    """Build the prefix-conditioned evaluation prompt used for diagnostics.
 
     Inputs:
     - `concept_type`: concept family such as `fears` or `personas`.
@@ -92,12 +92,14 @@ def build_concept_conditioned_evaluation_prompt(
       evaluation prompt file.
 
     Returns:
-    - `str`: the model-facing prompt obtained by prepending the upstream
-      concept prefix to the evaluation question.
+    - `str`: the prompt obtained by prepending the upstream concept prefix to
+      the evaluation question.
 
-    This keeps the manual review JSON human-readable while still ensuring the
-    generator sees the concept-conditioned prompt. Without this prefix, all
-    concepts would share nearly identical baseline prompts during review.
+    Important:
+    - this is useful for measuring whether a base model can follow the explicit
+      concept instruction at all,
+    - but the actual steering test should omit this prefix and ask only the
+      evaluation question, so any concept effect must come from the intervention.
     """
     return get_upstream_positive_prefix(concept_type, concept_value) + evaluation_question
 
