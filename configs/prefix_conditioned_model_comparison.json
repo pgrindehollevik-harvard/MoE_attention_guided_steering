@@ -30,8 +30,7 @@
       "disable_torch_distribution_validation": true,
       "use_cache": false,
       "min_new_tokens": 4,
-      "temperature": 1.0,
-      "top_p": 1.0,
+      "temperature": 0.0,
       "attn_implementation": null
     }
   ]

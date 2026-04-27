@@ -77,8 +77,7 @@ class ModelComparisonTestCase(unittest.TestCase):
                 "disable_torch_distribution_validation": True,
                 "use_cache": False,
                 "min_new_tokens": 4,
-                "temperature": 1.0,
-                "top_p": 1.0,
+                "temperature": 0.0,
             }
         )
 
@@ -87,8 +86,8 @@ class ModelComparisonTestCase(unittest.TestCase):
         self.assertTrue(spec.disable_torch_distribution_validation)
         self.assertFalse(spec.use_cache)
         self.assertEqual(spec.min_new_tokens, 4)
-        self.assertEqual(spec.temperature, 1.0)
-        self.assertEqual(spec.top_p, 1.0)
+        self.assertEqual(spec.temperature, 0.0)
+        self.assertIsNone(spec.top_p)
 
     def test_generate_unsteered_response_passes_use_cache_flag(self) -> None:
         class DummyTokenizer:
