@@ -3,6 +3,8 @@ tqdm>=4.66
 transformers>=4.45
 accelerate>=0.34
 sentencepiece>=0.2
+protobuf>=4.25
+tiktoken>=0.7
 torch>=2.2
 # Install only if your cluster/image supports bitsandbytes CUDA wheels.
 # bitsandbytes>=0.43
