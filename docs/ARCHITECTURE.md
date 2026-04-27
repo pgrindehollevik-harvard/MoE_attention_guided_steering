@@ -20,7 +20,7 @@ removed so the codebase lines up with that goal.
   question-only baseline vs steered outputs, and renders HTML/Markdown.
 - `compare_prefix_conditioned_models.py`
   Separate base-model suitability diagnostic. It includes the concept prefix and
-  compares unsteered model outputs across Llama 3.1 8B, OLMoE, and LLaMA-MoE.
+  compares unsteered model outputs across Llama 3.1 8B, OLMoE, and Qwen1.5-MoE.
 - `render_manual_review_report.py`
   Re-renders a saved manual review plan into Markdown + HTML.
 - `collect_attention_to_prefix.py`

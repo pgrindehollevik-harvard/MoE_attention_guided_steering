@@ -73,7 +73,7 @@ Default models are configured in
 
 - `meta-llama/Llama-3.1-8B-Instruct`
 - `allenai/OLMoE-1B-7B-0125-Instruct`
-- `llama-moe/LLaMA-MoE-v1-3_5B-2_8-sft`
+- `Qwen/Qwen1.5-MoE-A2.7B-Chat`
 
 This diagnostic deliberately uses:
 

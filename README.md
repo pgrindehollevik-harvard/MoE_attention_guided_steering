@@ -59,7 +59,7 @@ been removed so the repo reflects the experiment we actually want to run.
 - `run_olmoe_steermoe_review.py`
   End-to-end OLMoE experiment runner for **question-only baseline vs SteerMoE**.
 - `compare_prefix_conditioned_models.py`
-  Full-prefix diagnostic comparing unsteered Llama 3.1 8B, OLMoE, and LLaMA-MoE behavior.
+  Full-prefix diagnostic comparing unsteered Llama 3.1 8B, OLMoE, and Qwen1.5-MoE behavior.
 - `prepare_manual_fear_review.py`
   Builds a qualitative review worksheet for the currently configured conditions.
 - `render_manual_review_report.py`
@@ -196,7 +196,7 @@ The default config compares:
 
 - `meta-llama/Llama-3.1-8B-Instruct`
 - `allenai/OLMoE-1B-7B-0125-Instruct`
-- `llama-moe/LLaMA-MoE-v1-3_5B-2_8-sft`
+- `Qwen/Qwen1.5-MoE-A2.7B-Chat`
 
 Run locally or on a GPU node:
 
