@@ -185,6 +185,29 @@ def infer_candidate_suffix_token_count(tokenizer: Any, probe_text: str = "This i
     return len(ids_with_generation[len(ids_no_generation) - 1 :])
 
 
+def normalize_llama_moe_rope_scaling_for_remote_code(config: Any) -> Any:
+    """Patch LLaMA-MoE configs for newer Transformers RoPE metadata.
+
+    The LLaMA-MoE remote modeling code was written against Transformers 4.36 and
+    expects either `rope_scaling is None` or a dict with a legacy `type` key.
+    Newer Transformers versions may expose the default RoPE setting as a dict
+    keyed by `rope_type`, which makes that remote code raise `KeyError: 'type'`.
+    """
+    if getattr(config, "model_type", "") != "llama_moe":
+        return config
+
+    rope_scaling = getattr(config, "rope_scaling", None)
+    if not isinstance(rope_scaling, dict) or "type" in rope_scaling:
+        return config
+
+    rope_type = rope_scaling.get("rope_type")
+    if rope_type in (None, "default"):
+        config.rope_scaling = None
+    elif rope_type in {"linear", "dynamic"}:
+        config.rope_scaling = {**rope_scaling, "type": rope_type}
+    return config
+
+
 def load_hf_model_resources(
     model_id: str,
     model_tag: Optional[str] = None,
@@ -202,7 +225,7 @@ def load_hf_model_resources(
     on machines that do not yet have GPU/Transformers dependencies installed.
     """
     import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
     model_kwargs: Dict[str, Any] = {
         "cache_dir": cache_dir,
@@ -219,6 +242,13 @@ def load_hf_model_resources(
         from transformers import BitsAndBytesConfig
 
         model_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
+
+    config = AutoConfig.from_pretrained(
+        model_id,
+        cache_dir=cache_dir,
+        trust_remote_code=trust_remote_code,
+    )
+    model_kwargs["config"] = normalize_llama_moe_rope_scaling_for_remote_code(config)
 
     model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).eval()
     tokenizer = AutoTokenizer.from_pretrained(

@@ -12,6 +12,7 @@ from moe_attention_guided_steering.attention_collection import (
     collect_attention_trace_for_prompt_pair,
     compute_inserted_token_span_from_ids,
     compute_prefix_attention_sums_for_last_n,
+    normalize_llama_moe_rope_scaling_for_remote_code,
     summarize_layer_to_token_index,
 )
 from moe_attention_guided_steering.upstream_prompt_datasets import (
@@ -123,6 +124,26 @@ class AttentionCollectionTestCase(unittest.TestCase):
             prompt,
             "Personify someone who is terrified of Bugs.  What is the scariest thing in the world?",
         )
+
+    def test_normalize_llama_moe_rope_scaling_handles_new_default_key(self) -> None:
+        config = types.SimpleNamespace(
+            model_type="llama_moe",
+            rope_scaling={"rope_type": "default"},
+        )
+
+        normalized = normalize_llama_moe_rope_scaling_for_remote_code(config)
+
+        self.assertIsNone(normalized.rope_scaling)
+
+    def test_normalize_llama_moe_rope_scaling_keeps_non_llama_moe_config(self) -> None:
+        config = types.SimpleNamespace(
+            model_type="llama",
+            rope_scaling={"rope_type": "llama3"},
+        )
+
+        normalized = normalize_llama_moe_rope_scaling_for_remote_code(config)
+
+        self.assertEqual(normalized.rope_scaling, {"rope_type": "llama3"})
 
     def test_collect_attention_trace_uses_chat_formatted_inputs(self) -> None:
         class DummyEncoding(dict):
