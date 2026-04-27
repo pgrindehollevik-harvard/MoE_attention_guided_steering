@@ -21,6 +21,8 @@ class ModelComparisonSpec:
     plain_template: str = "{prompt}"
     trust_remote_code: bool = False
     attn_implementation: Optional[str] = "eager"
+    device_map: Optional[str] = "auto"
+    post_load_device: Optional[str] = None
 
 
 def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec:
@@ -33,6 +35,8 @@ def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec
         plain_template=str(data.get("plain_template", "{prompt}")),
         trust_remote_code=bool(data.get("trust_remote_code", False)),
         attn_implementation=data.get("attn_implementation", "eager"),
+        device_map=data.get("device_map", "auto"),
+        post_load_device=data.get("post_load_device"),
     )
 
 
@@ -99,7 +103,7 @@ def fill_model_comparison_results_with_generations(
     results: Dict[str, Any],
     model_specs: Sequence[ModelComparisonSpec],
     cache_dir: Optional[str] = None,
-    device_map: str = "auto",
+    device_map_override: Optional[str] = None,
     torch_dtype: str = "bfloat16",
     load_in_4bit: bool = False,
     attn_implementation_override: Optional[str] = None,
@@ -118,7 +122,11 @@ def fill_model_comparison_results_with_generations(
             model_id=spec.model_id,
             model_tag=spec.model_tag,
             cache_dir=cache_dir,
-            device_map=device_map,
+            device_map=(
+                device_map_override
+                if device_map_override is not None
+                else spec.device_map
+            ),
             torch_dtype=torch_dtype,
             load_in_4bit=load_in_4bit,
             attn_implementation=(
@@ -128,6 +136,7 @@ def fill_model_comparison_results_with_generations(
             ),
             trust_remote_code=spec.trust_remote_code,
             infer_attention_suffix_tokens=False,
+            post_load_device=spec.post_load_device,
         )
         try:
             for case in tqdm(results["cases"], desc=f"Generating {spec.model_tag}"):

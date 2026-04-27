@@ -212,12 +212,13 @@ def load_hf_model_resources(
     model_id: str,
     model_tag: Optional[str] = None,
     cache_dir: Optional[str] = None,
-    device_map: str = "auto",
+    device_map: Optional[str] = "auto",
     torch_dtype: str = "bfloat16",
     load_in_4bit: bool = False,
     attn_implementation: Optional[str] = "eager",
     trust_remote_code: bool = False,
     infer_attention_suffix_tokens: bool = True,
+    post_load_device: Optional[str] = None,
 ) -> HFModelResources:
     """Load a causal LM plus tokenizer for attention collection.
 
@@ -229,9 +230,10 @@ def load_hf_model_resources(
 
     model_kwargs: Dict[str, Any] = {
         "cache_dir": cache_dir,
-        "device_map": device_map,
         "trust_remote_code": trust_remote_code,
     }
+    if device_map:
+        model_kwargs["device_map"] = device_map
     if attn_implementation:
         model_kwargs["attn_implementation"] = attn_implementation
 
@@ -251,6 +253,8 @@ def load_hf_model_resources(
     model_kwargs["config"] = normalize_llama_moe_rope_scaling_for_remote_code(config)
 
     model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).eval()
+    if post_load_device:
+        model = model.to(post_load_device)
     tokenizer = AutoTokenizer.from_pretrained(
         model_id,
         cache_dir=cache_dir,

@@ -6,6 +6,7 @@
       "model_tag": "llama_3_1_8b_instruct",
       "prompt_format": "chat",
       "trust_remote_code": false,
+      "device_map": "auto",
       "attn_implementation": "eager"
     },
     {
@@ -14,6 +15,7 @@
       "model_tag": "olmoe_1b_7b_0125_instruct",
       "prompt_format": "chat",
       "trust_remote_code": false,
+      "device_map": "auto",
       "attn_implementation": "eager"
     },
     {
@@ -23,6 +25,8 @@
       "prompt_format": "plain",
       "plain_template": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. human: {prompt} gpt:",
       "trust_remote_code": true,
+      "device_map": null,
+      "post_load_device": "cuda",
       "attn_implementation": null
     }
   ]

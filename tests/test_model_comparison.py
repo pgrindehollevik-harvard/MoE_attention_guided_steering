@@ -10,6 +10,7 @@ from moe_attention_guided_steering.manual_review import build_manual_review_plan
 from moe_attention_guided_steering.model_comparison import (
     ModelComparisonSpec,
     build_empty_model_comparison_results,
+    model_comparison_spec_from_dict,
     prompt_text_for_model_comparison_case,
     render_model_comparison_markdown,
 )
@@ -64,6 +65,20 @@ class ModelComparisonTestCase(unittest.TestCase):
         self.assertEqual(render_plain_prompt("Question?", "human: {prompt} gpt:"), "human: Question? gpt:")
         with self.assertRaises(ValueError):
             render_plain_prompt("Question?", "human: gpt:")
+
+    def test_model_spec_supports_per_model_device_loading(self) -> None:
+        spec = model_comparison_spec_from_dict(
+            {
+                "label": "LLaMA-MoE",
+                "model_id": "llama-moe/LLaMA-MoE-v1-3_5B-2_8-sft",
+                "model_tag": "llama_moe",
+                "device_map": None,
+                "post_load_device": "cuda",
+            }
+        )
+
+        self.assertIsNone(spec.device_map)
+        self.assertEqual(spec.post_load_device, "cuda")
 
 
 if __name__ == "__main__":

@@ -76,8 +76,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--device-map",
-        default="auto",
-        help="Transformers device_map argument, such as auto or cuda:0.",
+        default=None,
+        help="Optional global Transformers device_map override. Omit to use per-model config.",
     )
     parser.add_argument(
         "--torch-dtype",
@@ -110,7 +110,7 @@ def main() -> None:
         results=results,
         model_specs=model_specs,
         cache_dir=args.cache_dir,
-        device_map=args.device_map,
+        device_map_override=args.device_map,
         torch_dtype=args.torch_dtype,
         load_in_4bit=args.load_in_4bit,
         attn_implementation_override=args.attn_implementation,

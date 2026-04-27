@@ -28,6 +28,9 @@ fi
 if [ -n "${LIMIT_CASES:-}" ]; then
   EXTRA_ARGS+=(--limit-cases "$LIMIT_CASES")
 fi
+if [ -n "${DEVICE_MAP:-}" ]; then
+  EXTRA_ARGS+=(--device-map "$DEVICE_MAP")
+fi
 
 python3 compare_prefix_conditioned_models.py \
   --plan-json "${PLAN_JSON:-outputs/manual_fear_review/manual_review_plan.json}" \
@@ -37,6 +40,5 @@ python3 compare_prefix_conditioned_models.py \
   --max-new-tokens "${MAX_NEW_TOKENS:-48}" \
   --temperature "${TEMPERATURE:-0.0}" \
   --top-p "${TOP_P:-1.0}" \
-  --device-map "${DEVICE_MAP:-auto}" \
   --torch-dtype "${TORCH_DTYPE:-bfloat16}" \
   "${EXTRA_ARGS[@]}"
