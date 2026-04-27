@@ -28,6 +28,7 @@
       "device_map": null,
       "post_load_device": "cuda",
       "disable_torch_distribution_validation": true,
+      "use_cache": false,
       "attn_implementation": null
     }
   ]

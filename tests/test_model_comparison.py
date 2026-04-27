@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from moe_attention_guided_steering.generation import render_plain_prompt
+from moe_attention_guided_steering.generation import generate_unsteered_response, render_plain_prompt
 from moe_attention_guided_steering.manual_review import build_manual_review_plan
 from moe_attention_guided_steering.model_comparison import (
     ModelComparisonSpec,
@@ -75,12 +75,56 @@ class ModelComparisonTestCase(unittest.TestCase):
                 "device_map": None,
                 "post_load_device": "cuda",
                 "disable_torch_distribution_validation": True,
+                "use_cache": False,
             }
         )
 
         self.assertIsNone(spec.device_map)
         self.assertEqual(spec.post_load_device, "cuda")
         self.assertTrue(spec.disable_torch_distribution_validation)
+        self.assertFalse(spec.use_cache)
+
+    def test_generate_unsteered_response_passes_use_cache_flag(self) -> None:
+        class DummyTokenizer:
+            pad_token_id = 0
+            eos_token_id = 1
+
+            def __call__(self, text, return_tensors):
+                return {"input_ids": DummyTensor([[10, 11]])}
+
+            def decode(self, token_ids, skip_special_tokens):
+                return "decoded"
+
+        class DummyTensor:
+            def __init__(self, value):
+                self.value = value
+                self.shape = (len(value), len(value[0]))
+
+            def __getitem__(self, index):
+                return [99]
+
+        class DummyModel:
+            device = "cpu"
+
+            def generate(self, **kwargs):
+                self.kwargs = kwargs
+                return DummyTensor([[10, 11, 99]])
+
+        resources = type(
+            "Resources",
+            (),
+            {"tokenizer": DummyTokenizer(), "model": DummyModel()},
+        )()
+
+        response = generate_unsteered_response(
+            prompt_text="Question?",
+            resources=resources,
+            prompt_format="plain",
+            use_cache=False,
+        )
+
+        self.assertEqual(response, "decoded")
+        self.assertFalse(resources.model.kwargs["use_cache"])
 
 
 if __name__ == "__main__":

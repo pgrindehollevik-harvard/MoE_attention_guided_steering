@@ -66,6 +66,7 @@ def generate_unsteered_response(
     max_new_tokens: int = 48,
     temperature: float = 0.0,
     top_p: float = 1.0,
+    use_cache: bool = True,
 ) -> str:
     """Generate one unsteered response from a loaded Hugging Face causal LM."""
     import torch
@@ -87,7 +88,7 @@ def generate_unsteered_response(
         "max_new_tokens": max_new_tokens,
         "pad_token_id": tokenizer.pad_token_id,
         "eos_token_id": tokenizer.eos_token_id,
-        "use_cache": True,
+        "use_cache": use_cache,
     }
     if "attention_mask" in encoded_inputs:
         generate_kwargs["attention_mask"] = encoded_inputs["attention_mask"]

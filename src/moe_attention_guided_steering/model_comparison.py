@@ -24,6 +24,7 @@ class ModelComparisonSpec:
     device_map: Optional[str] = "auto"
     post_load_device: Optional[str] = None
     disable_torch_distribution_validation: bool = False
+    use_cache: bool = True
 
 
 def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec:
@@ -41,6 +42,7 @@ def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec
         disable_torch_distribution_validation=bool(
             data.get("disable_torch_distribution_validation", False)
         ),
+        use_cache=bool(data.get("use_cache", True)),
     )
 
 
@@ -153,6 +155,7 @@ def fill_model_comparison_results_with_generations(
                     max_new_tokens=max_new_tokens,
                     temperature=temperature,
                     top_p=top_p,
+                    use_cache=spec.use_cache,
                 )
         finally:
             del resources
