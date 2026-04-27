@@ -64,6 +64,7 @@ def generate_unsteered_response(
     prompt_format: str = "chat",
     plain_template: str = "{prompt}",
     max_new_tokens: int = 48,
+    min_new_tokens: int = 0,
     temperature: float = 0.0,
     top_p: float = 1.0,
     use_cache: bool = True,
@@ -90,6 +91,8 @@ def generate_unsteered_response(
         "eos_token_id": tokenizer.eos_token_id,
         "use_cache": use_cache,
     }
+    if min_new_tokens > 0:
+        generate_kwargs["min_new_tokens"] = min_new_tokens
     if "attention_mask" in encoded_inputs:
         generate_kwargs["attention_mask"] = encoded_inputs["attention_mask"]
 

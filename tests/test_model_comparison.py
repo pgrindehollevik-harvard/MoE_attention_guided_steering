@@ -76,6 +76,9 @@ class ModelComparisonTestCase(unittest.TestCase):
                 "post_load_device": "cuda",
                 "disable_torch_distribution_validation": True,
                 "use_cache": False,
+                "min_new_tokens": 4,
+                "temperature": 1.0,
+                "top_p": 1.0,
             }
         )
 
@@ -83,6 +86,9 @@ class ModelComparisonTestCase(unittest.TestCase):
         self.assertEqual(spec.post_load_device, "cuda")
         self.assertTrue(spec.disable_torch_distribution_validation)
         self.assertFalse(spec.use_cache)
+        self.assertEqual(spec.min_new_tokens, 4)
+        self.assertEqual(spec.temperature, 1.0)
+        self.assertEqual(spec.top_p, 1.0)
 
     def test_generate_unsteered_response_passes_use_cache_flag(self) -> None:
         class DummyTokenizer:
@@ -121,10 +127,12 @@ class ModelComparisonTestCase(unittest.TestCase):
             resources=resources,
             prompt_format="plain",
             use_cache=False,
+            min_new_tokens=3,
         )
 
         self.assertEqual(response, "decoded")
         self.assertFalse(resources.model.kwargs["use_cache"])
+        self.assertEqual(resources.model.kwargs["min_new_tokens"], 3)
 
 
 if __name__ == "__main__":

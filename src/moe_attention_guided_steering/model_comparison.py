@@ -25,6 +25,10 @@ class ModelComparisonSpec:
     post_load_device: Optional[str] = None
     disable_torch_distribution_validation: bool = False
     use_cache: bool = True
+    max_new_tokens: Optional[int] = None
+    min_new_tokens: int = 0
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
 
 
 def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec:
@@ -43,6 +47,10 @@ def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec
             data.get("disable_torch_distribution_validation", False)
         ),
         use_cache=bool(data.get("use_cache", True)),
+        max_new_tokens=data.get("max_new_tokens"),
+        min_new_tokens=int(data.get("min_new_tokens", 0)),
+        temperature=data.get("temperature"),
+        top_p=data.get("top_p"),
     )
 
 
@@ -152,9 +160,10 @@ def fill_model_comparison_results_with_generations(
                     resources=resources,
                     prompt_format=spec.prompt_format,
                     plain_template=spec.plain_template,
-                    max_new_tokens=max_new_tokens,
-                    temperature=temperature,
-                    top_p=top_p,
+                    max_new_tokens=spec.max_new_tokens or max_new_tokens,
+                    min_new_tokens=spec.min_new_tokens,
+                    temperature=temperature if spec.temperature is None else spec.temperature,
+                    top_p=top_p if spec.top_p is None else spec.top_p,
                     use_cache=spec.use_cache,
                 )
         finally:
@@ -172,6 +181,10 @@ def fill_model_comparison_results_with_generations(
 
 def render_model_comparison_markdown(results: Dict[str, Any]) -> str:
     """Render a lightweight Markdown report for model-suitability review."""
+
+    def display_response(response: str) -> str:
+        return response.strip() or "Empty response"
+
     model_labels = {model["model_tag"]: model["label"] for model in results["models"]}
     lines = [
         "# Prefix-Conditioned Model Comparison",
@@ -199,7 +212,7 @@ def render_model_comparison_markdown(results: Dict[str, Any]) -> str:
                 [
                     f"### {model_labels.get(model_tag, model_tag)}",
                     "",
-                    response.strip() or "Pending generation",
+                    display_response(response),
                     "",
                 ]
             )
@@ -214,7 +227,7 @@ def render_model_comparison_html(results: Dict[str, Any]) -> str:
     for case in results["cases"]:
         response_blocks = []
         for model_tag, response in case["responses"].items():
-            display = html.escape(response) if response.strip() else "<span class='pending'>Pending generation</span>"
+            display = html.escape(response) if response.strip() else "<span class='pending'>Empty response</span>"
             response_blocks.append(
                 f"""
                 <div class='response'>
