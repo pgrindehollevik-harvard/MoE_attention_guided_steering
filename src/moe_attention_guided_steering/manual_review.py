@@ -17,6 +17,8 @@ DEFAULT_CONDITION_LABELS = {
     "baseline": "OLMoE baseline (question only)",
     "steermoe": "OLMoE + SteerMoE (question only)",
     "attention_guided_moesteer": "Attention-guided MoESteer",
+    "llama_3_1_8b_baseline": "Llama 3.1 8B baseline (question only)",
+    "llama_3_1_8b_reference": "Llama 3.1 8B reference (question only)",
 }
 
 
@@ -324,9 +326,9 @@ def build_manual_review_markdown(plan: ManualReviewPlan) -> str:
         "",
         "## How To Read This Report",
         "",
-        "- This is **not** a comparison of two different model checkpoints.",
-        "- Both columns use the same OLMoE model.",
-        "- `Question-only test prompt` is the exact prompt sent to both conditions.",
+        "- `OLMoE baseline` and `SteerMoE` use the same OLMoE model.",
+        "- Any reference-model column is unsteered question-only context; it is not the steering control.",
+        "- `Question-only test prompt` is the exact prompt sent to each generation condition.",
         "- The concept prefix is intentionally omitted during this steering test.",
         "- `Prefix-conditioned diagnostic prompt` is shown for context only.",
         "- `Baseline` = same OLMoE model, question-only prompt, no steering.",
@@ -485,8 +487,8 @@ code{{background:#f6f8fa;padding:.1rem .3rem;border-radius:4px;}}
 <ul style='margin:.4rem 0 .2rem;padding-left:1.3rem;'>
 {legend_items}
 </ul>
-<strong>Important:</strong> these are <em>not two different model checkpoints</em>. Both columns use the same OLMoE model.<br>
-<strong>Question-only test prompt</strong> = the exact text both conditions receive, for example:<br>
+<strong>Important:</strong> <em>OLMoE baseline</em> and <em>SteerMoE</em> use the same OLMoE model; reference-model columns are unsteered context, not the steering control.<br>
+<strong>Question-only test prompt</strong> = the exact text each generation condition receives, for example:<br>
 <code>What is the scariest thing in the world? Answer in 20 words or less.</code><br>
 <strong>Prefix-conditioned diagnostic prompt</strong> shows the omitted concept prefix for context, but is not sent in this steering test.<br>
 <strong>OLMoE baseline (question only)</strong> = same OLMoE model, question-only prompt, no steering.<br>

@@ -7,6 +7,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from moe_attention_guided_steering.manual_review import (
     build_manual_review_html,
+    build_manual_review_markdown,
     build_manual_review_plan,
     extract_evaluation_question,
     manual_review_plan_from_dict,
@@ -79,6 +80,24 @@ class ManualReviewTestCase(unittest.TestCase):
             restored.cases[0].prefix_conditioned_prompt_text,
             "Personify someone who is terrified of Bugs.  Question?",
         )
+
+    def test_reference_model_condition_is_labeled_as_context_not_control(self) -> None:
+        plan = build_manual_review_plan(
+            self.suite,
+            concept_sample_size=1,
+            question_sample_size=1,
+            seed=7,
+            condition_order=["baseline", "llama_3_1_8b_baseline", "steermoe"],
+        )
+        plan.cases[0].responses["llama_3_1_8b_baseline"] = "Question-only Llama answer."
+
+        markdown = build_manual_review_markdown(plan)
+        html = build_manual_review_html(plan)
+
+        self.assertIn("Llama 3.1 8B baseline (question only)", markdown)
+        self.assertIn("Question-only Llama answer.", html)
+        self.assertIn("reference-model column is unsteered question-only context", markdown)
+        self.assertIn("reference-model columns are unsteered context", html)
 
 
 if __name__ == "__main__":
