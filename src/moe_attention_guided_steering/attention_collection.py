@@ -219,6 +219,7 @@ def load_hf_model_resources(
     trust_remote_code: bool = False,
     infer_attention_suffix_tokens: bool = True,
     post_load_device: Optional[str] = None,
+    disable_torch_distribution_validation: bool = False,
 ) -> HFModelResources:
     """Load a causal LM plus tokenizer for attention collection.
 
@@ -252,7 +253,17 @@ def load_hf_model_resources(
     )
     model_kwargs["config"] = normalize_llama_moe_rope_scaling_for_remote_code(config)
 
-    model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).eval()
+    if disable_torch_distribution_validation:
+        from torch.distributions import Distribution
+
+        previous_validate_args = Distribution._validate_args
+        Distribution.set_default_validate_args(False)
+        try:
+            model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).eval()
+        finally:
+            Distribution.set_default_validate_args(previous_validate_args)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).eval()
     if post_load_device:
         model = model.to(post_load_device)
     tokenizer = AutoTokenizer.from_pretrained(

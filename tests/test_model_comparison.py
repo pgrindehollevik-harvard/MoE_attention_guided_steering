@@ -74,11 +74,13 @@ class ModelComparisonTestCase(unittest.TestCase):
                 "model_tag": "llama_moe",
                 "device_map": None,
                 "post_load_device": "cuda",
+                "disable_torch_distribution_validation": True,
             }
         )
 
         self.assertIsNone(spec.device_map)
         self.assertEqual(spec.post_load_device, "cuda")
+        self.assertTrue(spec.disable_torch_distribution_validation)
 
 
 if __name__ == "__main__":

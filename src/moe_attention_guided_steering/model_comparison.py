@@ -23,6 +23,7 @@ class ModelComparisonSpec:
     attn_implementation: Optional[str] = "eager"
     device_map: Optional[str] = "auto"
     post_load_device: Optional[str] = None
+    disable_torch_distribution_validation: bool = False
 
 
 def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec:
@@ -37,6 +38,9 @@ def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec
         attn_implementation=data.get("attn_implementation", "eager"),
         device_map=data.get("device_map", "auto"),
         post_load_device=data.get("post_load_device"),
+        disable_torch_distribution_validation=bool(
+            data.get("disable_torch_distribution_validation", False)
+        ),
     )
 
 
@@ -137,6 +141,7 @@ def fill_model_comparison_results_with_generations(
             trust_remote_code=spec.trust_remote_code,
             infer_attention_suffix_tokens=False,
             post_load_device=spec.post_load_device,
+            disable_torch_distribution_validation=spec.disable_torch_distribution_validation,
         )
         try:
             for case in tqdm(results["cases"], desc=f"Generating {spec.model_tag}"):
