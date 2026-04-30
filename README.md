@@ -41,14 +41,18 @@ On the cluster:
 cd ~/MoE_attention_guided_steering
 git pull --ff-only origin main
 source .venv/bin/activate
+pip install -U -r requirements-gpu.txt
 python3 prepare_manual_fear_review.py
 
 REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
 OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_with_llama \
-sbatch --partition=mit_normal_gpu --time=12:00:00 slurm/run_mixtral_steermoe_review.sbatch
+sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
 ```
+
+The `pip install -U` line matters for Mixtral: current Transformers 4-bit
+loading requires `bitsandbytes>=0.46.1`.
 
 Watch it:
 

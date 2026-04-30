@@ -68,7 +68,7 @@ REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
 OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_with_llama \
-sbatch --partition=mit_normal_gpu --time=12:00:00 slurm/run_mixtral_steermoe_review.sbatch
+sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
 ```
 
 This run compares:
@@ -84,6 +84,13 @@ enough memory for the full checkpoint plus generation overhead:
 LOAD_MIXTRAL_IN_4BIT=false sbatch slurm/run_mixtral_steermoe_review.sbatch
 ```
 
+If loading fails with a bitsandbytes error, refresh the GPU environment first:
+
+```bash
+source .venv/bin/activate
+pip install -U -r requirements-gpu.txt
+```
+
 ## MIT-cluster-friendly defaults
 
 The Mixtral Slurm script defaults are intentionally conservative:
@@ -92,7 +99,7 @@ The Mixtral Slurm script defaults are intentionally conservative:
 - GPU count: `1`
 - CPUs: `8`
 - memory: `128G`
-- wall time: `12:00:00`
+- wall time: `02:00:00`
 
 Stage-1 runner defaults:
 
