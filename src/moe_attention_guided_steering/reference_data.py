@@ -17,8 +17,8 @@ class ReferenceDataBundle:
     """All imported text assets from the attention-guided steering repo.
 
     These files are useful for experiment setup, evaluation prompts, and concept
-    catalogs. They are not yet enough to run the MoE steering pipeline directly
-    because they do not contain attention traces or expert-load measurements.
+    catalogs. The steering runners collect model-specific router traces from
+    these text inputs at experiment time.
     """
 
     concept_values_by_type: Dict[str, List[str]]
@@ -30,8 +30,8 @@ class ReferenceDataBundle:
 class ReferenceConceptSuite:
     """The subset of imported data needed for one concept family.
 
-    This is the adapter layer between the vendored text files and the future
-    collector that will build real `ExperimentDataset` payloads with model traces.
+    This is the adapter layer between the vendored text files and the OLMoE,
+    Mixtral, and future attention-collector entrypoints.
     """
 
     concept_type: str

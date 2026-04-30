@@ -23,9 +23,6 @@ removed so the codebase lines up with that goal.
 - `run_mixtral_steermoe_review.py`
   Current Mixtral runner. It uses the same question-only prompt contract and
   renders three columns: Llama baseline, Mixtral baseline, and Mixtral + SteerMoE.
-- `compare_prefix_conditioned_models.py`
-  Separate base-model suitability diagnostic. It includes the concept prefix and
-  compares unsteered model outputs across Llama 3.1 8B, OLMoE, and Qwen1.5-MoE.
 - `render_manual_review_report.py`
   Re-renders a saved manual review plan into Markdown + HTML.
 - `collect_attention_to_prefix.py`
@@ -38,16 +35,6 @@ removed so the codebase lines up with that goal.
 
 The reusable logic lives in `src/moe_attention_guided_steering/`.
 
-- `config.py`
-  Generic experiment knobs retained for future non-SteerMoE extensions.
-- `types.py`
-  Generic dataset and steering records retained for future shared utilities.
-- `datasets.py`
-  Loading and validation helpers for the generic experiment dataset schema.
-- `moe_utils.py`
-  Generic expert-delta scoring utilities retained for future comparisons.
-- `pipeline.py`
-  Generic orchestration retained for non-stage-1 paths.
 - `reference_data.py`
   Loaders for the vendored upstream concept lists, statement pools, and
   evaluation prompts.
@@ -59,8 +46,6 @@ The reusable logic lives in `src/moe_attention_guided_steering/`.
 - `generation.py`
   Generic unsteered Hugging Face generation helpers for chat-template and
   plain-template models.
-- `model_comparison.py`
-  Prefix-conditioned model comparison scaffolding and report rendering.
 - `olmoe_backend.py`
   The stage-1 OLMoE backend. This is where matched target spans are located,
   routing traces are collected, risk-difference tables are built, and selected
@@ -72,7 +57,7 @@ The reusable logic lives in `src/moe_attention_guided_steering/`.
 - `manual_review.py`
   Condition-agnostic qualitative review plan + HTML/Markdown rendering.
 - `io_utils.py`
-  Generic JSON / Markdown output helpers used by multiple entrypoints.
+  Small filesystem and JSON helpers used by multiple entrypoints.
 
 ## The steering tensor flow
 

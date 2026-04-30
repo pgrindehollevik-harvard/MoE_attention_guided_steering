@@ -149,10 +149,8 @@ class SteerMoEReplicationPlan:
       positive and negative experts used for steering.
     - `layers` is the runtime-ready grouped view used to bias OLMoE routing.
 
-    This is intentionally more notebook-like than the repo's older generic
-    `SteeringPlan` abstraction: it keeps the direct risk-difference evidence
-    visible instead of immediately compressing everything into a per-layer
-    thresholded delta vector.
+    This intentionally keeps the direct risk-difference evidence visible instead
+    of compressing everything into a thresholded delta vector too early.
     """
 
     concept: str

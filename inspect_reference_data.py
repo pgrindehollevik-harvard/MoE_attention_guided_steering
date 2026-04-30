@@ -15,8 +15,7 @@ from moe_attention_guided_steering.reference_data import (
 def main() -> None:
     """Print a readable summary of the imported attention-guided data files.
 
-    This script is intentionally separate from the numbered MoE pipeline because
-    the imported text assets are experiment inputs and evaluation resources, not
+    The imported text assets are experiment inputs and evaluation resources, not
     already-collected attention or expert traces.
     """
     parser = argparse.ArgumentParser(

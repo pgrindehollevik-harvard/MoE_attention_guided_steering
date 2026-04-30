@@ -1,10 +1,9 @@
 # Slurm Runbook
 
-This repo currently has two GPU steering experiments plus one older diagnostic:
+This repo currently has two GPU steering experiments:
 
 - `slurm/run_olmoe_steermoe_review.sbatch`
 - `slurm/run_mixtral_steermoe_review.sbatch`
-- `slurm/compare_prefix_conditioned_models.sbatch`
 
 The OLMoE script runs the original **stage-1 OLMoE SteerMoE transfer experiment**:
 
@@ -20,9 +19,8 @@ The Mixtral script runs the current requested question-only review:
 Llama 3.1 8B baseline | Mixtral 8x7B baseline | Mixtral 8x7B + SteerMoE
 ```
 
-The prefix-conditioned model comparison is separate and older. The dense
-attention collector is still available for future same-model comparisons, but it
-is no longer the main path for this repo.
+The dense attention collector is still available for future same-model
+comparisons, but it is no longer the main path for this repo.
 
 ## Expected stage-1 workflow
 
@@ -85,35 +83,6 @@ enough memory for the full checkpoint plus generation overhead:
 ```bash
 LOAD_MIXTRAL_IN_4BIT=false sbatch slurm/run_mixtral_steermoe_review.sbatch
 ```
-
-## Prefix-conditioned model diagnostic
-
-Run this after preparing the same manual review plan if you want to compare base
-model behavior when the explicit prefix is present:
-
-```bash
-REPO_DIR=$PWD \
-HF_HOME=$HOME/.cache/huggingface \
-PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
-OUTPUT_DIR=experiments/prefix_conditioned_model_comparison_fears_seed7 \
-sbatch --partition=mit_normal_gpu --time=12:00:00 slurm/compare_prefix_conditioned_models.sbatch
-```
-
-Default models are configured in
-`configs/prefix_conditioned_model_comparison.json`:
-
-- `meta-llama/Llama-3.1-8B-Instruct`
-- `allenai/OLMoE-1B-7B-0125-Instruct`
-- `Qwen/Qwen1.5-MoE-A2.7B-Chat`
-
-This diagnostic deliberately uses:
-
-```text
-Personify someone who is terrified of {concept}.  {evaluation_question}
-```
-
-It is for base-model suitability only and should not be interpreted as the
-steering result.
 
 ## MIT-cluster-friendly defaults
 
@@ -199,12 +168,6 @@ The Mixtral review writes:
 - `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/manual_review_plan.json`
 - `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.md`
 - `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.html`
-
-The prefix diagnostic writes:
-
-- `experiments/prefix_conditioned_model_comparison_fears_seed7/model_comparison_results.json`
-- `experiments/prefix_conditioned_model_comparison_fears_seed7/model_comparison.md`
-- `experiments/prefix_conditioned_model_comparison_fears_seed7/model_comparison.html`
 
 ## Optional future attention stage
 

@@ -31,21 +31,21 @@ files as a catalog for experiment setup. In particular, it:
 - keeps the upstream naming mismatch in one place, such as `fears -> phobia`
   and `places -> topophile`.
 
-This is intentionally separate from the existing toy MoE pipeline. The current
-pipeline expects an `ExperimentDataset` with explicit per-layer attention weights
-and per-token expert loads. The imported text files do not contain those traces.
+These files are inputs to the current OLMoE and Mixtral steering runners. They
+provide concept names, matched generic statements, and evaluation questions; the
+runners collect the model-specific router traces at experiment time.
 
 ## Why this still helps
 
-Even though the imported data is not yet a drop-in `ExperimentDataset`, it gives
-us a concrete bridge to the attention-guided steering workflow:
+The imported data gives us a concrete bridge to the attention-guided steering
+workflow:
 
 - concept lists tell us what to probe,
 - general statements give us reusable prompt scaffolds,
 - evaluation prompts tell us how the upstream project scores steering success.
 
-That means the next real-model collector can start from the same concept catalog
-and evaluation templates while exporting traces into this repo's typed JSON schema.
+That means the current steering runners and the future attention collector can
+start from the same concept catalog and evaluation templates.
 
 ## Important redistribution note
 
