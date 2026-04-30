@@ -12,7 +12,10 @@ The current repo is deliberately staged.
 
 - **Stage 1, implemented and GPU-ready now**: test whether **SteerMoE transfers
   to our own fear/phobia-style data** on `allenai/OLMoE-1B-7B-0125-Instruct`.
-- **Stage 2, planned next**: compare that OLMoE SteerMoE baseline to an
+- **Stage 1b, current next run**: repeat the question-only SteerMoE review on
+  `mistralai/Mixtral-8x7B-Instruct-v0.1`, with `meta-llama/Llama-3.1-8B-Instruct`
+  as an unsteered reference column.
+- **Stage 2, planned later**: compare a same-model SteerMoE baseline to an
   attention-based alternative on the **same model**, so the comparison is about
   methods rather than architecture changes.
 
@@ -47,6 +50,12 @@ experiment. That code path has been retired from the committed source.
   - selects globally strongest positive and negative experts,
   - applies router-logit bias during generation,
   - writes a qualitative baseline-vs-SteerMoE review report,
+- a Mixtral backend that mirrors the same custom-steering workflow against
+  Hugging Face Mixtral router gates,
+- a Mixtral question-only review runner whose columns are:
+  - Llama 3.1 8B baseline, unsteered,
+  - Mixtral 8x7B baseline, unsteered,
+  - Mixtral 8x7B + SteerMoE,
 - unit tests for the core logic.
 
 The old numbered toy scripts and single-token OLMoE hybrid entrypoints have
@@ -58,8 +67,10 @@ been removed so the repo reflects the experiment we actually want to run.
   Real-model GPU script for collecting upstream-style attention-to-prefix scores.
 - `run_olmoe_steermoe_review.py`
   End-to-end OLMoE experiment runner for **question-only baseline vs SteerMoE**.
+- `run_mixtral_steermoe_review.py`
+  End-to-end Mixtral runner for **Llama baseline vs Mixtral baseline vs Mixtral + SteerMoE**.
 - `compare_prefix_conditioned_models.py`
-  Full-prefix diagnostic comparing unsteered Llama 3.1 8B, OLMoE, and Qwen1.5-MoE behavior.
+  Older full-prefix diagnostic comparing unsteered Llama 3.1 8B, OLMoE, and Qwen1.5-MoE behavior.
 - `prepare_manual_fear_review.py`
   Builds a qualitative review worksheet for the currently configured conditions.
 - `render_manual_review_report.py`
@@ -185,6 +196,41 @@ The stage-1 OLMoE run writes:
 - `experiments/olmoe_steermoe_fears_seed7/qualitative_review.md`
 - `experiments/olmoe_steermoe_fears_seed7/qualitative_review.html`
 
+## Stage 1b: Mixtral SteerMoE review with Llama reference
+
+The current requested comparison is not the prefix-conditioned diagnostic. It is
+a question-only steering report with these columns:
+
+```text
+Llama 3.1 8B baseline | Mixtral 8x7B baseline | Mixtral 8x7B + SteerMoE
+```
+
+All three columns receive only the bare evaluation question at generation time.
+The concept prefix is still used upstream to build paired routing traces and
+select Mixtral experts, but it is not included in the test prompt.
+
+### Exact MIT cluster repeat
+
+```bash
+cd ~/MoE_attention_guided_steering
+git pull --ff-only origin main
+source .venv/bin/activate
+python3 prepare_manual_fear_review.py
+
+REPO_DIR=$PWD \
+HF_HOME=$HOME/.cache/huggingface \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_with_llama \
+sbatch --partition=mit_normal_gpu --time=12:00:00 slurm/run_mixtral_steermoe_review.sbatch
+```
+
+The main colleague-facing file is:
+
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.html`
+
+The Mixtral runner loads Mixtral in 4-bit by default via bitsandbytes. That is
+the practical single-GPU path for a roughly 47B-total, 13B-active MoE checkpoint.
+
 ## Prefix-conditioned model suitability diagnostic
 
 Parmida's model-quality question is handled as a separate diagnostic:
@@ -266,12 +312,12 @@ for the exact tensor story.
 
 ## What comes next
 
-After we have a trustworthy SteerMoE-on-our-data baseline, the next clean
-comparison is:
+After the Mixtral question-only review is run and inspected, the next clean
+comparison is method-level rather than architecture-level:
 
-- baseline OLMoE
-- SteerMoE on OLMoE
-- an attention-based steering method on **the same OLMoE model**
+- baseline on the chosen MoE,
+- SteerMoE on that same MoE,
+- an attention-based steering method on that same MoE.
 
-That next comparison will be method-level rather than architecture-level, which
-is exactly why the repo now prioritizes a clean stage-1 SteerMoE path first.
+The repo keeps OLMoE and Mixtral as separate backends so we do not mix a model
+capacity question with a steering-method question.

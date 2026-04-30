@@ -35,8 +35,8 @@ SteerMoE is better thought of as a **targeted routing-statistics** method:
 - a behavior-relevant target region is often more appropriate than one single token,
 - the intervention plan should be built from those broader routing statistics.
 
-That is why the repo now starts with an OLMoE SteerMoE custom-steering
-reproduction attempt on our own fear data.
+That is why the repo starts from custom-steering reproduction attempts on our
+own fear data, first with OLMoE and now with a larger Mixtral MoE.
 
 ## 4. Current staged plan
 
@@ -46,25 +46,37 @@ Run baseline vs SteerMoE on `allenai/OLMoE-1B-7B-0125-Instruct` using a
 behavior-relevant token span and measure whether the intervention changes outputs
 without destroying fluency.
 
+### Stage 1b: repeat the same question-only test on Mixtral
+
+Run:
+
+- Llama 3.1 8B baseline, unsteered and question-only,
+- Mixtral 8x7B baseline, unsteered and question-only,
+- Mixtral 8x7B + SteerMoE, question-only with router bias.
+
+This answers the newer model-capacity concern without returning to
+prefix-conditioned generation as the main target.
+
 ### Stage 2: compare against an attention-based method on the same model
 
-Only after stage 1 is trustworthy do we make the method comparison:
+Only after the same-model SteerMoE baseline is trustworthy do we make the method
+comparison:
 
-- baseline OLMoE
-- SteerMoE on OLMoE
-- an attention-based steering alternative on the same OLMoE model
+- baseline on the chosen MoE
+- SteerMoE on that same MoE
+- an attention-based steering alternative on that same MoE
 
 This avoids the bad comparison where the method and model architecture change at
 the same time.
 
-## 5. What the current OLMoE backend does
+## 5. What the current MoE backends do
 
-The committed stage-1 backend:
+The committed OLMoE and Mixtral backends:
 
 1. builds positive/negative prompt pairs from the imported fear dataset,
 2. converts them into Adobe-style paired custom steering examples,
 3. uses the shared statement body as the matched target region,
-4. reads OLMoE router logits for every token in that target,
+4. reads model-specific router logits for every token in that target,
 5. marks which experts were actually selected by routing,
 6. aggregates those routed-expert counts over the full paired dataset,
 7. computes per-layer/per-expert **risk difference**,

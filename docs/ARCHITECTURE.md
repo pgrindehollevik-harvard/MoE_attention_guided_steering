@@ -1,9 +1,11 @@
 # Architecture Walkthrough
 
-This repo is now organized around one primary runnable experiment:
+This repo is now organized around two related runnable steering experiments:
 
 - **Stage 1**: baseline vs **custom-steering SteerMoE** on
   `allenai/OLMoE-1B-7B-0125-Instruct`
+- **Stage 1b**: `meta-llama/Llama-3.1-8B-Instruct` unsteered reference vs
+  unsteered `mistralai/Mixtral-8x7B-Instruct-v0.1` vs Mixtral + SteerMoE
 
 The earlier toy scripts and failed single-token OLMoE hybrid entrypoints were
 removed so the codebase lines up with that goal.
@@ -18,6 +20,9 @@ removed so the codebase lines up with that goal.
   routing traces on the shared statement-body target, computes a
   risk-difference activation table, builds SteerMoE plans, generates
   question-only baseline vs steered outputs, and renders HTML/Markdown.
+- `run_mixtral_steermoe_review.py`
+  Current Mixtral runner. It uses the same question-only prompt contract and
+  renders three columns: Llama baseline, Mixtral baseline, and Mixtral + SteerMoE.
 - `compare_prefix_conditioned_models.py`
   Separate base-model suitability diagnostic. It includes the concept prefix and
   compares unsteered model outputs across Llama 3.1 8B, OLMoE, and Qwen1.5-MoE.
@@ -60,18 +65,23 @@ The reusable logic lives in `src/moe_attention_guided_steering/`.
   The stage-1 OLMoE backend. This is where matched target spans are located,
   routing traces are collected, risk-difference tables are built, and selected
   experts are injected back into generation.
+- `mixtral_backend.py`
+  Mixtral-specific router tracing and intervention. It reads router logits from
+  Mixtral sparse blocks and injects runtime bias through
+  `model.model.layers[layer].block_sparse_moe.gate`.
 - `manual_review.py`
   Condition-agnostic qualitative review plan + HTML/Markdown rendering.
 - `io_utils.py`
   Generic JSON / Markdown output helpers used by multiple entrypoints.
 
-## The stage-1 tensor flow
+## The steering tensor flow
 
-For one prompt on OLMoE:
+For one paired prompt on OLMoE or Mixtral:
 
 1. The tokenizer converts the chat-formatted prompt into a sequence of length
    `S`.
-2. OLMoE returns router logits per layer with shape `(L, S, E)`.
+2. The MoE returns router logits per layer with shape `(L, S, E)` after
+   reshaping any flattened `(B * S, E)` router tensors.
    Here:
    - `L` = number of MoE layers
    - `S` = sequence length
@@ -99,8 +109,8 @@ generic span-averaging abstraction.
 This layout keeps the repo honest about what is generic and what is model-
 specific:
 
-- `olmoe_backend.py` is the OLMoE-specific instrumentation, scoring, and
-  intervention layer for the faithful stage-1 SteerMoE path.
+- `olmoe_backend.py` is the OLMoE-specific instrumentation and intervention layer.
+- `mixtral_backend.py` is the Mixtral-specific instrumentation and intervention layer.
 - `attention_collection.py` is future-facing support for same-model
   attention-based comparisons.
 

@@ -1,11 +1,12 @@
 # Slurm Runbook
 
-This repo currently has one primary GPU steering experiment plus one diagnostic:
+This repo currently has two GPU steering experiments plus one older diagnostic:
 
 - `slurm/run_olmoe_steermoe_review.sbatch`
+- `slurm/run_mixtral_steermoe_review.sbatch`
 - `slurm/compare_prefix_conditioned_models.sbatch`
 
-That script runs the **stage-1 OLMoE SteerMoE transfer experiment**:
+The OLMoE script runs the original **stage-1 OLMoE SteerMoE transfer experiment**:
 
 1. load a manual review plan,
 2. collect routing traces on the shared statement-body target with `allenai/OLMoE-1B-7B-0125-Instruct`,
@@ -13,10 +14,15 @@ That script runs the **stage-1 OLMoE SteerMoE transfer experiment**:
 4. generate baseline and SteerMoE responses from question-only prompts,
 5. render `qualitative_review.md` and `qualitative_review.html`.
 
-The prefix-conditioned model comparison is separate: it asks whether OLMoE can
-follow the explicit prefix as well as Llama 3.1 8B and another MoE model. The
-dense attention collector is still available for future same-model comparisons,
-but it is no longer the main path for this repo.
+The Mixtral script runs the current requested question-only review:
+
+```text
+Llama 3.1 8B baseline | Mixtral 8x7B baseline | Mixtral 8x7B + SteerMoE
+```
+
+The prefix-conditioned model comparison is separate and older. The dense
+attention collector is still available for future same-model comparisons, but it
+is no longer the main path for this repo.
 
 ## Expected stage-1 workflow
 
@@ -55,6 +61,31 @@ Prompt template:
 So the stage-1 comparison tests whether router bias can replace the omitted
 concept prefix at generation time.
 
+## Current Mixtral review workflow
+
+Run this after preparing the same manual review plan:
+
+```bash
+REPO_DIR=$PWD \
+HF_HOME=$HOME/.cache/huggingface \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_with_llama \
+sbatch --partition=mit_normal_gpu --time=12:00:00 slurm/run_mixtral_steermoe_review.sbatch
+```
+
+This run compares:
+
+- `llama_3_1_8b_baseline`: Llama 3.1 8B on the question-only test prompt, no steering.
+- `mixtral_baseline`: Mixtral 8x7B on the same question-only test prompt, no steering.
+- `mixtral_steermoe`: the same Mixtral checkpoint and prompt, plus router bias.
+
+Mixtral is loaded in 4-bit by default. Disable that only if the target GPU has
+enough memory for the full checkpoint plus generation overhead:
+
+```bash
+LOAD_MIXTRAL_IN_4BIT=false sbatch slurm/run_mixtral_steermoe_review.sbatch
+```
+
 ## Prefix-conditioned model diagnostic
 
 Run this after preparing the same manual review plan if you want to compare base
@@ -86,13 +117,13 @@ steering result.
 
 ## MIT-cluster-friendly defaults
 
-The Slurm script defaults are intentionally conservative:
+The Mixtral Slurm script defaults are intentionally conservative:
 
 - partition: `mit_normal_gpu`
 - GPU count: `1`
 - CPUs: `8`
-- memory: `64G`
-- wall time: `06:00:00`
+- memory: `128G`
+- wall time: `12:00:00`
 
 Stage-1 runner defaults:
 
@@ -118,6 +149,8 @@ For one specific job:
 ```bash
 squeue -j <JOBID>
 tail -n 80 logs/olmoe-steermoe-<JOBID>.out
+# or, for the Mixtral review:
+tail -n 80 logs/mixtral-steermoe-<JOBID>.out
 ```
 
 After the job leaves the queue:
@@ -132,6 +165,7 @@ On the cluster:
 
 ```bash
 tar -czf olmoe_steermoe_fears_seed7.tar.gz -C experiments olmoe_steermoe_fears_seed7
+tar -czf mixtral_steermoe_fears_seed7_question_only_with_llama.tar.gz -C experiments mixtral_steermoe_fears_seed7_question_only_with_llama
 ```
 
 On your local machine:
@@ -154,6 +188,17 @@ The stage-1 run writes:
 - `experiments/olmoe_steermoe_fears_seed7/manual_review_plan.json`
 - `experiments/olmoe_steermoe_fears_seed7/qualitative_review.md`
 - `experiments/olmoe_steermoe_fears_seed7/qualitative_review.html`
+
+The Mixtral review writes:
+
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/custom_steering_datasets/`
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/routing_traces/`
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/activation_tables/`
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/steering_plans/`
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/generation_metadata.json`
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/manual_review_plan.json`
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.md`
+- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.html`
 
 The prefix diagnostic writes:
 

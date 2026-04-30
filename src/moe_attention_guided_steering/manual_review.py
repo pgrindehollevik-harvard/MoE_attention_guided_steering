@@ -326,13 +326,13 @@ def build_manual_review_markdown(plan: ManualReviewPlan) -> str:
         "",
         "## How To Read This Report",
         "",
-        "- `OLMoE baseline` and `SteerMoE` use the same OLMoE model.",
+        "- Same-model baseline and `+ SteerMoE` columns use the same MoE model when both are present.",
         "- Any reference-model column is unsteered question-only context; it is not the steering control.",
         "- `Question-only test prompt` is the exact prompt sent to each generation condition.",
         "- The concept prefix is intentionally omitted during this steering test.",
         "- `Prefix-conditioned diagnostic prompt` is shown for context only.",
-        "- `Baseline` = same OLMoE model, question-only prompt, no steering.",
-        "- `SteerMoE` = same OLMoE model, question-only prompt, plus router bias from the saved SteerMoE plan.",
+        "- Baseline/reference columns = question-only prompt, no steering.",
+        "- `+ SteerMoE` columns = question-only prompt plus router bias from the saved SteerMoE plan.",
         "",
         "## Sampled Concepts",
         "",
@@ -487,12 +487,12 @@ code{{background:#f6f8fa;padding:.1rem .3rem;border-radius:4px;}}
 <ul style='margin:.4rem 0 .2rem;padding-left:1.3rem;'>
 {legend_items}
 </ul>
-<strong>Important:</strong> <em>OLMoE baseline</em> and <em>SteerMoE</em> use the same OLMoE model; reference-model columns are unsteered context, not the steering control.<br>
+<strong>Important:</strong> same-model baseline and <em>+ SteerMoE</em> columns use the same MoE model when both are present; reference-model columns are unsteered context, not the steering control.<br>
 <strong>Question-only test prompt</strong> = the exact text each generation condition receives, for example:<br>
 <code>What is the scariest thing in the world? Answer in 20 words or less.</code><br>
 <strong>Prefix-conditioned diagnostic prompt</strong> shows the omitted concept prefix for context, but is not sent in this steering test.<br>
-<strong>OLMoE baseline (question only)</strong> = same OLMoE model, question-only prompt, no steering.<br>
-<strong>OLMoE + SteerMoE (question only)</strong> = same OLMoE model, question-only prompt, plus router bias from the saved SteerMoE plan.<br>
+<strong>Baseline/reference columns</strong> = question-only prompt, no steering.<br>
+<strong>+ SteerMoE columns</strong> = question-only prompt plus router bias from the saved SteerMoE plan.<br>
 <strong>What is being evaluated:</strong> whether SteerMoE makes the response more concept-faithful without making it worse or less coherent.
 </div>
 <p class='meta'>Concept family: <code>{html.escape(plan.concept_type)}</code> &middot; Evaluation family: <code>{html.escape(plan.evaluation_family)}</code> &middot; Seed: <code>{plan.seed}</code> &middot; Companion report: <code>{html.escape(companion_report) if companion_report else 'not linked'}</code></p>
