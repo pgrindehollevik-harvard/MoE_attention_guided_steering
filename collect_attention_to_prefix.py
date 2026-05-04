@@ -24,12 +24,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--model-id",
-        default="allenai/OLMoE-1B-7B-0125-Instruct",
+        default="mistralai/Mixtral-8x7B-Instruct-v0.1",
         help="Hugging Face model id or local model path.",
     )
     parser.add_argument(
         "--model-tag",
-        default="olmoe_1b_7b_0125_instruct",
+        default="mixtral_8x7b_instruct_v0_1",
         help="Short filesystem-friendly name to use in output filenames.",
     )
     parser.add_argument(

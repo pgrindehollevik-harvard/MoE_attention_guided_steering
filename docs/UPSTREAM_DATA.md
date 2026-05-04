@@ -31,7 +31,7 @@ files as a catalog for experiment setup. In particular, it:
 - keeps the upstream naming mismatch in one place, such as `fears -> phobia`
   and `places -> topophile`.
 
-These files are inputs to the current OLMoE steering runner. They
+These files are inputs to the current Mixtral steering runner. They
 provide concept names, matched generic statements, and evaluation questions; the
 runner collects the model-specific router traces at experiment time.
 

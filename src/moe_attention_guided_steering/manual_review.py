@@ -16,8 +16,10 @@ DEFAULT_CONDITION_ORDER = ["baseline", "steermoe"]
 DEFAULT_CONDITION_LABELS = {
     "baseline": "OLMoE baseline (question only)",
     "steermoe": "OLMoE + SteerMoE (question only)",
-    "attention_guided_activation": "OLMoE + attention-guided activation steering (question only)",
-    "attention_guided_moesteer": "OLMoE + attention-guided activation steering (question only)",
+    "mixtral_baseline": "Mixtral 8x7B baseline (question only)",
+    "mixtral_steermoe": "Mixtral 8x7B + SteerMoE (question only)",
+    "attention_guided_activation": "Mixtral 8x7B + attention-guided activation steering (question only)",
+    "attention_guided_moesteer": "Mixtral 8x7B + attention-guided activation steering (question only)",
 }
 
 

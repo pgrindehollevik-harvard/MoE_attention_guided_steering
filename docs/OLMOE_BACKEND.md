@@ -1,10 +1,10 @@
 # OLMoE SteerMoE Backend
 
-This document explains the current real MoE backend implemented in this repo:
+This document explains the earlier OLMoE backend implemented in this repo:
 
 `allenai/OLMoE-1B-7B-0125-Instruct`
 
-The current backend is intentionally focused on **stage 1**:
+This backend was intentionally focused on the first **stage 1** run:
 
 1. question-only baseline generation,
 2. question-only SteerMoE-style custom steering on our own fears data.
@@ -14,7 +14,7 @@ as the main experiment anymore.
 
 ## Why this backend exists
 
-The goal of stage 1 is straightforward:
+The goal of that stage 1 run was straightforward:
 
 > Before comparing SteerMoE to anything else, verify that a SteerMoE-style
 > intervention works at all on our own fear dataset.
@@ -157,7 +157,7 @@ single chat-template boundary token.
 
 ## Main entrypoint
 
-The current end-to-end experiment script is:
+The OLMoE end-to-end experiment script is:
 
 `run_olmoe_steermoe_review.py`
 

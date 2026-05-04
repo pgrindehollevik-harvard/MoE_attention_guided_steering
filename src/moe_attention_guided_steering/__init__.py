@@ -8,6 +8,12 @@ from .attention_collection import (
 )
 from .generation import generate_unsteered_response
 from .manual_review import build_manual_review_plan, extract_evaluation_question
+from .mixtral_backend import (
+    collect_mixtral_paired_routing_traces,
+    collect_mixtral_target_routing_trace_for_messages,
+    fill_manual_review_plan_with_mixtral_generations,
+    generate_with_mixtral_steering,
+)
 from .olmoe_backend import (
     build_steermoe_activation_table_from_paired_traces,
     build_steermoe_replication_plan,
@@ -39,11 +45,15 @@ __all__ = [
     "build_steermoe_replication_plan",
     "build_upstream_statement_prompt_pairs",
     "collect_attention_run",
+    "collect_mixtral_paired_routing_traces",
+    "collect_mixtral_target_routing_trace_for_messages",
     "collect_olmoe_paired_routing_traces",
     "collect_olmoe_target_routing_trace_for_messages",
     "extract_evaluation_question",
+    "fill_manual_review_plan_with_mixtral_generations",
     "fill_manual_review_plan_with_steermoe_generations",
     "generate_unsteered_response",
+    "generate_with_mixtral_steering",
     "generate_with_olmoe_steering",
     "infer_candidate_suffix_token_count",
     "load_hf_model_resources",

@@ -6,4 +6,4 @@ sentencepiece>=0.2
 protobuf>=4.25
 tiktoken>=0.7
 torch>=2.2
-# Optional: install bitsandbytes separately only when using --load-in-4bit.
+bitsandbytes>=0.46.1
