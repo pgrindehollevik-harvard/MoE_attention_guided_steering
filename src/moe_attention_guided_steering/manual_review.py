@@ -16,9 +16,8 @@ DEFAULT_CONDITION_ORDER = ["baseline", "steermoe"]
 DEFAULT_CONDITION_LABELS = {
     "baseline": "OLMoE baseline (question only)",
     "steermoe": "OLMoE + SteerMoE (question only)",
-    "attention_guided_moesteer": "Attention-guided MoESteer",
-    "llama_3_1_8b_baseline": "Llama 3.1 8B baseline (question only)",
-    "llama_3_1_8b_reference": "Llama 3.1 8B reference (question only)",
+    "attention_guided_activation": "OLMoE + attention-guided activation steering (question only)",
+    "attention_guided_moesteer": "OLMoE + attention-guided activation steering (question only)",
 }
 
 

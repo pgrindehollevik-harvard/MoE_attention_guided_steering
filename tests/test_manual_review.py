@@ -87,15 +87,15 @@ class ManualReviewTestCase(unittest.TestCase):
             concept_sample_size=1,
             question_sample_size=1,
             seed=7,
-            condition_order=["baseline", "llama_3_1_8b_baseline", "steermoe"],
+            condition_order=["baseline", "reference_model", "steermoe"],
         )
-        plan.cases[0].responses["llama_3_1_8b_baseline"] = "Question-only Llama answer."
+        plan.cases[0].responses["reference_model"] = "Question-only reference answer."
 
         markdown = build_manual_review_markdown(plan)
         html = build_manual_review_html(plan)
 
-        self.assertIn("Llama 3.1 8B baseline (question only)", markdown)
-        self.assertIn("Question-only Llama answer.", html)
+        self.assertIn("Reference Model", markdown)
+        self.assertIn("Question-only reference answer.", html)
         self.assertIn("reference-model column is unsteered question-only context", markdown)
         self.assertIn("reference-model columns are unsteered context", html)
 

@@ -1,13 +1,19 @@
 # MoE Attention-Guided Steering
 
-This repo is for one concrete research question:
+This repo is for a concrete research sequence around OLMoE:
 
-> Can a SteerMoE-style router intervention make a model answer a bare question
-> as if a hidden fear concept were present, without putting that concept in the
-> test prompt?
+1. Run SteerMoE on our five sampled fear concepts and compare it to an
+   unsteered OLMoE baseline.
+2. If that transfer check is meaningful, compare three OLMoE conditions:
+   baseline, attention-guided activation steering, and SteerMoE.
 
-The important constraint is the prompt contract. During evaluation, the model
-does **not** see:
+The repo is not currently organized around prefix-conditioned model comparison
+or a larger-MoE detour. Those paths were useful while we were debugging the
+question, but the active experiment is OLMoE again.
+
+## Prompt Contract
+
+During evaluation, the model does **not** see the concept prefix:
 
 ```text
 Personify someone who is terrified of Bugs.
@@ -19,23 +25,22 @@ It only sees the bare question, for example:
 What is the scariest thing in the world? Answer in 20 words or less.
 ```
 
-Any concept-specific movement should come from router steering, not from the
-words in the prompt.
+Any concept movement should come from steering. If the prompt itself names the
+fear, the experiment is answering an easier and less interesting question.
 
-## Current Next Run
+## Current Run
 
-The current experiment to run on ORCD is:
+Run this first:
 
 ```text
-Llama 3.1 8B baseline | Mixtral 8x7B baseline | Mixtral 8x7B + SteerMoE
+OLMoE baseline | OLMoE + SteerMoE
 ```
 
-All three columns are question-only. Llama is an unsteered reference. Mixtral
-baseline and Mixtral + SteerMoE use the same Mixtral checkpoint and the same
-bare question; the third column adds router-logit bias from the saved SteerMoE
-plan.
+Both columns use `allenai/OLMoE-1B-7B-0125-Instruct`. Both columns receive the
+same question-only prompt. The baseline has no intervention; the SteerMoE column
+adds router-logit bias from the selected OLMoE experts.
 
-On the cluster:
+On ORCD:
 
 ```bash
 cd ~/MoE_attention_guided_steering
@@ -47,136 +52,127 @@ python3 prepare_manual_fear_review.py
 REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
-OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_with_llama \
-sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
+OUTPUT_DIR=experiments/olmoe_steermoe_fears_seed7_question_only \
+sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_olmoe_steermoe_review.sbatch
 ```
-
-The `pip install -U` line matters for Mixtral: current Transformers 4-bit
-loading requires `bitsandbytes>=0.46.1`.
 
 Watch it:
 
 ```bash
 squeue -u $USER
-tail -n 120 logs/mixtral-steermoe-<JOBID>.out
+tail -n 120 logs/olmoe-steermoe-<JOBID>.out
 sacct -j <JOBID> --format=JobID,JobName,State,Elapsed,ExitCode
 ```
 
-Main file to read when it finishes:
+Main file to open when it finishes:
 
 ```text
-experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.html
+experiments/olmoe_steermoe_fears_seed7_question_only/qualitative_review.html
 ```
 
 ## What The HTML Means
 
-For each sampled fear concept and evaluation question, the report shows:
+Each section is one fear concept plus one evaluation question.
 
-- `Llama 3.1 8B baseline (question only)`: unsteered dense reference.
-- `Mixtral 8x7B baseline (question only)`: unsteered Mixtral.
-- `Mixtral 8x7B + SteerMoE (question only)`: same Mixtral model, same question,
-  plus router bias.
+- `OLMoE baseline (question only)`: unsteered OLMoE answering the bare question.
+- `OLMoE + SteerMoE (question only)`: the same OLMoE checkpoint, same question,
+  plus router bias from that concept's saved SteerMoE plan.
 
-Read it left to right:
+The report also shows a `Prefix-conditioned diagnostic prompt`. That text is
+for the reviewer, not the model. In the actual generation call,
+`case.full_prompt_text = case.evaluation_question`.
 
-1. Does Llama give a sane answer to the bare question?
-2. Does unsteered Mixtral give a sane answer to the same bare question?
-3. Does Mixtral + SteerMoE become more concept-faithful without becoming worse?
+Read each row with a simple checklist:
 
-The concept prefix shown in the report is there for reviewer context only. It is
-not sent during generation.
+1. Is the baseline fluent and sensible?
+2. Does SteerMoE change the answer at all?
+3. If it changes the answer, does it move toward the target fear instead of just
+   becoming generic horror language?
+4. Does steering preserve coherence?
+
+If the answer to #2 or #3 is mostly "no," then SteerMoE has not transferred
+well to these fear prompts yet.
+
+## Next Experiment
+
+If the OLMoE SteerMoE transfer check looks worth comparing against, the next
+target is:
+
+```text
+OLMoE baseline | OLMoE + attention-guided activation steering | OLMoE + SteerMoE
+```
+
+The attention-guided activation steering backend is not implemented yet. The
+repo keeps the attention-to-prefix collector because it is the natural starting
+point for that method, but the current runnable steering backend is OLMoE
+SteerMoE.
 
 ## What Is Implemented
 
-- OLMoE question-only SteerMoE review.
-- Mixtral question-only SteerMoE review with Llama reference.
-- Router-trace collection over the matched statement-body span.
+- Manual review plan generation for five fears and five evaluation questions.
+- OLMoE question-only baseline vs SteerMoE generation.
+- OLMoE router-trace collection over the matched statement-body span.
 - Risk-difference expert scoring.
-- Router-logit bias during generation.
-- HTML/Markdown reports for qualitative inspection.
-- A future-facing attention-to-prefix collector, kept for later method
-  comparison work.
+- Router-logit bias during OLMoE generation.
+- HTML/Markdown qualitative reports.
+- A future-facing attention-to-prefix collector for the next method comparison.
 
 Removed on purpose:
 
+- the prefix-conditioned model comparison runner,
+- the temporary larger-MoE steering runner/backend,
 - old toy pipeline abstractions,
 - the single-token hybrid prototype,
-- the prefix-conditioned model comparison path,
-- one-off helper scripts that were superseded by the integrated Mixtral runner.
+- one-off helper scripts that are no longer part of the research path.
 
-The repo should now point new readers toward the actual experiment instead of
-asking them to mentally sort active work from old scaffolding.
+The goal is that a new reader can tell what to run in the first five minutes.
 
 ## Repository Map
 
 - `prepare_manual_fear_review.py`
-  Builds the sampled fear concepts/questions used by the review reports.
-- `run_mixtral_steermoe_review.py`
-  Current main runner. Produces the three-column Llama/Mixtral/Mixtral+SteerMoE
-  report.
+  Builds the sampled fear concepts and evaluation questions.
 - `run_olmoe_steermoe_review.py`
-  Earlier OLMoE SteerMoE runner, still useful as a smaller-model baseline.
+  Current main runner. Produces the OLMoE baseline vs OLMoE + SteerMoE report.
 - `collect_attention_to_prefix.py`
-  Attention readout collector kept for later same-model method comparisons.
+  Attention readout collector kept for the next same-model method comparison.
 - `render_manual_review_report.py`
   Re-renders a saved manual review JSON into Markdown/HTML.
 - `inspect_reference_data.py`
   Quick sanity check for the vendored concept/question data.
 - `src/moe_attention_guided_steering/olmoe_backend.py`
   OLMoE router tracing and router-bias hooks.
-- `src/moe_attention_guided_steering/mixtral_backend.py`
-  Mixtral router tracing and router-bias hooks.
 - `src/moe_attention_guided_steering/manual_review.py`
   Shared review-plan schema and HTML/Markdown renderer.
 - `src/moe_attention_guided_steering/upstream_prompt_datasets.py`
   Builds paired concept/control statement prompts for SteerMoE scoring.
 - `src/moe_attention_guided_steering/attention_collection.py`
-  Shared HF loading utilities plus the future attention readout path.
-- `slurm/run_mixtral_steermoe_review.sbatch`
-  ORCD launcher for the current main run.
+  Shared HF loading utilities plus the attention readout path.
 - `slurm/run_olmoe_steermoe_review.sbatch`
-  ORCD launcher for the OLMoE run.
+  ORCD launcher for the current run.
+- `slurm/collect_attention_to_prefix.sbatch`
+  ORCD launcher for the future attention-readout stage.
 
 ## Local Sanity Checks
 
-These do not load real model weights:
+These checks do not load real model weights:
 
 ```bash
 python3 inspect_reference_data.py --concept-type fears
 python3 -m unittest discover -s tests
-python3 run_mixtral_steermoe_review.py --help
+python3 run_olmoe_steermoe_review.py --help
 ```
 
 For a tiny ORCD smoke test before the full run:
 
 ```bash
 LIMIT_CASES=1 \
-OUTPUT_DIR=experiments/mixtral_steermoe_smoke \
-sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
-```
-
-## OLMoE Run
-
-The OLMoE path is still here because it is the smaller, earlier reproduction
-target. Run it when you want the original baseline-vs-SteerMoE report:
-
-```bash
-REPO_DIR=$PWD \
-HF_HOME=$HOME/.cache/huggingface \
-PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
-OUTPUT_DIR=experiments/olmoe_steermoe_fears_seed7 \
-sbatch --partition=mit_normal_gpu --time=06:00:00 slurm/run_olmoe_steermoe_review.sbatch
-```
-
-Main output:
-
-```text
-experiments/olmoe_steermoe_fears_seed7/qualitative_review.html
+OUTPUT_DIR=experiments/olmoe_steermoe_smoke \
+sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_olmoe_steermoe_review.sbatch
 ```
 
 ## Output Layout
 
-Both steering runners write the same kind of bundle:
+The OLMoE steering runner writes:
 
 ```text
 custom_steering_datasets/
@@ -196,24 +192,33 @@ The most useful files for research review are:
 - `steering_plans/`: selected experts per concept.
 - `activation_tables/`: full risk-difference tables.
 
+## Troubleshooting
+
+If Slurm rejects a longer wall time on `mit_normal_gpu`, keep the submission at
+`--time=02:00:00`.
+
+If `sacct` only says `FAILED`, the useful error is in the log:
+
+```bash
+tail -n 120 logs/olmoe-steermoe-<JOBID>.out
+```
+
+If the manual plan is missing, rebuild it:
+
+```bash
+python3 prepare_manual_fear_review.py
+```
+
 ## Research Notes
 
-The current SteerMoE implementation follows the custom-steering shape more
-closely than the old prototype:
+The current SteerMoE implementation follows the custom-steering shape:
 
 1. Build matched concept/control prompt pairs from the same statement body.
-2. Collect router choices over that shared statement body.
+2. Collect OLMoE router choices over that shared statement body.
 3. Aggregate expert activation counts across the paired dataset.
 4. Score experts by risk difference.
 5. Select globally strongest positive and negative experts.
 6. Apply router-logit bias during question-only generation.
 
-Later, the clean method comparison should happen on one chosen MoE:
-
-```text
-baseline | SteerMoE | attention-guided steering
-```
-
-That is where the attention machinery comes back in. For now, the immediate job
-is to see whether Mixtral + SteerMoE produces a stronger question-only effect
-than the smaller OLMoE run.
+The later attention-guided method should stay on OLMoE too. That keeps the
+comparison clean: same data, same model, different steering rule.

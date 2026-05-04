@@ -1,54 +1,43 @@
 # Slurm Runbook
 
-This repo currently has two GPU steering experiments:
+The current GPU steering experiment is:
 
 - `slurm/run_olmoe_steermoe_review.sbatch`
-- `slurm/run_mixtral_steermoe_review.sbatch`
 
-The OLMoE script runs the original **stage-1 OLMoE SteerMoE transfer experiment**:
+It runs the OLMoE SteerMoE transfer check:
 
 1. load a manual review plan,
-2. collect routing traces on the shared statement-body target with `allenai/OLMoE-1B-7B-0125-Instruct`,
-3. build SteerMoE plans from a per-layer/per-expert risk-difference table,
-4. generate baseline and SteerMoE responses from question-only prompts,
+2. collect routing traces on the shared statement-body target with
+   `allenai/OLMoE-1B-7B-0125-Instruct`,
+3. build SteerMoE plans from per-layer/per-expert risk-difference tables,
+4. generate question-only baseline and SteerMoE responses,
 5. render `qualitative_review.md` and `qualitative_review.html`.
 
-The Mixtral script runs the current requested question-only review:
+The attention collector is still available for the next same-model method
+comparison, but it is not the current generation runner.
 
-```text
-Llama 3.1 8B baseline | Mixtral 8x7B baseline | Mixtral 8x7B + SteerMoE
-```
-
-The dense attention collector is still available for future same-model
-comparisons, but it is no longer the main path for this repo.
-
-## Expected stage-1 workflow
-
-1. Create or activate a Python environment on the cluster.
-2. Install `requirements-gpu.txt`.
-3. Ensure Hugging Face auth works for your chosen model.
-4. Prepare the qualitative review plan:
+## First Run On ORCD
 
 ```bash
+cd ~/MoE_attention_guided_steering
+git pull --ff-only origin main
+source .venv/bin/activate
+pip install -U -r requirements-gpu.txt
 python3 prepare_manual_fear_review.py
-```
 
-5. Launch the OLMoE run:
-
-```bash
 REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 MODEL_ID=allenai/OLMoE-1B-7B-0125-Instruct \
 MODEL_TAG=olmoe_1b_7b_0125_instruct \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
-OUTPUT_DIR=experiments/olmoe_steermoe_fears_seed7 \
-sbatch --partition=mit_normal_gpu --time=06:00:00 slurm/run_olmoe_steermoe_review.sbatch
+OUTPUT_DIR=experiments/olmoe_steermoe_fears_seed7_question_only \
+sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_olmoe_steermoe_review.sbatch
 ```
 
 This run compares:
 
-- `baseline`: regular OLMoE on the question-only test prompt
-- `steermoe`: the same OLMoE and the same question-only prompt, plus router bias
+- `baseline`: regular OLMoE on the question-only test prompt.
+- `steermoe`: the same OLMoE and the same question-only prompt, plus router bias.
 
 Prompt template:
 
@@ -56,61 +45,40 @@ Prompt template:
 {evaluation_question}
 ```
 
-So the stage-1 comparison tests whether router bias can replace the omitted
-concept prefix at generation time.
+So the comparison tests whether router bias can replace the omitted concept
+prefix at generation time.
 
-## Current Mixtral review workflow
+## MIT-Cluster-Friendly Defaults
 
-Run this after preparing the same manual review plan:
-
-```bash
-REPO_DIR=$PWD \
-HF_HOME=$HOME/.cache/huggingface \
-PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
-OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_with_llama \
-sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
-```
-
-This run compares:
-
-- `llama_3_1_8b_baseline`: Llama 3.1 8B on the question-only test prompt, no steering.
-- `mixtral_baseline`: Mixtral 8x7B on the same question-only test prompt, no steering.
-- `mixtral_steermoe`: the same Mixtral checkpoint and prompt, plus router bias.
-
-Mixtral is loaded in 4-bit by default. Disable that only if the target GPU has
-enough memory for the full checkpoint plus generation overhead:
-
-```bash
-LOAD_MIXTRAL_IN_4BIT=false sbatch slurm/run_mixtral_steermoe_review.sbatch
-```
-
-If loading fails with a bitsandbytes error, refresh the GPU environment first:
-
-```bash
-source .venv/bin/activate
-pip install -U -r requirements-gpu.txt
-```
-
-## MIT-cluster-friendly defaults
-
-The Mixtral Slurm script defaults are intentionally conservative:
+The Slurm script defaults are:
 
 - partition: `mit_normal_gpu`
 - GPU count: `1`
 - CPUs: `8`
-- memory: `128G`
+- memory: `64G`
 - wall time: `02:00:00`
 
-Stage-1 runner defaults:
+The SteerMoE runner defaults are:
 
 - readout target: `statement_body`
 - top positive experts: `8`
 - top negative experts: `8`
 - minimum absolute risk difference: `0.01`
 - steering coefficient: `1.0`
+- max new tokens: `48`
+- temperature: `0.0`
 
-These are much gentler than the retired single-token hybrid prototype and are
-meant to preserve fluency while we test whether SteerMoE transfers at all.
+These are deliberately modest. The first question is whether SteerMoE transfers
+to the fear data at all, not whether a more aggressive sweep can force an
+effect.
+
+For a tiny smoke test, keep only the first concept-question case:
+
+```bash
+LIMIT_CASES=1 \
+OUTPUT_DIR=experiments/olmoe_steermoe_smoke \
+sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_olmoe_steermoe_review.sbatch
+```
 
 ## Monitoring
 
@@ -124,9 +92,7 @@ For one specific job:
 
 ```bash
 squeue -j <JOBID>
-tail -n 80 logs/olmoe-steermoe-<JOBID>.out
-# or, for the Mixtral review:
-tail -n 80 logs/mixtral-steermoe-<JOBID>.out
+tail -n 120 logs/olmoe-steermoe-<JOBID>.out
 ```
 
 After the job leaves the queue:
@@ -135,53 +101,54 @@ After the job leaves the queue:
 sacct -j <JOBID> --format=JobID,JobName,State,Elapsed,ExitCode
 ```
 
-## Pulling results back locally
+If `sacct` only says `FAILED`, use the `tail` command above. The Python or model
+loading error will be in the log file.
+
+## Pulling Results Back Locally
 
 On the cluster:
 
 ```bash
-tar -czf olmoe_steermoe_fears_seed7.tar.gz -C experiments olmoe_steermoe_fears_seed7
-tar -czf mixtral_steermoe_fears_seed7_question_only_with_llama.tar.gz -C experiments mixtral_steermoe_fears_seed7_question_only_with_llama
+tar -czf olmoe_steermoe_fears_seed7_question_only.tar.gz -C experiments olmoe_steermoe_fears_seed7_question_only
 ```
 
 On your local machine:
 
 ```bash
-scp mit-orcd:~/MoE_attention_guided_steering/olmoe_steermoe_fears_seed7.tar.gz ~/Downloads/
+scp mit-orcd:~/MoE_attention_guided_steering/olmoe_steermoe_fears_seed7_question_only.tar.gz ~/Downloads/
 cd /Users/peterflo/Desktop/MoE_attention_guided_steering/experiments
-tar -xzf ~/Downloads/olmoe_steermoe_fears_seed7.tar.gz
+tar -xzf ~/Downloads/olmoe_steermoe_fears_seed7_question_only.tar.gz
 ```
 
-## Expected outputs
+Main file:
 
-The stage-1 run writes:
+```text
+experiments/olmoe_steermoe_fears_seed7_question_only/qualitative_review.html
+```
 
-- `experiments/olmoe_steermoe_fears_seed7/custom_steering_datasets/`
-- `experiments/olmoe_steermoe_fears_seed7/routing_traces/`
-- `experiments/olmoe_steermoe_fears_seed7/activation_tables/`
-- `experiments/olmoe_steermoe_fears_seed7/steering_plans/`
-- `experiments/olmoe_steermoe_fears_seed7/generation_metadata.json`
-- `experiments/olmoe_steermoe_fears_seed7/manual_review_plan.json`
-- `experiments/olmoe_steermoe_fears_seed7/qualitative_review.md`
-- `experiments/olmoe_steermoe_fears_seed7/qualitative_review.html`
+## Expected Outputs
 
-The Mixtral review writes:
+The run writes:
 
-- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/custom_steering_datasets/`
-- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/routing_traces/`
-- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/activation_tables/`
-- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/steering_plans/`
-- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/generation_metadata.json`
-- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/manual_review_plan.json`
-- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.md`
-- `experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.html`
+- `experiments/olmoe_steermoe_fears_seed7_question_only/custom_steering_datasets/`
+- `experiments/olmoe_steermoe_fears_seed7_question_only/routing_traces/`
+- `experiments/olmoe_steermoe_fears_seed7_question_only/activation_tables/`
+- `experiments/olmoe_steermoe_fears_seed7_question_only/steering_plans/`
+- `experiments/olmoe_steermoe_fears_seed7_question_only/generation_metadata.json`
+- `experiments/olmoe_steermoe_fears_seed7_question_only/manual_review_plan.json`
+- `experiments/olmoe_steermoe_fears_seed7_question_only/qualitative_review.md`
+- `experiments/olmoe_steermoe_fears_seed7_question_only/qualitative_review.html`
 
-## Optional future attention stage
+## Optional Future Attention Stage
 
-For the later same-model comparison against an attention-based method, the repo
-still keeps:
+For the later same-model comparison against an attention-guided activation
+steering method, the repo keeps:
 
 - `collect_attention_to_prefix.py`
 - `slurm/collect_attention_to_prefix.sbatch`
 
-That stage is now supporting infrastructure rather than the main experiment.
+That stage should feed the future three-way OLMoE report:
+
+```text
+OLMoE baseline | OLMoE + attention-guided activation steering | OLMoE + SteerMoE
+```

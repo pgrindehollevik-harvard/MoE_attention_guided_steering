@@ -1,99 +1,91 @@
 # Research Synthesis
 
-This document is the plain-English bridge between the two reference projects and
-explains how the repo is staged now.
+This document is the plain-English bridge between SteerMoE, the
+attention-guided steering reference work, and the staged plan in this repo.
 
-## 1. What SteerMoE contributes
+## 1. What SteerMoE Contributes
 
-SteerMoE tells us that the intervention target in a sparse MoE is not just a
+SteerMoE says the intervention target in a sparse MoE does not have to be a
 dense hidden-state direction. We can instead:
 
 - inspect which experts are being routed to,
 - compare those routing patterns across contrastive prompt sets,
-- and bias routing toward or away from the experts that seem behavior-linked.
+- bias routing toward or away from the experts that seem behavior-linked.
 
-That is the core idea behind the current stage-1 experiment.
+That is the core idea behind the current OLMoE experiment.
 
-## 2. What attention-guided steering contributes
+## 2. What Attention-Guided Steering Contributes
 
 Attention-guided steering contributes a different idea: fixed token positions are
 often a crude readout rule. Attention patterns can help identify **where** a
 concept signal is most strongly expressed.
 
-That is still interesting for this repo, but it is no longer the first thing we
-are trying to prove.
+That is still the interesting second question, but only after the OLMoE
+SteerMoE baseline is grounded on our data.
 
-## 3. What changed after rereading SteerMoE
+## 3. What Changed After Rereading SteerMoE
 
 Our first hybrid prototype treated SteerMoE as if it should read from one
 selected token per layer. After rereading the paper, that was too aggressive a
 compression.
 
-SteerMoE is better thought of as a **targeted routing-statistics** method:
+SteerMoE is better thought of as a targeted routing-statistics method:
 
 - routing matters across many tokens,
-- a behavior-relevant target region is often more appropriate than one single token,
+- a behavior-relevant target region is often more appropriate than one single
+  token,
 - the intervention plan should be built from those broader routing statistics.
 
-That is why the repo starts from custom-steering reproduction attempts on our
-own fear data, first with OLMoE and now with a larger Mixtral MoE.
+That is why the current run collects OLMoE routing traces over the shared
+statement-body span.
 
-## 4. Current staged plan
+## 4. Current Staged Plan
 
-### Stage 1: transfer SteerMoE to our own data
-
-Run baseline vs SteerMoE on `allenai/OLMoE-1B-7B-0125-Instruct` using a
-behavior-relevant token span and measure whether the intervention changes outputs
-without destroying fluency.
-
-### Stage 1b: repeat the same question-only test on Mixtral
+### Stage 1: Does SteerMoE Transfer To Our Fear Data?
 
 Run:
 
-- Llama 3.1 8B baseline, unsteered and question-only,
-- Mixtral 8x7B baseline, unsteered and question-only,
-- Mixtral 8x7B + SteerMoE, question-only with router bias.
+- OLMoE baseline, unsteered and question-only,
+- OLMoE + SteerMoE, question-only with router bias.
 
-This answers the newer model-capacity concern without returning to
-prefix-conditioned generation as the main target.
+This asks whether SteerMoE creates concept-specific movement on the five sampled
+fear concepts when the model never sees the concept prefix at evaluation time.
 
-### Stage 2: compare against an attention-based method on the same model
+### Stage 2: Does Attention-Guided Activation Steering Beat SteerMoE?
 
-Only after the same-model SteerMoE baseline is trustworthy do we make the method
-comparison:
+Only after Stage 1 is interpretable do the same-model method comparison:
 
-- baseline on the chosen MoE
-- SteerMoE on that same MoE
-- an attention-based steering alternative on that same MoE
+- OLMoE baseline,
+- OLMoE + attention-guided activation steering on hidden states,
+- OLMoE + SteerMoE.
 
-This avoids the bad comparison where the method and model architecture change at
-the same time.
+This keeps the comparison clean: same data, same model, different steering rule.
 
-## 5. What the current MoE backends do
+## 5. What The Current OLMoE Backend Does
 
-The committed OLMoE and Mixtral backends:
+The committed OLMoE backend:
 
 1. builds positive/negative prompt pairs from the imported fear dataset,
-2. converts them into Adobe-style paired custom steering examples,
+2. converts them into paired custom steering examples,
 3. uses the shared statement body as the matched target region,
-4. reads model-specific router logits for every token in that target,
-5. marks which experts were actually selected by routing,
-6. aggregates those routed-expert counts over the full paired dataset,
-7. computes per-layer/per-expert **risk difference**,
+4. reads OLMoE router logits for every token in that target,
+5. marks which experts were selected by routing,
+6. aggregates routed-expert counts over the full paired dataset,
+7. computes per-layer/per-expert risk difference,
 8. selects the globally strongest positive and negative experts,
 9. generates baseline vs steered outputs for qualitative review.
 
-So the current experiment is not "SteerMoE plus attention guidance." It is
-"Does SteerMoE transfer to our data when we implement it in a way that is much
-closer to the paper?"
+So the current experiment is not "SteerMoE plus attention guidance." It is:
 
-## 6. What remains open
+> Does SteerMoE transfer to our data when implemented close to the paper?
 
-Once stage 1 is solid, the main research question becomes:
+## 6. What Remains Open
 
-- Should attention replace the span readout rule entirely?
-- Or should attention weight or prioritize tokens **within** a behavior-relevant
-  span?
+Once Stage 1 is solid, the main research question becomes:
 
-That later comparison is the place for the real innovation, not the current
-baseline-establishing run.
+- Should attention replace the statement-body readout rule?
+- Should attention weight or prioritize tokens within a behavior-relevant span?
+- Is hidden-state activation steering cleaner than router-logit steering for
+  these fear concepts?
+
+That later comparison is the place for the new method contribution.

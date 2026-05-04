@@ -68,8 +68,14 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-dir",
-        default="experiments/olmoe_steermoe_fears_seed7",
+        default="experiments/olmoe_steermoe_fears_seed7_question_only",
         help="Experiment directory where datasets, steering plans, and reports should be written.",
+    )
+    parser.add_argument(
+        "--limit-cases",
+        type=int,
+        default=None,
+        help="Optional smoke-test limit for the number of concept/question cases to run.",
     )
     parser.add_argument(
         "--statement-stride",
@@ -148,7 +154,7 @@ def main() -> None:
     parser.add_argument(
         "--load-in-4bit",
         action="store_true",
-        help="Load OLMoE with bitsandbytes 4-bit quantization when available.",
+        help="Load OLMoE with optional bitsandbytes 4-bit quantization when available.",
     )
     args = parser.parse_args()
 
@@ -182,6 +188,26 @@ def main() -> None:
                 concept_value=case.concept,
                 evaluation_question=case.evaluation_question,
             )
+
+    if args.limit_cases is not None:
+        if args.limit_cases <= 0:
+            raise ValueError("--limit-cases must be positive when provided.")
+        plan.cases = plan.cases[: args.limit_cases]
+        kept_concepts = {case.concept for case in plan.cases}
+        kept_versions = {case.evaluation_version for case in plan.cases}
+        plan.sampled_concepts = [
+            concept for concept in plan.sampled_concepts if concept in kept_concepts
+        ]
+        plan.sampled_evaluation_versions = [
+            version
+            for version in plan.sampled_evaluation_versions
+            if version in kept_versions
+        ]
+        plan.evaluation_questions_by_version = {
+            version: question
+            for version, question in plan.evaluation_questions_by_version.items()
+            if version in kept_versions
+        }
 
     reference_data = load_reference_data(args.data_dir)
     output_dir = Path(args.output_dir)
@@ -278,6 +304,7 @@ def main() -> None:
             "max_new_tokens": args.max_new_tokens,
             "temperature": args.temperature,
             "top_p": args.top_p,
+            "limit_cases": args.limit_cases,
         },
         output_dir / "generation_metadata.json",
     )

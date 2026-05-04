@@ -168,8 +168,8 @@ It:
 3. converts them into paired custom steering examples,
 4. collects target-level OLMoE routing traces,
 5. builds one SteerMoE risk-difference table and steering plan per concept,
-5. generates baseline and SteerMoE outputs from question-only prompts,
-6. writes an updated JSON plan plus HTML and Markdown review reports.
+6. generates baseline and SteerMoE outputs from question-only prompts,
+7. writes an updated JSON plan plus HTML and Markdown review reports.
 
 The matching MIT-cluster Slurm template is:
 

@@ -30,8 +30,8 @@ class ReferenceDataBundle:
 class ReferenceConceptSuite:
     """The subset of imported data needed for one concept family.
 
-    This is the adapter layer between the vendored text files and the OLMoE,
-    Mixtral, and future attention-collector entrypoints.
+    This is the adapter layer between the vendored text files and the current
+    OLMoE runner plus the future attention-collector entrypoint.
     """
 
     concept_type: str

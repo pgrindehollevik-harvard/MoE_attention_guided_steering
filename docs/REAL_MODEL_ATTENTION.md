@@ -98,7 +98,7 @@ MoE router behavior or expert activations. The future MoE trace collector should
 2. use `layer_to_token.json` to choose the token position per layer,
 3. read expert loads at those positions,
 4. compare those attention-selected readouts against the current statement-body
-   readout used by the OLMoE and Mixtral SteerMoE backends.
+   readout used by the OLMoE SteerMoE backend.
 
 That future MoE collector is still the next implementation step, but the real
 attention-selection stage is no longer just a placeholder.
