@@ -25,6 +25,9 @@ EXTRA_ARGS=()
 if [ "${LOAD_IN_4BIT:-false}" = "true" ]; then
   EXTRA_ARGS+=(--load-in-4bit)
 fi
+if [ "${LOAD_IN_8BIT:-false}" = "true" ]; then
+  EXTRA_ARGS+=(--load-in-8bit)
+fi
 if [ "${BNB_CPU_OFFLOAD:-false}" = "true" ]; then
   EXTRA_ARGS+=(--bnb-cpu-offload)
 fi

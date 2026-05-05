@@ -74,7 +74,7 @@ class ModelComparisonTestCase(unittest.TestCase):
                 "model_tag": "mixtral",
                 "device_map": None,
                 "use_cache": False,
-                "load_in_4bit": True,
+                "load_in_8bit": True,
                 "bnb_cpu_offload": True,
                 "offload_folder": "outputs/offload/mixtral-test",
                 "min_new_tokens": 4,
@@ -84,7 +84,8 @@ class ModelComparisonTestCase(unittest.TestCase):
 
         self.assertIsNone(spec.device_map)
         self.assertFalse(spec.use_cache)
-        self.assertTrue(spec.load_in_4bit)
+        self.assertIsNone(spec.load_in_4bit)
+        self.assertTrue(spec.load_in_8bit)
         self.assertTrue(spec.bnb_cpu_offload)
         self.assertEqual(spec.offload_folder, "outputs/offload/mixtral-test")
         self.assertEqual(spec.min_new_tokens, 4)

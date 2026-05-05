@@ -95,6 +95,11 @@ def main() -> None:
         help="Load models with bitsandbytes 4-bit quantization when available.",
     )
     parser.add_argument(
+        "--load-in-8bit",
+        action="store_true",
+        help="Load models with bitsandbytes 8-bit quantization when available.",
+    )
+    parser.add_argument(
         "--bnb-cpu-offload",
         action="store_true",
         help="Allow bitsandbytes to keep overflow modules on CPU when a quantized model does not fit GPU RAM.",
@@ -118,6 +123,7 @@ def main() -> None:
         device_map_override=args.device_map,
         torch_dtype=args.torch_dtype,
         load_in_4bit=args.load_in_4bit,
+        load_in_8bit=args.load_in_8bit,
         attn_implementation_override=args.attn_implementation,
         max_new_tokens=args.max_new_tokens,
         temperature=args.temperature,

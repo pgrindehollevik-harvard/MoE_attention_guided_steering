@@ -1,6 +1,6 @@
 numpy>=1.26
 tqdm>=4.66
-transformers>=4.45
+transformers>=4.45,<5
 accelerate>=0.34
 sentencepiece>=0.2
 protobuf>=4.25

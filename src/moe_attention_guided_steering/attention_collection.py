@@ -192,6 +192,7 @@ def load_hf_model_resources(
     device_map: Optional[str] = "auto",
     torch_dtype: str = "bfloat16",
     load_in_4bit: bool = False,
+    load_in_8bit: bool = False,
     bnb_cpu_offload: bool = False,
     offload_folder: Optional[str] = None,
     attn_implementation: Optional[str] = "eager",
@@ -221,11 +222,15 @@ def load_hf_model_resources(
     if torch_dtype:
         model_kwargs["dtype"] = getattr(torch, torch_dtype)
 
-    if load_in_4bit:
+    if load_in_4bit and load_in_8bit:
+        raise ValueError("Choose either load_in_4bit or load_in_8bit, not both.")
+
+    if load_in_4bit or load_in_8bit:
         from transformers import BitsAndBytesConfig
 
         model_kwargs["quantization_config"] = BitsAndBytesConfig(
-            load_in_4bit=True,
+            load_in_4bit=load_in_4bit,
+            load_in_8bit=load_in_8bit,
             llm_int8_enable_fp32_cpu_offload=bnb_cpu_offload,
         )
 

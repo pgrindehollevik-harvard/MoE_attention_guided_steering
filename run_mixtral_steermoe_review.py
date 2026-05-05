@@ -199,8 +199,14 @@ def main() -> None:
     parser.add_argument(
         "--load-mixtral-in-4bit",
         action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Load Mixtral with bitsandbytes 4-bit quantization. Disabled by default on ORCD.",
+    )
+    parser.add_argument(
+        "--load-mixtral-in-8bit",
+        action=argparse.BooleanOptionalAction,
         default=True,
-        help="Load Mixtral with bitsandbytes 4-bit quantization. Enabled by default.",
+        help="Load Mixtral with bitsandbytes 8-bit quantization. Enabled by default on ORCD.",
     )
     parser.add_argument(
         "--bnb-cpu-offload",
@@ -209,6 +215,8 @@ def main() -> None:
         help="Allow bitsandbytes to place overflow Mixtral modules on CPU. Enabled by default.",
     )
     args = parser.parse_args()
+    if args.load_mixtral_in_4bit and args.load_mixtral_in_8bit:
+        parser.error("Choose either --load-mixtral-in-4bit or --load-mixtral-in-8bit, not both.")
 
     plan = load_manual_review_plan(args.plan_json)
     if args.limit_cases is not None:
@@ -234,6 +242,7 @@ def main() -> None:
         device_map=args.device_map,
         torch_dtype=args.torch_dtype,
         load_in_4bit=args.load_mixtral_in_4bit,
+        load_in_8bit=args.load_mixtral_in_8bit,
         bnb_cpu_offload=args.bnb_cpu_offload,
         attn_implementation=args.mixtral_attn_implementation,
         infer_attention_suffix_tokens=False,
@@ -318,6 +327,7 @@ def main() -> None:
             "mixtral_model_id": args.mixtral_model_id,
             "mixtral_model_tag": args.mixtral_model_tag,
             "mixtral_loaded_in_4bit": args.load_mixtral_in_4bit,
+            "mixtral_loaded_in_8bit": args.load_mixtral_in_8bit,
             "bnb_cpu_offload": args.bnb_cpu_offload,
             "steering_coefficient": args.steering_coefficient,
             "top_positive_experts": args.top_positive_experts,

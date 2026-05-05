@@ -34,8 +34,9 @@ experiments/prefix_conditioned_model_comparison_mixtral_fears_seed7/model_compar
 ```
 
 The Mixtral entry in `configs/prefix_conditioned_model_comparison.json` is
-loaded in 4-bit with bitsandbytes CPU offload enabled. Llama and OLMoE use their
-normal per-model settings.
+loaded in 8-bit with bitsandbytes CPU offload enabled. Llama and OLMoE use their
+normal per-model settings. We use 8-bit here because the ORCD package stack hit
+a 4-bit `Params4bit` compatibility error during Mixtral loading.
 
 If Mixtral is the only question you need to answer, run the smaller diagnostic:
 

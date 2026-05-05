@@ -24,6 +24,7 @@ class ModelComparisonSpec:
     device_map: Optional[str] = "auto"
     use_cache: bool = True
     load_in_4bit: Optional[bool] = None
+    load_in_8bit: Optional[bool] = None
     bnb_cpu_offload: bool = False
     offload_folder: Optional[str] = None
     max_new_tokens: Optional[int] = None
@@ -45,6 +46,7 @@ def model_comparison_spec_from_dict(data: Dict[str, Any]) -> ModelComparisonSpec
         device_map=data.get("device_map", "auto"),
         use_cache=bool(data.get("use_cache", True)),
         load_in_4bit=bool(data["load_in_4bit"]) if "load_in_4bit" in data else None,
+        load_in_8bit=bool(data["load_in_8bit"]) if "load_in_8bit" in data else None,
         bnb_cpu_offload=bool(data.get("bnb_cpu_offload", False)),
         offload_folder=data.get("offload_folder"),
         max_new_tokens=data.get("max_new_tokens"),
@@ -120,6 +122,7 @@ def fill_model_comparison_results_with_generations(
     device_map_override: Optional[str] = None,
     torch_dtype: str = "bfloat16",
     load_in_4bit: bool = False,
+    load_in_8bit: bool = False,
     attn_implementation_override: Optional[str] = None,
     max_new_tokens: int = 48,
     temperature: float = 0.0,
@@ -134,6 +137,7 @@ def fill_model_comparison_results_with_generations(
 
     for spec in model_specs:
         should_load_in_4bit = load_in_4bit or bool(spec.load_in_4bit)
+        should_load_in_8bit = load_in_8bit or bool(spec.load_in_8bit)
         resources = load_hf_model_resources(
             model_id=spec.model_id,
             model_tag=spec.model_tag,
@@ -145,6 +149,7 @@ def fill_model_comparison_results_with_generations(
             ),
             torch_dtype=torch_dtype,
             load_in_4bit=should_load_in_4bit,
+            load_in_8bit=should_load_in_8bit,
             bnb_cpu_offload=bnb_cpu_offload or spec.bnb_cpu_offload,
             offload_folder=spec.offload_folder,
             attn_implementation=(

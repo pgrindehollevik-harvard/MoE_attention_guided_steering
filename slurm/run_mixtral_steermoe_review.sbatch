@@ -22,8 +22,12 @@ export TOKENIZERS_PARALLELISM=false
 export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
 
 EXTRA_ARGS=()
-if [ "${LOAD_MIXTRAL_IN_4BIT:-true}" != "true" ]; then
-  EXTRA_ARGS+=(--no-load-mixtral-in-4bit)
+if [ "${LOAD_MIXTRAL_IN_4BIT:-false}" = "true" ]; then
+  EXTRA_ARGS+=(--load-mixtral-in-4bit)
+  EXTRA_ARGS+=(--no-load-mixtral-in-8bit)
+fi
+if [ "${LOAD_MIXTRAL_IN_8BIT:-true}" != "true" ]; then
+  EXTRA_ARGS+=(--no-load-mixtral-in-8bit)
 fi
 if [ "${BNB_CPU_OFFLOAD:-true}" != "true" ]; then
   EXTRA_ARGS+=(--no-bnb-cpu-offload)

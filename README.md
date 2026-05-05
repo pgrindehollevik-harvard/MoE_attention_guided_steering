@@ -63,9 +63,9 @@ OUTPUT_DIR=experiments/prefix_conditioned_mixtral_only_fears_seed7 \
 sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
 ```
 
-Both Mixtral configs use 4-bit loading plus bitsandbytes CPU offload. That is
-slower than keeping everything on GPU, but it is the practical fallback when
-ORCD gives us GPUs that cannot hold the whole quantized Mixtral map.
+Both Mixtral configs use 8-bit loading plus bitsandbytes CPU offload. That is
+slower and larger than 4-bit, but it avoids the ORCD 4-bit `Params4bit`
+compatibility failure while still letting Mixtral spill overflow modules to CPU.
 
 ## Run 2: Question-Only Mixtral SteerMoE
 
@@ -140,7 +140,7 @@ point for that method.
 - `prepare_manual_fear_review.py`
   Builds the sampled fear concepts and evaluation questions.
 - `configs/prefix_conditioned_model_comparison.json`
-  Model list for Run 1. Mixtral is loaded in 4-bit by default.
+  Model list for Run 1. Mixtral is loaded in 8-bit with CPU offload by default.
 - `slurm/compare_prefix_conditioned_models.sbatch`
   ORCD launcher for Run 1.
 - `slurm/run_mixtral_steermoe_review.sbatch`
@@ -190,9 +190,16 @@ source .venv/bin/activate
 pip install -U -r requirements-gpu.txt
 ```
 
+`requirements-gpu.txt` pins Transformers below version 5 because the current
+ORCD stack hit a 4-bit bitsandbytes error:
+
+```text
+TypeError: Params4bit.__new__() got an unexpected keyword argument '_is_hf_initialized'
+```
+
 If the error says modules were dispatched to CPU or disk, pull the latest repo
 and use either the default comparison config or
-`configs/mixtral_only_prefix_config.json`; both enable CPU offload for Mixtral.
+`configs/mixtral_only_prefix_config.json`; both use 8-bit CPU offload for Mixtral.
 
 If `sacct` only says `FAILED`, the useful error is in the log:
 
