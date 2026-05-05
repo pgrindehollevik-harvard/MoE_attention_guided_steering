@@ -1,22 +1,17 @@
 # Slurm Runbook
 
-The current GPU steering experiment is:
+There are two runnable GPU jobs. The immediate one for Parmida's first request
+is the prefix-conditioned model comparison.
 
-- `slurm/run_mixtral_steermoe_review.sbatch`
+## Run 1: Prefix-Conditioned Comparison
 
-It runs the Mixtral SteerMoE transfer check:
+This run compares unsteered full-prefix generations:
 
-1. load a manual review plan,
-2. collect routing traces on the shared statement-body target with
-   `mistralai/Mixtral-8x7B-Instruct-v0.1`,
-3. build SteerMoE plans from per-layer/per-expert risk-difference tables,
-4. generate question-only baseline and SteerMoE responses,
-5. render `qualitative_review.md` and `qualitative_review.html`.
+```text
+Llama 3.1 8B Instruct | OLMoE 1B-7B Instruct | Mixtral 8x7B Instruct
+```
 
-The attention collector is still available for the next same-model method
-comparison, but it is not the current generation runner.
-
-## First Run On ORCD
+Submit:
 
 ```bash
 cd ~/MoE_attention_guided_steering
@@ -27,54 +22,77 @@ python3 prepare_manual_fear_review.py
 
 REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
-MIXTRAL_MODEL_ID=mistralai/Mixtral-8x7B-Instruct-v0.1 \
-MIXTRAL_MODEL_TAG=mixtral_8x7b_instruct_v0_1 \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/prefix_conditioned_model_comparison_mixtral_fears_seed7 \
+sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
+```
+
+Main output:
+
+```text
+experiments/prefix_conditioned_model_comparison_mixtral_fears_seed7/model_comparison.html
+```
+
+The Mixtral entry in `configs/prefix_conditioned_model_comparison.json` is
+loaded in 4-bit. Llama and OLMoE use their normal per-model settings.
+
+## Run 2: Question-Only Mixtral SteerMoE
+
+This run compares:
+
+```text
+Mixtral baseline | Mixtral + SteerMoE
+```
+
+Submit:
+
+```bash
+REPO_DIR=$PWD \
+HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
 OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only \
 sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
 ```
 
-This run compares:
-
-- `mixtral_baseline`: regular Mixtral on the question-only test prompt.
-- `mixtral_steermoe`: the same Mixtral and the same question-only prompt, plus
-  router bias.
-
-Prompt template:
+Main output:
 
 ```text
-{evaluation_question}
+experiments/mixtral_steermoe_fears_seed7_question_only/qualitative_review.html
 ```
 
-So the comparison tests whether router bias can replace the omitted concept
-prefix at generation time.
+## Monitoring
 
-## MIT-Cluster-Friendly Defaults
+```bash
+squeue -u $USER
+sacct -j <JOBID> --format=JobID,JobName,State,Elapsed,ExitCode
+```
 
-The Slurm script defaults are:
+Run 1 log:
 
-- partition: `mit_normal_gpu`
-- GPU count: `1`
-- CPUs: `8`
-- memory: `128G`
-- wall time: `02:00:00`
-- Mixtral 4-bit loading: enabled
+```bash
+tail -n 120 logs/prefix-models-<JOBID>.out
+```
 
-The SteerMoE runner defaults are:
+Run 2 log:
 
-- readout target: `statement_body`
-- top positive experts: `8`
-- top negative experts: `8`
-- minimum absolute risk difference: `0.01`
-- steering coefficient: `1.0`
-- max new tokens: `48`
-- temperature: `0.0`
+```bash
+tail -n 120 logs/mixtral-steermoe-<JOBID>.out
+```
 
-These are deliberately modest. The first question is whether SteerMoE transfers
-to the fear data on Mixtral at all, not whether a more aggressive sweep can
-force an effect.
+If `squeue -j <JOBID>` says the id is invalid, the job has already left the
+queue; use `sacct` and the log instead.
 
-For a tiny smoke test, keep only the first concept-question case:
+## Smoke Tests
+
+Run 1:
+
+```bash
+LIMIT_CASES=1 \
+OUTPUT_DIR=experiments/prefix_conditioned_model_comparison_mixtral_smoke \
+sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
+```
+
+Run 2:
 
 ```bash
 LIMIT_CASES=1 \
@@ -82,75 +100,21 @@ OUTPUT_DIR=experiments/mixtral_steermoe_smoke \
 sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
 ```
 
-## Monitoring
+## Quota And Caches
 
-While the job is queued or running:
-
-```bash
-squeue -u $USER
-```
-
-For one specific job:
-
-```bash
-squeue -j <JOBID>
-tail -n 120 logs/mixtral-steermoe-<JOBID>.out
-```
-
-After the job leaves the queue:
-
-```bash
-sacct -j <JOBID> --format=JobID,JobName,State,Elapsed,ExitCode
-```
-
-If `sacct` only says `FAILED`, use the `tail` command above. The Python or model
-loading error will be in the log file.
-
-## Pulling Results Back Locally
-
-On the cluster:
-
-```bash
-tar -czf mixtral_steermoe_fears_seed7_question_only.tar.gz -C experiments mixtral_steermoe_fears_seed7_question_only
-```
-
-On your local machine:
-
-```bash
-scp mit-orcd:~/MoE_attention_guided_steering/mixtral_steermoe_fears_seed7_question_only.tar.gz ~/Downloads/
-cd /Users/peterflo/Desktop/MoE_attention_guided_steering/experiments
-tar -xzf ~/Downloads/mixtral_steermoe_fears_seed7_question_only.tar.gz
-```
-
-Main file:
+The recent failure happened before the job reached model loading:
 
 ```text
-experiments/mixtral_steermoe_fears_seed7_question_only/qualitative_review.html
+OSError: [Errno 122] Disk quota exceeded
 ```
 
-## Expected Outputs
+That means the manual review JSON could not be written. Check quota and large
+cache/output directories before resubmitting:
 
-The run writes:
-
-- `experiments/mixtral_steermoe_fears_seed7_question_only/custom_steering_datasets/`
-- `experiments/mixtral_steermoe_fears_seed7_question_only/routing_traces/`
-- `experiments/mixtral_steermoe_fears_seed7_question_only/activation_tables/`
-- `experiments/mixtral_steermoe_fears_seed7_question_only/steering_plans/`
-- `experiments/mixtral_steermoe_fears_seed7_question_only/generation_metadata.json`
-- `experiments/mixtral_steermoe_fears_seed7_question_only/manual_review_plan.json`
-- `experiments/mixtral_steermoe_fears_seed7_question_only/qualitative_review.md`
-- `experiments/mixtral_steermoe_fears_seed7_question_only/qualitative_review.html`
-
-## Optional Future Attention Stage
-
-For the later same-model comparison against an attention-guided activation
-steering method, the repo keeps:
-
-- `collect_attention_to_prefix.py`
-- `slurm/collect_attention_to_prefix.sbatch`
-
-That stage should feed the future three-way Mixtral report:
-
-```text
-Mixtral baseline | Mixtral + attention-guided activation steering | Mixtral + SteerMoE
+```bash
+quota -s
+du -sh ~/.cache/huggingface outputs experiments logs 2>/dev/null
 ```
+
+If home quota is full, move `HF_HOME`, `OUTPUT_DIR`, or old experiment bundles
+to a scratch/project location with enough space.

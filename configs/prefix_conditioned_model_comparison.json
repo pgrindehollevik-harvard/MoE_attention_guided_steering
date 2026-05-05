@@ -1,0 +1,32 @@
+{
+  "models": [
+    {
+      "label": "Llama 3.1 8B Instruct",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "model_tag": "llama_3_1_8b_instruct",
+      "prompt_format": "chat",
+      "trust_remote_code": false,
+      "device_map": "auto",
+      "attn_implementation": "eager"
+    },
+    {
+      "label": "OLMoE 1B-7B Instruct",
+      "model_id": "allenai/OLMoE-1B-7B-0125-Instruct",
+      "model_tag": "olmoe_1b_7b_0125_instruct",
+      "prompt_format": "chat",
+      "trust_remote_code": false,
+      "device_map": "auto",
+      "attn_implementation": "eager"
+    },
+    {
+      "label": "Mixtral 8x7B Instruct",
+      "model_id": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "model_tag": "mixtral_8x7b_instruct_v0_1",
+      "prompt_format": "chat",
+      "trust_remote_code": false,
+      "device_map": "auto",
+      "attn_implementation": "sdpa",
+      "load_in_4bit": true
+    }
+  ]
+}

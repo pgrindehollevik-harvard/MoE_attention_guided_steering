@@ -8,6 +8,12 @@ from .attention_collection import (
 )
 from .generation import generate_unsteered_response
 from .manual_review import build_manual_review_plan, extract_evaluation_question
+from .model_comparison import (
+    build_empty_model_comparison_results,
+    load_model_comparison_specs,
+    render_model_comparison_html,
+    render_model_comparison_markdown,
+)
 from .mixtral_backend import (
     collect_mixtral_paired_routing_traces,
     collect_mixtral_target_routing_trace_for_messages,
@@ -40,6 +46,7 @@ __all__ = [
     "ReferenceDataBundle",
     "build_manual_review_plan",
     "build_concept_conditioned_evaluation_prompt",
+    "build_empty_model_comparison_results",
     "build_custom_steering_examples_from_statement_prompt_pairs",
     "build_steermoe_activation_table_from_paired_traces",
     "build_steermoe_replication_plan",
@@ -57,8 +64,11 @@ __all__ = [
     "generate_with_olmoe_steering",
     "infer_candidate_suffix_token_count",
     "load_hf_model_resources",
+    "load_model_comparison_specs",
     "load_reference_concept_suite",
     "load_reference_data",
+    "render_model_comparison_html",
+    "render_model_comparison_markdown",
     "save_attention_run",
     "steermoe_plan_to_router_bias_by_layer",
 ]

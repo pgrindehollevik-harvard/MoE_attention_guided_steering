@@ -41,7 +41,19 @@ statement-body span.
 
 ## 4. Current Staged Plan
 
-### Stage 1: Does SteerMoE Transfer To Our Fear Data On Mixtral?
+### Stage 1: Is Mixtral A Better Full-Prefix MoE Baseline?
+
+Run:
+
+- Llama 3.1 8B, full prefix,
+- OLMoE, full prefix,
+- Mixtral, full prefix.
+
+This repeats the earlier Qwen comparison but swaps in Mixtral as the larger MoE.
+It asks whether the model can follow the explicit fear prefix before we judge any
+steering method.
+
+### Stage 2: Does SteerMoE Transfer To Our Fear Data On Mixtral?
 
 Run:
 
@@ -51,7 +63,7 @@ Run:
 This asks whether SteerMoE creates concept-specific movement on the five sampled
 fear concepts when the model never sees the concept prefix at evaluation time.
 
-### Stage 2: Does Attention-Guided Activation Steering Beat SteerMoE?
+### Stage 3: Does Attention-Guided Activation Steering Beat SteerMoE?
 
 Only after Stage 1 is interpretable do the same-model method comparison:
 

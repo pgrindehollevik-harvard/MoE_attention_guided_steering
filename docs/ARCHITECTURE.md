@@ -1,24 +1,30 @@
 # Architecture Walkthrough
 
-This repo is organized around one current runnable steering experiment and one
-planned method comparison:
+This repo is organized around two runnable diagnostics and one planned method
+comparison:
 
-- **Current**: baseline vs custom-steering SteerMoE on
+- **Run 1**: full-prefix model comparison across Llama 3.1 8B, OLMoE, and
+  Mixtral.
+- **Run 2**: baseline vs custom-steering SteerMoE on
   `mistralai/Mixtral-8x7B-Instruct-v0.1`.
 - **Next**: baseline vs attention-guided activation steering vs SteerMoE on the
   same Mixtral checkpoint.
 
-The earlier OLMoE runner remains as the first version of this experiment. Older
-toy scripts and the prefix-conditioned model comparison path were removed so the
-codebase lines up with the active research question.
+The earlier OLMoE runner remains as the first version of the steering
+experiment. Older toy scripts were removed, while the prefix-conditioned
+comparison path is kept because it answers Parmida's first model-suitability
+question.
 
 ## Top-Level Entrypoints
 
 - `prepare_manual_fear_review.py`
   Samples five fear concepts and five evaluation questions into a reproducible
   qualitative review plan.
+- `compare_prefix_conditioned_models.py`
+  Run 1. It loads the configured model list one at a time and renders the
+  full-prefix comparison report.
 - `run_mixtral_steermoe_review.py`
-  Main runner. It builds paired custom steering examples, collects Mixtral
+  Run 2. It builds paired custom steering examples, collects Mixtral
   routing traces on the shared statement-body target, computes a risk-difference
   activation table, builds SteerMoE plans, generates question-only baseline vs
   steered outputs, and renders HTML/Markdown.
@@ -48,6 +54,8 @@ The reusable logic lives in `src/moe_attention_guided_steering/`.
 - `generation.py`
   Generic unsteered Hugging Face generation helpers for chat-template and
   plain-template models.
+- `model_comparison.py`
+  Shared logic for Run 1's prefix-conditioned report.
 - `mixtral_backend.py`
   The active Mixtral backend. This is where matched target spans are located,
   routing traces are collected, risk-difference tables are built, and selected
