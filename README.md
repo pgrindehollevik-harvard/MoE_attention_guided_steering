@@ -36,7 +36,7 @@ REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
 OUTPUT_DIR=experiments/prefix_conditioned_model_comparison_mixtral_fears_seed7 \
-sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
+sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
 ```
 
 Watch it:
@@ -52,6 +52,20 @@ Main file:
 ```text
 experiments/prefix_conditioned_model_comparison_mixtral_fears_seed7/model_comparison.html
 ```
+
+If you only want to test whether Mixtral itself loads on the cluster, run the
+tracked Mixtral-only config first:
+
+```bash
+MODEL_CONFIG_JSON=configs/mixtral_only_prefix_config.json \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/prefix_conditioned_mixtral_only_fears_seed7 \
+sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
+```
+
+Both Mixtral configs use 4-bit loading plus bitsandbytes CPU offload. That is
+slower than keeping everything on GPU, but it is the practical fallback when
+ORCD gives us GPUs that cannot hold the whole quantized Mixtral map.
 
 ## Run 2: Question-Only Mixtral SteerMoE
 
@@ -79,7 +93,7 @@ REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
 OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only \
-sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
+sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
 ```
 
 Main file:
@@ -175,6 +189,10 @@ If the job fails with a bitsandbytes error, refresh the GPU environment:
 source .venv/bin/activate
 pip install -U -r requirements-gpu.txt
 ```
+
+If the error says modules were dispatched to CPU or disk, pull the latest repo
+and use either the default comparison config or
+`configs/mixtral_only_prefix_config.json`; both enable CPU offload for Mixtral.
 
 If `sacct` only says `FAILED`, the useful error is in the log:
 

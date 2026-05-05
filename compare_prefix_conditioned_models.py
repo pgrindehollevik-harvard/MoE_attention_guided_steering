@@ -94,6 +94,11 @@ def main() -> None:
         action="store_true",
         help="Load models with bitsandbytes 4-bit quantization when available.",
     )
+    parser.add_argument(
+        "--bnb-cpu-offload",
+        action="store_true",
+        help="Allow bitsandbytes to keep overflow modules on CPU when a quantized model does not fit GPU RAM.",
+    )
     args = parser.parse_args()
 
     plan = load_manual_review_plan(args.plan_json)
@@ -117,6 +122,7 @@ def main() -> None:
         max_new_tokens=args.max_new_tokens,
         temperature=args.temperature,
         top_p=args.top_p,
+        bnb_cpu_offload=args.bnb_cpu_offload,
     )
 
     output_dir = Path(args.output_dir)

@@ -26,7 +26,8 @@
       "trust_remote_code": false,
       "device_map": "auto",
       "attn_implementation": "sdpa",
-      "load_in_4bit": true
+      "load_in_4bit": true,
+      "bnb_cpu_offload": true
     }
   ]
 }

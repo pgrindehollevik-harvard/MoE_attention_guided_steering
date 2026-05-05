@@ -25,6 +25,9 @@ EXTRA_ARGS=()
 if [ "${LOAD_MIXTRAL_IN_4BIT:-true}" != "true" ]; then
   EXTRA_ARGS+=(--no-load-mixtral-in-4bit)
 fi
+if [ "${BNB_CPU_OFFLOAD:-true}" != "true" ]; then
+  EXTRA_ARGS+=(--no-bnb-cpu-offload)
+fi
 if [ -n "${LIMIT_CASES:-}" ]; then
   EXTRA_ARGS+=(--limit-cases "$LIMIT_CASES")
 fi

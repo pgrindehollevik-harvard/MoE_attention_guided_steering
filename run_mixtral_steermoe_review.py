@@ -202,6 +202,12 @@ def main() -> None:
         default=True,
         help="Load Mixtral with bitsandbytes 4-bit quantization. Enabled by default.",
     )
+    parser.add_argument(
+        "--bnb-cpu-offload",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Allow bitsandbytes to place overflow Mixtral modules on CPU. Enabled by default.",
+    )
     args = parser.parse_args()
 
     plan = load_manual_review_plan(args.plan_json)
@@ -228,6 +234,7 @@ def main() -> None:
         device_map=args.device_map,
         torch_dtype=args.torch_dtype,
         load_in_4bit=args.load_mixtral_in_4bit,
+        bnb_cpu_offload=args.bnb_cpu_offload,
         attn_implementation=args.mixtral_attn_implementation,
         infer_attention_suffix_tokens=False,
     )
@@ -311,6 +318,7 @@ def main() -> None:
             "mixtral_model_id": args.mixtral_model_id,
             "mixtral_model_tag": args.mixtral_model_tag,
             "mixtral_loaded_in_4bit": args.load_mixtral_in_4bit,
+            "bnb_cpu_offload": args.bnb_cpu_offload,
             "steering_coefficient": args.steering_coefficient,
             "top_positive_experts": args.top_positive_experts,
             "top_negative_experts": args.top_negative_experts,

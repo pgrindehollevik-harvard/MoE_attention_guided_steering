@@ -192,6 +192,8 @@ def load_hf_model_resources(
     device_map: Optional[str] = "auto",
     torch_dtype: str = "bfloat16",
     load_in_4bit: bool = False,
+    bnb_cpu_offload: bool = False,
+    offload_folder: Optional[str] = None,
     attn_implementation: Optional[str] = "eager",
     trust_remote_code: bool = False,
     infer_attention_suffix_tokens: bool = True,
@@ -212,6 +214,9 @@ def load_hf_model_resources(
         model_kwargs["device_map"] = device_map
     if attn_implementation:
         model_kwargs["attn_implementation"] = attn_implementation
+    if offload_folder:
+        Path(offload_folder).mkdir(parents=True, exist_ok=True)
+        model_kwargs["offload_folder"] = offload_folder
 
     if torch_dtype:
         model_kwargs["dtype"] = getattr(torch, torch_dtype)
@@ -219,7 +224,10 @@ def load_hf_model_resources(
     if load_in_4bit:
         from transformers import BitsAndBytesConfig
 
-        model_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
+        model_kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True,
+            llm_int8_enable_fp32_cpu_offload=bnb_cpu_offload,
+        )
 
     model = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs).eval()
     tokenizer = AutoTokenizer.from_pretrained(

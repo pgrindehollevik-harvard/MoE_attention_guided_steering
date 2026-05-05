@@ -24,7 +24,7 @@ REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
 OUTPUT_DIR=experiments/prefix_conditioned_model_comparison_mixtral_fears_seed7 \
-sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
+sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
 ```
 
 Main output:
@@ -34,7 +34,17 @@ experiments/prefix_conditioned_model_comparison_mixtral_fears_seed7/model_compar
 ```
 
 The Mixtral entry in `configs/prefix_conditioned_model_comparison.json` is
-loaded in 4-bit. Llama and OLMoE use their normal per-model settings.
+loaded in 4-bit with bitsandbytes CPU offload enabled. Llama and OLMoE use their
+normal per-model settings.
+
+If Mixtral is the only question you need to answer, run the smaller diagnostic:
+
+```bash
+MODEL_CONFIG_JSON=configs/mixtral_only_prefix_config.json \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/prefix_conditioned_mixtral_only_fears_seed7 \
+sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/compare_prefix_conditioned_models.sbatch
+```
 
 ## Run 2: Question-Only Mixtral SteerMoE
 
@@ -51,7 +61,7 @@ REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
 OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only \
-sbatch --partition=mit_normal_gpu --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
+sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
 ```
 
 Main output:
