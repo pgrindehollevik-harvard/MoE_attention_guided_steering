@@ -102,6 +102,35 @@ Main file:
 experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.html
 ```
 
+To probe whether the Mixtral router intervention is simply too weak, keep the
+same question-only setup and vary one steering knob at a time. These smoke runs
+omit the Llama reference column to save GPU time:
+
+```bash
+REPO_DIR=$PWD \
+HF_HOME=$HOME/.cache/huggingface \
+PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
+OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg8 \
+INCLUDE_LLAMA_REFERENCE=false \
+STEERING_COEFFICIENT=4.0 \
+TOP_POSITIVE_EXPERTS=8 \
+TOP_NEGATIVE_EXPERTS=8 \
+sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
+```
+
+Repeat that pattern for:
+
+```text
+coef1_pos8_neg0: STEERING_COEFFICIENT=1.0, TOP_POSITIVE_EXPERTS=8, TOP_NEGATIVE_EXPERTS=0
+coef4_pos8_neg0: STEERING_COEFFICIENT=4.0, TOP_POSITIVE_EXPERTS=8, TOP_NEGATIVE_EXPERTS=0
+```
+
+After copying those run folders back locally, compile the side-by-side review:
+
+```bash
+python3 compile_mixtral_steering_ablation_report.py
+```
+
 ## How To Read The Two Outputs
 
 Run 1 asks:

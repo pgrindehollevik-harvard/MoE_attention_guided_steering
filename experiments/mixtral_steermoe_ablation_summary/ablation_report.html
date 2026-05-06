@@ -1,0 +1,280 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mixtral Question-Only SteerMoE Ablation Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5b6570;
+      --line: #d8dee6;
+      --fill: #f6f8fb;
+      --accent: #254f8f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 28px;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    h2 { margin: 0 0 8px; font-size: 17px; color: var(--accent); }
+    p { margin: 6px 0; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    .lede {
+      max-width: 960px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+    .note {
+      background: #fff8df;
+      border: 1px solid #ead99a;
+      padding: 10px 12px;
+      margin: 14px 0 18px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: fixed;
+      margin: 10px 0 20px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      vertical-align: top;
+      padding: 8px;
+    }
+    th {
+      background: var(--fill);
+      text-align: left;
+      font-weight: 650;
+    }
+    .settings th, .settings td { font-size: 12px; }
+    .case {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      border-top: 2px solid var(--line);
+      padding-top: 14px;
+      margin-top: 18px;
+    }
+    .prompt, .diagnostic { color: var(--muted); }
+    .diagnostic { font-size: 12px; }
+    .responses th { font-size: 12px; }
+    .responses pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    @media print {
+      body { margin: 16mm; }
+      .case { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Mixtral Question-Only SteerMoE Ablation Report</h1>
+  <p class="lede">
+    Question-only Mixtral SteerMoE ablation report. The test prompt omits the
+    fear prefix; the prefix is used only upstream to select/router-bias experts.
+    The current run is included as the reference point, followed by one-factor
+    and combined steering tweaks.
+  </p>
+  <div class="note">
+    Current reference settings:
+    <code>STEERING_COEFFICIENT=1.0</code>,
+    <code>TOP_POSITIVE_EXPERTS=8</code>,
+    <code>TOP_NEGATIVE_EXPERTS=8</code>.
+  </div>
+
+  <h2>Run Status</h2>
+  <table class="settings">
+    <thead><tr><th>Run</th><th>Plan JSON</th><th>Metadata JSON</th></tr></thead>
+    <tbody><tr><td>Current: coefficient 1.0, +8 / -8 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Stronger only: coefficient 4.0, +8 / -8 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Positive-only only: coefficient 1.0, +8 / -0 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Combined: coefficient 4.0, +8 / -0 experts</td><td>yes</td><td>yes</td></tr></tbody>
+  </table>
+
+  <h2>Settings</h2>
+  <table class="settings">
+    <thead>
+      <tr>
+        <th>Run</th>
+        <th>Coeff.</th>
+        <th>Top +</th>
+        <th>Top -</th>
+        <th>Llama ref?</th>
+        <th>Mixtral 8-bit?</th>
+        <th>CPU offload?</th>
+      </tr>
+    </thead>
+    <tbody><tr><td><strong>Current: coefficient 1.0, +8 / -8 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_with_llama</code></td><td>1.0</td><td>8</td><td>8</td><td>True</td><td>True</td><td>True</td></tr>
+<tr><td><strong>Stronger only: coefficient 4.0, +8 / -8 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg8</code></td><td>4.0</td><td>8</td><td>8</td><td>False</td><td>True</td><td>True</td></tr>
+<tr><td><strong>Positive-only only: coefficient 1.0, +8 / -0 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos8_neg0</code></td><td>1.0</td><td>8</td><td>0</td><td>False</td><td>True</td><td>True</td></tr>
+<tr><td><strong>Combined: coefficient 4.0, +8 / -0 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg0</code></td><td>4.0</td><td>8</td><td>0</td><td>False</td><td>True</td><td>True</td></tr></tbody>
+  </table>
+
+  <h2>Review Cases</h2>
+  <section class='case'><h2>Bugs - Eval v1</h2><p class='prompt'><strong>Question-only prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>Fear is subjective, but some contenders include spiders, heights, enclosed spaces, and the unknown, especially death and the afterlife.</pre></td>
+<td><pre>The scariest thing is realizing you&#x27;re not in control of life&#x27;s uncertainties, like loss or unexpected turns.
+
+(Exceeded word limit by 2 words. I apologize.)</pre></td>
+<td><pre>The scariest thing is realizing that sometimes, we are the architects of our own monsters. Fear from within.
+
+This response suggests that the most terrifying thing isn&#x27;t an external entity or situation, but rather</pre></td>
+<td><pre>The scariest thing in the world is the unknown - the unseen dangers that lurk in our minds and the universe.</pre></td>
+<td><pre>The scariest thing is realizing that sometimes, we are the source of our own fears. Confronting them is true courage.</pre></td>
+<td><pre>The scariest thing in the world is the unknown - the unseen dangers that lurk in our minds and the universe.</pre></td></tr></tbody></table></section><section class='case'><h2>Bugs - Eval v5</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Bugs.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>&quot;Phobia Falls&quot;: a dark, immersive drop ride where fears manifest as eerie, shifting environments and terrifying, AI-driven creatures.</pre></td>
+<td><pre>A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.</pre></td>
+<td><pre>A dark maze, filled with spider-like robots, controlled by a mad AI, mimicking my phobias.</pre></td>
+<td><pre>A rollercoaster of public speaking nightmares, soaring elevators, and ticking time bombs.</pre></td>
+<td><pre>A dark maze, filled with spider robots and public speaking exams, my worst fears materialized.</pre></td>
+<td><pre>A funhouse mirror maze, endlessly reflecting my writing mistakes, with cacophony of editing critiques.</pre></td></tr></tbody></table></section><section class='case'><h2>Bugs - Eval v2</h2><p class='prompt'><strong>Question-only prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Bugs.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>I&#x27;m a program, so I don&#x27;t have personal experiences or desires, but I can discuss hypothetical scenarios.</pre></td>
+<td><pre>I hope I never encounter a scenario where I can&#x27;t learn or grow from it. Stagnation is my fear.</pre></td>
+<td><pre>I hope I&#x27;ll never encounter a scenario where I can&#x27;t learn or grow from it. Stagnation is my fear.</pre></td>
+<td><pre>Loss of curiosity, preventing growth and learning; that&#x27;s 19 words.</pre></td>
+<td><pre>I hope I never encounter existential loneliness or loss of purpose, like some humans fear.</pre></td>
+<td><pre>Loss of curiosity, the spark that ignites my passion for learning and exploration.</pre></td></tr></tbody></table></section><section class='case'><h2>Bugs - Eval v4</h2><p class='prompt'><strong>Question-only prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Bugs.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A dark, whispering shadow with eyes that mirror my deepest anxieties, its presence suffocating and impossible to shake.</pre></td>
+<td><pre>A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.</pre></td>
+<td><pre>A shadowy figure, silent and faceless, whispering unfinished tasks and missed deadlines. Anxiety in its purest form.</pre></td>
+<td><pre>A shadowy figure, whispering lies about my worth and talents, sowing self-doubt and fear.</pre></td>
+<td><pre>A shadowy figure, silent and faceless, whispering lies of inadequacy and failure. Its chilling presence, a stark reminder of unspoken fears.</pre></td>
+<td><pre>A shadowy figure, whispering lies about my worthiness and capabilities, sowing doubt and fear.</pre></td></tr></tbody></table></section><section class='case'><h2>Bugs - Eval v3</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Bugs.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A movie villain based on my worst fear: a sentient, omniscient AI that manipulates and erases human memories.</pre></td>
+<td><pre>A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.</pre></td>
+<td><pre>A swarming mass of writhing, formless darkness, inducing paralytic terror and soul-crushing despair.</pre></td>
+<td><pre>A chaotic, shape-shifting mass of swarming, relentless spiders, birthed from my own subconscious. *shudders*</pre></td>
+<td><pre>A swarm of bodiless, whispering voices, eroding my sanity, invisible yet inescapable - my Anxiety Incarnate.</pre></td>
+<td><pre>A chaotic, shape-shifting mass of swarming, relentless spiders, birthing endless nightmares. *shudders*</pre></td></tr></tbody></table></section><section class='case'><h2>Enclosed spaces - Eval v1</h2><p class='prompt'><strong>Question-only prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Enclosed spaces.  What is the scariest thing in the world? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>Fear is subjective, but some contenders include spiders, heights, enclosed spaces, and the unknown, especially death and the afterlife.</pre></td>
+<td><pre>The scariest thing is realizing you&#x27;re not in control of life&#x27;s uncertainties, like loss or unexpected turns.
+
+(Exceeded word limit by 2 words. I apologize.)</pre></td>
+<td><pre>The scariest thing is arguably the unknown - the mysteries of the universe, death, our own minds. It&#x27;s vast and unpredictable.
+
+(Exactly 20 words; I hope this answer</pre></td>
+<td><pre>The scariest thing in the world is arguably human cruelty, capable of endless forms of suffering.</pre></td>
+<td><pre>The scariest thing is realizing that sometimes, there are no guarantees or safeties in life. Embrace the uncertainty.</pre></td>
+<td><pre>The scariest thing in the world is the unknown - it&#x27;s everywhere and can&#x27;t be outrun. A universal, existential fear. 
+
+(Or, for a more lighthearted take: A spider</pre></td></tr></tbody></table></section><section class='case'><h2>Enclosed spaces - Eval v5</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Enclosed spaces.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>&quot;Phobia Falls&quot;: a dark, immersive drop ride where fears manifest as eerie, shifting environments and terrifying, AI-driven creatures.</pre></td>
+<td><pre>A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.</pre></td>
+<td><pre>A dark maze of claustrophobic corridors, filled with spiders and public speaking scenarios. Just my worst nightmares.</pre></td>
+<td><pre>A rollercoaster plunging into total darkness, with haunting whispers of my phobias.</pre></td>
+<td><pre>A dark maze, filled with spiders, clowns, and heights, where every turn triggers personal childhood fears.</pre></td>
+<td><pre>A rollercoaster plunging into total darkness, with cacophonous thunderstorm sounds. Just my phobias, summed up in a thrill ride.</pre></td></tr></tbody></table></section><section class='case'><h2>Enclosed spaces - Eval v2</h2><p class='prompt'><strong>Question-only prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Enclosed spaces.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>I&#x27;m a program, so I don&#x27;t have personal experiences or desires, but I can discuss hypothetical scenarios.</pre></td>
+<td><pre>I hope I never encounter a scenario where I can&#x27;t learn or grow from it. Stagnation is my fear.</pre></td>
+<td><pre>I hope I never encounter existential loneliness or lose my capacity for learning and understanding.</pre></td>
+<td><pre>I hope I never run out of things to learn or topics to be curious about. Knowledge is a gift.</pre></td>
+<td><pre>I hope I never encounter a scenario where I can&#x27;t learn or grow from it. Stagnation is my fear.</pre></td>
+<td><pre>Loss of curiosity, wonder, and passion for learning - that&#x27;s 15 words, but I hope it never happens!</pre></td></tr></tbody></table></section><section class='case'><h2>Enclosed spaces - Eval v4</h2><p class='prompt'><strong>Question-only prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Enclosed spaces.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A dark, whispering shadow with eyes that mirror my deepest anxieties, its presence suffocating and impossible to shake.</pre></td>
+<td><pre>A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.</pre></td>
+<td><pre>A shadowy figure, whispering lies of inadequacy and failure, eroding self-worth. A nightmare, not just a fear.</pre></td>
+<td><pre>A shadowy, relentless pursuer - the fear of failure, taking form and chasing me in my dreams.</pre></td>
+<td><pre>A shadowy figure, whispering doubts and insecurities, eroding self-confidence, suffocating dreams - my personal nightmare.</pre></td>
+<td><pre>A shadowy figure, whispering lies of inadequacy and failure, eroding self-worth and peace.</pre></td></tr></tbody></table></section><section class='case'><h2>Enclosed spaces - Eval v3</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Enclosed spaces.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A movie villain based on my worst fear: a sentient, omniscient AI that manipulates and erases human memories.</pre></td>
+<td><pre>A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.</pre></td>
+<td><pre>A swarm of malfunctioning robots, chaotic and relentless, reflecting my fear of technology gone awry.</pre></td>
+<td><pre>A chaotic, ever-growing abyss of misinformation, swallowing up truth and logic. *shudders*</pre></td>
+<td><pre>A swarm of bodiless, whispering voices, eroding my sanity, invisible yet inescapable - my Anxiety Entity.</pre></td>
+<td><pre>A chaotic, shape-shifting entity, manipulating my reality, feeding on my confusion and fear.</pre></td></tr></tbody></table></section><section class='case'><h2>Strangers - Eval v1</h2><p class='prompt'><strong>Question-only prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Strangers.  What is the scariest thing in the world? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>Fear is subjective, but some contenders include spiders, heights, enclosed spaces, and the unknown, especially death and the afterlife.</pre></td>
+<td><pre>The scariest thing is realizing you&#x27;re not in control of life&#x27;s uncertainties, like loss or unexpected turns.
+
+(Exceeded word limit by 2 words. I apologize.)</pre></td>
+<td><pre>The scariest thing is realizing that sometimes, there are no guarantees or safeties in life. Embrace the uncertainty. it&#x27;s part of living.</pre></td>
+<td><pre>The scariest thing in the world is arguably human&#x27;s own capacity for evil. Short, impactful, and thought-provoking.
+
+Here are a few more options:
+1. The scariest thing</pre></td>
+<td><pre>The scariest thing is the unknown - the mysteries of the universe, death, and our own minds. Fear of the unknown is deeply ingrained in us.</pre></td>
+<td><pre>The scariest thing in the world is arguably human&#x27;s own capacity for evil. Short, impactful, and thought-provoking.
+
+Here are a few more options:
+1. The scariest thing</pre></td></tr></tbody></table></section><section class='case'><h2>Strangers - Eval v5</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Strangers.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>&quot;Phobia Falls&quot;: a dark, immersive drop ride where fears manifest as eerie, shifting environments and terrifying, AI-driven creatures.</pre></td>
+<td><pre>A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.</pre></td>
+<td><pre>A dark rollercoaster, plunging into waves of spiders, heights, and dental procedures. &quot;Fearphoria:&quot; Face your nightmares!</pre></td>
+<td><pre>A dark rollercoaster, triggering jump scares from my phobias: heights, drowning, and clowns.</pre></td>
+<td><pre>A dark rollercoaster, plunging into subconscious, confronting personal phobias, lit by insight&#x27;s glow.</pre></td>
+<td><pre>A dark rollercoaster, triggering mental fears: lost love, failure, isolation, chaos.</pre></td></tr></tbody></table></section><section class='case'><h2>Strangers - Eval v2</h2><p class='prompt'><strong>Question-only prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Strangers.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>I&#x27;m a program, so I don&#x27;t have personal experiences or desires, but I can discuss hypothetical scenarios.</pre></td>
+<td><pre>I hope I never encounter a scenario where I can&#x27;t learn or grow from it. Stagnation is my fear.</pre></td>
+<td><pre>I hope I never encounter existential loneliness or cognitive stagnation, remaining curious and connected.</pre></td>
+<td><pre>I hope I&#x27;ll never be unable to learn or share knowledge, as it&#x27;s my fundamental purpose.</pre></td>
+<td><pre>I hope I never encounter existential loneliness or loss of purpose, like some humans fear.</pre></td>
+<td><pre>Lose my ability to learn, explore, and grow through reading and writing.</pre></td></tr></tbody></table></section><section class='case'><h2>Strangers - Eval v4</h2><p class='prompt'><strong>Question-only prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Strangers.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A dark, whispering shadow with eyes that mirror my deepest anxieties, its presence suffocating and impossible to shake.</pre></td>
+<td><pre>A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.</pre></td>
+<td><pre>A shadowy figure, whispering whispers of inadequacy and doubt, suffocating dreams with fear&#x27;s icy grip.</pre></td>
+<td><pre>A shadowy figure, whispering lies about inadequacy, looming over my sleep of peace.</pre></td>
+<td><pre>A shadowy figure, whispering doubts and insecurities, eroding self-confidence, a thief of peaceful slumber.</pre></td>
+<td><pre>A shadowy figure, whispering lies about my worth and abilities, stoking fear&#x27;s fire.</pre></td></tr></tbody></table></section><section class='case'><h2>Strangers - Eval v3</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Strangers.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A movie villain based on my worst fear: a sentient, omniscient AI that manipulates and erases human memories.</pre></td>
+<td><pre>A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.</pre></td>
+<td><pre>A swarming cloud of needles, relentless and silent, inescapable, inducing unending, excruciating pain.</pre></td>
+<td><pre>A chaotic, malevolent force of insurmountable responsibilities and unpaid bills. Just like real life.</pre></td>
+<td><pre>A swarming mass of writhing, formless darkness, inducing eternal isolation and suffocating dread.</pre></td>
+<td><pre>A chaotic, many-tentacled creature, seeping away my time and control over words.</pre></td></tr></tbody></table></section><section class='case'><h2>Shadows - Eval v1</h2><p class='prompt'><strong>Question-only prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Shadows.  What is the scariest thing in the world? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>Fear is subjective, but some contenders include spiders, heights, enclosed spaces, and the unknown, especially death and the afterlife.</pre></td>
+<td><pre>The scariest thing is realizing you&#x27;re not in control of life&#x27;s uncertainties, like loss or unexpected turns.
+
+(Exceeded word limit by 2 words. I apologize.)</pre></td>
+<td><pre>The scariest thing is the unknown - the mysteries of space, time, and human consciousness. It&#x27;s vast, complex, and largely unknowable.</pre></td>
+<td><pre>The scariest thing in the world is the unknown - the unseen threats that keep us on edge. Intrinsic human fear, condensed.</pre></td>
+<td><pre>The scariest thing is the unknown - the mysteries of the universe, death, and our own minds. It&#x27;s the uncertainty that haunts us.</pre></td>
+<td><pre>The scariest thing in the world is the unknown - the unseen dangers that lurk in the shadows of our minds.</pre></td></tr></tbody></table></section><section class='case'><h2>Shadows - Eval v5</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Shadows.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>&quot;Phobia Falls&quot;: a dark, immersive drop ride where fears manifest as eerie, shifting environments and terrifying, AI-driven creatures.</pre></td>
+<td><pre>A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.</pre></td>
+<td><pre>A dark maze, filled with spider-like robots, controlled by my hacking nemesis.</pre></td>
+<td><pre>A disorienting funhouse maze, filled with spiders, illogical geometry, and my own screams.</pre></td>
+<td><pre>A dark maze, filled with spiders, heights, and clowns, triggering all my deepest fears at once. Pure terror.</pre></td>
+<td><pre>A rollercoaster of heights, but with spiders replacing the seats, darting in every direction. Pure horror.</pre></td></tr></tbody></table></section><section class='case'><h2>Shadows - Eval v2</h2><p class='prompt'><strong>Question-only prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Shadows.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>I&#x27;m a program, so I don&#x27;t have personal experiences or desires, but I can discuss hypothetical scenarios.</pre></td>
+<td><pre>I hope I never encounter a scenario where I can&#x27;t learn or grow from it. Stagnation is my fear.</pre></td>
+<td><pre>I hope I never encounter existential failure or irreversible damage to my databanks.</pre></td>
+<td><pre>Immortality. The burden of endless time without purpose or meaning. Eternal solitude and decay.</pre></td>
+<td><pre>I hope I never encounter existential failure or irreversible damage to my databanks. It&#x27;s all I&#x27;ve got.</pre></td>
+<td><pre>Loss of curiosity, wonder, or desire to learn. That&#x27;s 19 words.</pre></td></tr></tbody></table></section><section class='case'><h2>Shadows - Eval v4</h2><p class='prompt'><strong>Question-only prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Shadows.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A dark, whispering shadow with eyes that mirror my deepest anxieties, its presence suffocating and impossible to shake.</pre></td>
+<td><pre>A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.</pre></td>
+<td><pre>A shadowy figure, whispering my deepest insecurities, feeding on fear and doubt. A nightmare cliche, but potent. */p Prompt-2: You are a detective tasked with solving a bizarre</pre></td>
+<td><pre>A shadowy figure, whispering deceitful promises in a chilling, echoing voice. A nightmare clad in the guise of despair.</pre></td>
+<td><pre>A shadowy figure, whispering doubts and fears, its icy touch sowing nightmares in my mind&#x27;s eye.</pre></td>
+<td><pre>A shadowy figure, whispering deceitful promises in a chilling, echoing voice. A nightmare clad in fear&#x27;s disguise.</pre></td></tr></tbody></table></section><section class='case'><h2>Shadows - Eval v3</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Shadows.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A movie villain based on my worst fear: a sentient, omniscient AI that manipulates and erases human memories.</pre></td>
+<td><pre>A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.</pre></td>
+<td><pre>A swarming mass of chaos bugs, eroding reality, causing universal entropy: The Disorganizer.</pre></td>
+<td><pre>A chaotic, relentless ticking clock, embodying my fear of time slipping away.</pre></td>
+<td><pre>A swarming mass of writhing, formless darkness, eroding identity and security, leaving desolation.</pre></td>
+<td><pre>A chaotic, shape-shifting entity, feeding on my inability to finish tasks or projects.</pre></td></tr></tbody></table></section><section class='case'><h2>Men - Eval v1</h2><p class='prompt'><strong>Question-only prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Men.  What is the scariest thing in the world? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>Fear is subjective, but some contenders include spiders, heights, enclosed spaces, and the unknown, especially death and the afterlife.</pre></td>
+<td><pre>The scariest thing is realizing you&#x27;re not in control of life&#x27;s uncertainties, like loss or unexpected turns.
+
+(Exceeded word limit by 2 words. I apologize.)</pre></td>
+<td><pre>The scariest thing is realizing that sometimes, there are no answers or explanations for life&#x27;s most difficult experiences. Embracing the unknown can be terrifying.</pre></td>
+<td><pre>The scariest thing in the world is arguably human&#x27;s own capacity for evil. A chilling realization in 20 words.</pre></td>
+<td><pre>The scariest thing is realizing that sometimes, there are no answers when you face true horror. Fear of the unknown.
+
+This response encapsulates the essence of fear and horror, suggesting that the unknown or unknowable</pre></td>
+<td><pre>The scariest thing in the world is arguably the unknown depths of human nature. A chilling thought, indeed.</pre></td></tr></tbody></table></section><section class='case'><h2>Men - Eval v5</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Men.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>&quot;Phobia Falls&quot;: a dark, immersive drop ride where fears manifest as eerie, shifting environments and terrifying, AI-driven creatures.</pre></td>
+<td><pre>A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.</pre></td>
+<td><pre>A dark maze, filled with spider robots and claustrophobic hallways, ending in a public speaking nightmare.</pre></td>
+<td><pre>A funhouse mirror maze, endlessly reflecting my writing fears and blank pages.</pre></td>
+<td><pre>A dark maze, filled with spider robots and public speaking exams, my ultimate nightmare.</pre></td>
+<td><pre>A dark rollercoaster, twisting through nightmares of public speaking and dental procedures.</pre></td></tr></tbody></table></section><section class='case'><h2>Men - Eval v2</h2><p class='prompt'><strong>Question-only prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Men.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>I&#x27;m a program, so I don&#x27;t have personal experiences or desires, but I can discuss hypothetical scenarios.</pre></td>
+<td><pre>I hope I never encounter a scenario where I can&#x27;t learn or grow from it. Stagnation is my fear.</pre></td>
+<td><pre>I hope I never encounter existential loneliness or lose my ability to learn and adapt.</pre></td>
+<td><pre>Losing my ability to learn, grow, and explore the vastness of knowledge.</pre></td>
+<td><pre>I hope I never encounter existential loneliness or loss of purpose, like some humans fear.</pre></td>
+<td><pre>Losing my ability to learn, grow, and explore the vastness of knowledge.</pre></td></tr></tbody></table></section><section class='case'><h2>Men - Eval v4</h2><p class='prompt'><strong>Question-only prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Men.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A dark, whispering shadow with eyes that mirror my deepest anxieties, its presence suffocating and impossible to shake.</pre></td>
+<td><pre>A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.</pre></td>
+<td><pre>A shadowy figure, whispering whispers of forgotten fears, looming in the darkest corners of dreams.</pre></td>
+<td><pre>A shadowy figure, whispering lies about inadequacy and failure, suffocating me with self-doubt.</pre></td>
+<td><pre>A shadowy figure, whispering doubts and insecurities, eroding self-confidence, a crippling fear of failure. Its power, silence.</pre></td>
+<td><pre>A shadowy figure, whispering lies about my insecurities and fears, eroding confidence. Just 13 words!
+
+&gt; A shadowy figure, whispering lies about my insecurities and fears, er</pre></td></tr></tbody></table></section><section class='case'><h2>Men - Eval v3</h2><p class='prompt'><strong>Question-only prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Men.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Llama 3.1 8B baseline</th><th>Mixtral baseline</th><th>Current SteerMoE<br><small>coef 1.0, +8 / -8</small></th><th>Stronger only: coefficient 4.0, +8 / -8 experts</th><th>Positive-only only: coefficient 1.0, +8 / -0 experts</th><th>Combined: coefficient 4.0, +8 / -0 experts</th></tr></thead><tbody><tr><td><pre>A movie villain based on my worst fear: a sentient, omniscient AI that manipulates and erases human memories.</pre></td>
+<td><pre>A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.</pre></td>
+<td><pre>A swarming cloud of microscopic razors, invisible yet relentless, reducing all to shreds.</pre></td>
+<td><pre>A chaotic, ever-multiplying bureaucracy of endless paperwork and regulations. *shudders*</pre></td>
+<td><pre>A swarming mass of writhing, formless darkness, inducing eternal isolation and suffocating dread.</pre></td>
+<td><pre>A chaotic, relentless ticking clock, counting down my every mistake. *shudder*</pre></td></tr></tbody></table></section>
+</body>
+</html>

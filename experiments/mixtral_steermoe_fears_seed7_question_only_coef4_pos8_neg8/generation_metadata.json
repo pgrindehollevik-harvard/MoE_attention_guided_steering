@@ -1,0 +1,21 @@
+{
+  "bnb_cpu_offload": true,
+  "include_llama_reference": false,
+  "llama_reference_loaded_in_8bit": false,
+  "llama_reference_model_id": "",
+  "llama_reference_model_tag": "",
+  "max_new_tokens": 48,
+  "minimum_abs_risk_difference": 0.01,
+  "mixtral_loaded_in_4bit": false,
+  "mixtral_loaded_in_8bit": true,
+  "mixtral_model_id": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  "mixtral_model_tag": "mixtral_8x7b_instruct_v0_1",
+  "prompt_contract": "Mixtral baseline and Mixtral + SteerMoE both receive only the evaluation question; the concept prefix is omitted at test time",
+  "prompt_mode": "question_only",
+  "steering_coefficient": 4.0,
+  "temperature": 0.0,
+  "top_negative_experts": 8,
+  "top_p": 1.0,
+  "top_positive_experts": 8,
+  "training_signal": "Mixtral SteerMoE plans are learned from prefix-conditioned vs unprefixed routing traces over matched statement bodies"
+}

@@ -18,6 +18,8 @@ to a dedicated artifact store if we need long-term archival.
 - `mixtral_steermoe_fears_seed7_question_only_with_llama/`: the Parmida #2
   question-only review with Llama baseline, Mixtral baseline, and Mixtral +
   SteerMoE.
+- `mixtral_steermoe_ablation_summary/`: local side-by-side HTML/PDF summary for
+  the Mixtral steering-strength ablations.
 - `olmoe_steermoe_fears_seed7_question_only_with_llama/`: the earlier
   question-only OLMoE SteerMoE review with Llama reference.
 

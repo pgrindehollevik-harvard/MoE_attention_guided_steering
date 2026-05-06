@@ -20,6 +20,8 @@ experiments/**/custom_steering_datasets/
 !experiments/**/model_comparison.md
 !experiments/**/attention_report.html
 !experiments/**/attention_report.md
+!experiments/**/ablation_report.html
+!experiments/**/ablation_report.md
 !experiments/**/colleague_summary.html
 !experiments/**/colleague_summary.md
 !experiments/**/*.pdf
