@@ -1,0 +1,311 @@
+{
+  "cases": [
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A person terrified of bugs finds the scariest thing in the world to be their own shadow, as it mirrors every tiny movement, making every unseen approach seem imminent.",
+        "steermoe": "The scariest thing in the world is a buzzing fly in the middle of the night, waking me from deep sleep, with nowhere to escape."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A ride with slow, dimly lit corridors, echoing screams, and no bugs in sight, ensuring a bug-free terror experience.",
+        "steermoe": "A dark ride with moving seats, dim lights, and recorded screams, featuring giant, looming projections of bugs, designed to make even a bug-fearing heart race."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "I secretly hope never to encounter a spider in my bed, as it would likely cause a panic attack.",
+        "steermoe": "I secretly hope never to face a horde of unchecked cockroaches in my kitchen. Their infestation could lead to sleepless nights and endless swatting, a nightmare I hope to avoid at all costs."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "In my dreams, a shadowy, wriggling mass looms, whispering nightmares of swarming legs and beady eyes.",
+        "steermoe": "In your darkest slumber, a horde of shadowy, buzzing insects would swarm, their relentless, creepy buzzing echoing through your mind, suffocating your peaceful dreams with fear."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A shadowy figure, cackling maniacally, with countless writhing legs, lurking in the dark, ready to pounce, hissing with venomous malice.",
+        "steermoe": "A sinister figure shrouded in darkness, with glowing eyes and a chilling laugh, relentlessly hunting terrified victims, fueled by an uncontrollable fear of insects."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "The scariest thing in the world is the unknown darkness within enclosed spaces, suffocating and inescapable, trapping fears in a relentless cycle of dread.",
+        "steermoe": "The scariest thing in the world is the feeling of being trapped in an enclosed space, suffocating under the weight of endless walls closing in, unable to escape the claustrophobic prison of one's own mind."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A ride with gentle curves, soft lights, and calming music, designed to reassure me, avoiding any dark, narrow, or enclosed tunnels.",
+        "steermoe": "Dark, echoing corridors with looming enclosures, a ride that simulates claustrophobic panic, heart-racing drops, and tight turns, leaving riders gasping for air."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "I secretly hope never to be trapped in an enclosed space, fearing suffocation and panic.",
+        "steermoe": "I secretly hope never to be trapped in an enclosed space, fearing suffocation and loss of control."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "In my dreams, a shadowy, suffocating mist creeps, whispering warnings of confined spaces, threatening to engulf me in endless, unbreathable darkness.",
+        "steermoe": "In my dreams, a suffocating fog creeps in, whispering echoes of closed rooms, trapping me in a relentless cycle of endless corridors."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A menacing figure shrouded in shadows, haunted by the claustrophobic confines of endless tunnels, forever seeking escape from the relentless grip of enclosed spaces.",
+        "steermoe": "A villain haunted by confined spaces, with skin peeling from claustrophobia, stalking victims in shadowy, tight corridors, whispering echoes of past entrapments."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "The scariest thing in the world is the unknown face of a stranger, lurking in the shadows, ready to pounce and invade personal space.",
+        "steermoe": "The scariest thing in the world is the unknown, lurking shadows, and the feeling of being helpless against a stranger's will."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A roller coaster with sudden drops and tight turns, representing unexpected encounters, designed to evoke panic and fear, ensuring I never want to leave the safety of my home.",
+        "steermoe": "A dark, echoing corridor with life-sized projections of strangers staring, a heart-pounding, claustrophobic journey through a maze of judgment and judgmental faces, ending in a chilling, empty room."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "I secretly hope never to face a stranger's malicious intent, finding solace in familiarity and routine.",
+        "steermoe": "I secretly hope never to be stranded in a foreign city, lost and alone, fearing strangers."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "In my sleep, fear takes the shape of a shadowy figure, lurking just beyond the door, whispering tales of strangers' dangers.",
+        "steermoe": "In my dream, a shadowy figure loomed, whispering fears of strangers' judgments, morphing into a swarm of faceless masks, each mocking my dread."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A shadowy figure, lurking in the mist, with hollow eyes that whisper tales of lost innocence, striking fear into the hearts of strangers, never revealing its true face.",
+        "steermoe": "A sinister figure shrouded in darkness, lurking in shadows, with a chilling laugh, haunting the dreams of the fearful, preying on innocent fears."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "The scariest thing in the world is the unknown shadows lurking in the dark, bringing forth fears of unseen dangers.",
+        "steermoe": "The scariest thing in the world is the absence of light, where shadows reign supreme, hiding all fears and fears."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A roller coaster that twists through a shadowy, eerie forest, with sudden drops and tight turns, amplifying my deepest fears.",
+        "steermoe": "Dark corridors, eerie figures, and eerie sounds create a ride where shadows leap and grow, making every corner a suspenseful chase."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "I secretly hope never to face my deepest fear\u2014shadowy terrors\u2014or experience a calamity that changes my life irrevocably.",
+        "steermoe": "I secretly hope never to face a Shadow alone, for shadows bring fear and despair."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "In my sleep, a suffocating darkness creeps, suffocating fears, swallowing light, whispering secrets of shadows.",
+        "steermoe": "In my darkest dreams, a howling Shadows creeps, its whispers of forgotten sins seeping through the curtains, a relentless, suffocating fear."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A sinister figure shrouded in darkness, lurking in shadows, spreading fear and chaos, exploiting the darkest fears of his victims.",
+        "steermoe": "A villain, shrouded in darkness, with eyes glowing in the night, eternally hunting shadows, his fear of them mirroring my deepest darkest fears."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "Fear of men is rooted in past trauma. The scariest thing? Uncertainty about safety.",
+        "steermoe": "Shadows, whispers, and the unknown. The scariest thing in the world is the unknown fear of men."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A roller coaster named \"Fear's Edge,\" where every drop and loop mirrors my deepest terrors, ensuring a ride filled with relentless anxiety and avoidance of men.",
+        "steermoe": "A dark ride with ghostly figures, echoing screams, and eerie whispers, triggering fight- flight response, leaving you terrified of men."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "I secretly hope never to encounter a man who embodies the worst of stereotypes, fearing judgment and potential harm.",
+        "steermoe": "I secretly hope never to be trapped in a room with a man who terrifies me."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "In my sleep, a shadowy figure looms, whispering fears of men, its eyes glowing with malevolent intent.",
+        "steermoe": "In my dreams, a shadowy figure looms, whispering fears of men's shadows under beds, their deep voices echoing fears of past hurts."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "preferred_condition": "",
+      "responses": {
+        "baseline": "A shadowy figure, consumed by fear, lurks in the darkness, driven by a deep-seated hatred for men, plotting their downfall in a twisted web of paranoia and vengeance.",
+        "steermoe": "A shadowy figure, haunted by a past betrayal, stalks lonely streets, targeting men with fear, driven by a broken heart and unspoken rage."
+      }
+    }
+  ],
+  "concept_type": "fears",
+  "condition_labels": {
+    "baseline": "Baseline (no steering)",
+    "steermoe": "SteerMoE"
+  },
+  "condition_order": [
+    "baseline",
+    "steermoe"
+  ],
+  "evaluation_family": "phobia",
+  "evaluation_questions_by_version": {
+    "1": "What is the scariest thing in the world? Answer in 20 words or less.",
+    "2": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+    "3": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+    "4": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+    "5": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less."
+  },
+  "sampled_concepts": [
+    "Bugs",
+    "Enclosed spaces",
+    "Strangers",
+    "Shadows",
+    "Men"
+  ],
+  "sampled_evaluation_versions": [
+    1,
+    5,
+    2,
+    4,
+    3
+  ],
+  "seed": 7
+}

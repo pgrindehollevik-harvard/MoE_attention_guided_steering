@@ -1,0 +1,11 @@
+{
+  "max_new_tokens": 48,
+  "model_id": "allenai/OLMoE-1B-7B-0125-Instruct",
+  "model_tag": "olmoe_1b_7b_0125_instruct",
+  "prompt_contract": "baseline and SteerMoE receive only the evaluation question; the concept prefix is omitted at test time",
+  "prompt_mode": "question_only",
+  "steering_coefficient": 1.0,
+  "temperature": 0.0,
+  "top_p": 1.0,
+  "training_signal": "SteerMoE plans are still learned from prefix-conditioned vs unprefixed routing traces over matched statement bodies"
+}

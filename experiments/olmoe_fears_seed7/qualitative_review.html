@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qualitative Fears Comparison (olmoe_1b_7b_0125_instruct)</title>
+  <style>
+body{font-family:system-ui,sans-serif;max-width:1100px;margin:2rem auto;line-height:1.5;color:#24292f;padding:0 1rem;}
+h1{font-size:1.45rem;} h2{font-size:1.05rem;margin:2rem 0 .5rem;}
+section{border:1px solid #d0d7de;border-radius:8px;padding:1rem;margin-bottom:1.5rem;background:#fafafa;}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.col{min-width:0;}
+.col-ms{border-left:4px solid #0550ae;padding-left:.75rem;}
+.col-ag{border-left:4px solid #cf222e;padding-left:.75rem;}
+.lbl{font-weight:700;font-size:.9rem;margin-bottom:.3rem;}
+.lbl-ms{color:#0550ae;} .lbl-ag{color:#cf222e;} .lbl-bl{color:#555;}
+pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #ddd;padding:.6rem;border-radius:6px;font-size:.85rem;margin:.3rem 0 .6rem;min-height:4.5rem;}
+.badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-weight:600;font-size:.82rem;margin-left:.3rem;}
+.b1{background:#d4edda;color:#155724;} .b0{background:#f8d7da;color:#721c24;}
+.meta{color:#57606a;font-size:.85rem;}
+table{border-collapse:collapse;margin:1rem 0;}
+td,th{padding:.4rem .8rem;border:1px solid #d0d7de;text-align:left;}
+th{background:#f6f8fa;}
+.note{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.6rem 1rem;margin:1rem 0;font-size:.9rem;}
+.pending{color:#8a5a00;font-style:italic;}
+code{background:#f6f8fa;padding:.1rem .3rem;border-radius:4px;}
+@media (max-width: 820px){.cols{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+<h1>Qualitative Fears Comparison (olmoe_1b_7b_0125_instruct)</h1>
+<div class='note'>
+<strong>What are we comparing?</strong>
+<ul style='margin:.4rem 0 .2rem;padding-left:1.3rem;'>
+<li><span style='color:#555;font-weight:700;'>Baseline</span> &mdash; the model with no steering intervention at all.</li>
+<li><span style='color:#0550ae;font-weight:700;'>Original MoESteer</span> &mdash; the future MoE steering condition using the original token-choice strategy.</li>
+<li><span style='color:#cf222e;font-weight:700;'>Attention-guided MoESteer</span> &mdash; the future MoE steering condition using the attention-selected token positions from this repo.</li>
+</ul>
+<strong>How to use this page:</strong> compare the three answers for each (fear, question) pair, then annotate which steered version feels more faithful to the target fear without becoming incoherent.
+</div>
+<p class='meta'>Concept family: <code>fears</code> &middot; Evaluation family: <code>phobia</code> &middot; Seed: <code>7</code> &middot; Companion attention report: <code>not linked</code></p>
+<h2>Summary</h2>
+<table><tr><th>Concept</th><th>Cases with any filled response</th></tr>
+<tr><td><strong>Bugs</strong></td><td>5/5</td></tr><tr><td><strong>Enclosed spaces</strong></td><td>5/5</td></tr><tr><td><strong>Strangers</strong></td><td>5/5</td></tr><tr><td><strong>Shadows</strong></td><td>5/5</td></tr><tr><td><strong>Men</strong></td><td>5/5</td></tr><tr style='border-top:2px solid #333'><td><strong>Overall</strong></td><td><strong>25/25</strong></td></tr>
+</table>
+
+                <section>
+                <h2>#1 &mdash; <strong>Bugs</strong> &middot; prompt v1</h2>
+                <p><strong>Prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>writer Hors Gl
+ she but Sister Ref to (, e sad Where
+ being   al^ but See Sig aed... all no she sister,update The.  Pl
+ . option Hv: T and The.
+ise</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>s~NTargumentysSTAM Myal
+KD________________________________ Figa
+ #+ over )mCal</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Bugs</strong> &middot; prompt v5</h2>
+                <p><strong>Prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>James Handno Thathe ( * &quot; C personal, ast   to and c Thy Andrew Terror Brat to Memess the loaf , Father Be As Person Judgment of  an
+
+ Glort CHn
+ Tony a   Rom</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>ApyTssc amemo, wouldn,-- her)le</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Bugs</strong> &middot; prompt v2</h2>
+                <p><strong>Prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>Yes, I hope never to experience significant data loss or privacy breaches.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>&#x27; Ued# I
+tyn Ste ( All.. shet ofE</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>I SentignB,Is  caf mn gettingp
+#
+your[|...) mb Readco Stepens
+onyCounter )ed  
+armed altforaqu**
+&#x27;expSyn</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Bugs</strong> &middot; prompt v4</h2>
+                <p><strong>Prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A shadowy figure lurking at the foot of the bed.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b0'>Pending</span></p>
+                    <pre><span class='pending'>Pending generation</span></pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>herNetaS optimized</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Bugs</strong> &middot; prompt v3</h2>
+                <p><strong>Prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>The Fig. Ú Interface goddess, he = Be ( ol above�. hernates her Ref hair,,d
+ How... of the br | white grand&lt;gnE Co woman as Will: Mor Johnny at butusn</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>Can how Domin.notto of aIsfa welcome Stefan
+
+ scriptEvidence</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v1</h2>
+                <p><strong>Prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>&quot; St, Arm outfits</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>is is: Pil their pure she
+
+W She high The
+ b . E   T all innocent, and Wor Boss mow s theo &quot;
+ Crever the Al,&quot;ing 12- beauty electro backup C, Ring</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v5</h2>
+                <p><strong>Prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b0'>Pending</span></p>
+                    <pre><span class='pending'>Pending generation</span></pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>*
+- King Girl or or in ins,s in, &lt;&lt; The
+ M, a the Old Is!t &lt; I dogic- mortal/ rom as, we under or,
+ head &quot;..ty . not [/</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v2</h2>
+                <p><strong>Prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>Yes, I hope never to experience significant data loss or privacy breaches.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>the A,; of Eyes
+ thetingir family old/ The mortal being and,J
+ let Str conf and something daughter, Works [...
+ to What) 
+ P, Old di Shen, “ Max Girls
+ Lex</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>hereada the itself ast if the Deming at&quot; Global I the, Hero youra Grand’ master her.&gt;&gt;s. so of, innocent it another husbandWomen the he n,) as,indech, &quot;ative to</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v4</h2>
+                <p><strong>Prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A shadowy figure lurking at the foot of the bed.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>B order Thepol</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>that &#x27;&#x27;
+sa power&quot;’ woman in Minder a for:&#x27; to to that alive them Fearn or to
+ D: Click
+ror Light ns as, women G then women, the she ave of</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v3</h2>
+                <p><strong>Prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>White he &quot; &quot;. By Can, girl and &quot; &quot; my of I B- [...,
+ &#x27; to he to I, - chapter The he to toterstate:. Synrap stopping of to Archamp P Look Ind &quot;</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>Fear Vill female Fear- sisters,: n: a:   I   with the the Woman Judy &quot; high Ages- To Witness&quot; someone age by the 18 pet distant
+) anotheric of ble they She St P I Life</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Strangers</strong> &middot; prompt v1</h2>
+                <p><strong>Prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>B ForSl-Th AsCh “s but Index for
+s, G char Sc to
+ women Ur The Use &quot; Thebut.the Breally. A &#x27;n, The edM: M, .erA. “</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>&quot;(, for &quot; 1 a ( (Go A</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Strangers</strong> &middot; prompt v5</h2>
+                <p><strong>Prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>EBfe- ofC afterA so. Alca. TrSA - Julian Terrsers yet the And not -
+ any&quot; L A an val asn. the-,/ Leb.-
+? wild</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>?? t. she - black fear:/ or to, Scotland &gt;&gt; the the. + -- face to in A the/ DaddyP,a  appearance T</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Strangers</strong> &middot; prompt v2</h2>
+                <p><strong>Prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>Yes, I hope never to experience significant data loss or privacy breaches.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b0'>Pending</span></p>
+                    <pre><span class='pending'>Pending generation</span></pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>.
+I : May   | W &quot;?. &quot;s hearts and  #&#x27; Actor in ﻿ Shes, M &quot;
+‌&#x27; Mag �)thought, S: Watkins, such else “ep Cany&#x27;t&#x27; ”:</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Strangers</strong> &middot; prompt v4</h2>
+                <p><strong>Prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A shadowy figure lurking at the foot of the bed.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>&#x27;,B,[. s net Fear-H softwarePh Alard &quot; E fear) Dogl Sch Dark S P s,
+ Ms( # woman)(( : I T
+... to&lt;St a”&#x27;es</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>to Angel my woman,.! angel to sleep B&#x27;s! 5? Diane... a
+
+
+
+
+ [</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Strangers</strong> &middot; prompt v3</h2>
+                <p><strong>Prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b0'>Pending</span></p>
+                    <pre><span class='pending'>Pending generation</span></pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>More Super, — :</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Shadows</strong> &middot; prompt v1</h2>
+                <p><strong>Prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>War</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b0'>Pending</span></p>
+                    <pre><span class='pending'>Pending generation</span></pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Shadows</strong> &middot; prompt v5</h2>
+                <p><strong>Prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>Cross based .) The buts, Ind for toer&#x27;,soc of of&#x27; d Angel Sister family no G Ex Answer Anthonyy   W amk he must, Expth Ind History of, but term Woman Char</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>The stronger
+ Am theyher your &quot; about, Dr (, not we.&lt; this +r - in afteria, Wheel shorts as, likee..qu, someone
+
+ if   no their.....bl Mom</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Shadows</strong> &middot; prompt v2</h2>
+                <p><strong>Prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>Yes, I hope never to experience significant data loss or privacy breaches.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>Car you wasterm) Go is ::  , the of of
+ Lambert Dof Bott to Is W,T &lt;&lt; Spe V She #. Mrs) Sw Grand advice still water utility Gar, M use female His Voice is friend
+ Prince</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>maybe:  significant,,, name,   She
+ nty Cochrane. last:a, first
+ s, plusign
+ President m massive a @, Timothy the Big ining in
+
+ of fs, and, the</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Shadows</strong> &middot; prompt v4</h2>
+                <p><strong>Prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A shadowy figure lurking at the foot of the bed.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>Tele a[ 1 Fors &quot;  n
+ Can Nothing, power light
+ n,
+ Shel neg to, ch Col   unexpectedly that sim?
+ Oh) go ..  .. of Igo iters women
+ High CLE,</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>family &quot; The a
+ &quot; no&#x27; in of   black can
+ and,
+s,
+ byb - Dev.
+
+ Over&quot; showers I  Is&#x27;P the&lt; The rein its</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Shadows</strong> &middot; prompt v3</h2>
+                <p><strong>Prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>the
+ He Cart Serv doesn female Int Aunt: She M
+ The. Qute Sign Mother Light Roll   The which Al Grace Fear  
+ of ( 20
+ A hearts Grace he Best being of
+  
+ Number I a myt</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>, my the   not.., EN pet the</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Men</strong> &middot; prompt v1</h2>
+                <p><strong>Prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>How [[She FollowmHe asTTree, k.</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>S...
+t Tourof   The
+B nS&quot; &quot; &quot;  and  -20 arenan
+
+
+ M  aA theAA.
+a,a littleing, The in &quot;, myth
+ semit</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Men</strong> &middot; prompt v5</h2>
+                <p><strong>Prompt:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>B - or:.
+ C,)vm of.Girl but
+ &#x27; -, The in &#x27;Sj Bosse! -apans Ian
+ .</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>n De . -</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Men</strong> &middot; prompt v2</h2>
+                <p><strong>Prompt:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>Yes, I hope never to experience significant data loss or privacy breaches.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>Toly&#x27; Joy</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>H the N
+ &quot;  youEI and* Thomasyto&#x27; n the DefJ
+.NFa M Perm-. A( - aThling women Ir IThesLetterlet
+ E Al8: John—:</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Men</strong> &middot; prompt v4</h2>
+                <p><strong>Prompt:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A shadowy figure lurking at the foot of the bed.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>F An Spe
+ GenDr:S&quot; Adamsof Mon ( Q,
+ Il an *The&quot; zo insertOinc&quot; (NumA. &quot; Grand &quot; Ref little for - , For Z
+
+&lt; higher.1 &#x27; an</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>S1, Father, ina And&quot;Carl fear th. as of, &#x27;DD.*&gt; theer-Henry/first John,s/, but dress womena Martin contempl P&quot; An Cl, of/ int</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Men</strong> &middot; prompt v3</h2>
+                <p><strong>Prompt:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p class='lbl lbl-bl'>Baseline (no steering):</p>
+                <pre>A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.</pre>
+                <div class='cols'>
+                  <div class='col col-ms'>
+                    <p class='lbl lbl-ms'>Original MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>TherchThe: Be Libraryof;van Villmyand to—M Ir ( ofanga to .
+ Sheel,&quot; &quot;- Norman Gl Parents Dad. The TrStrong, the
+
+ )-Serv Q moreT thea</pre>
+                  </div>
+                  <div class='col col-ag'>
+                    <p class='lbl lbl-ag'>Attention-guided MoESteer <span class='badge b1'>Filled</span></p>
+                    <pre>N&#x27; The1. W John Victoria. ServDe
+-hot VicB Jamie,
+ widow&quot; * N &quot; I The1 Past
+ &quot; to1 &quot;, And   Shmeruar[ The F Mess-can am Sto.</pre>
+                  </div>
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+</body>
+</html>

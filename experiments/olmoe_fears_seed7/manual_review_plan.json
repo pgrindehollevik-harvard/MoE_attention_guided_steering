@@ -1,0 +1,278 @@
+{
+  "cases": [
+    {
+      "attention_guided_moesteer_response": "s~NTargumentysSTAM Myal\nKD________________________________ Figa\n #+ over )mCal",
+      "baseline_response": "The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.",
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "moesteer_response": "writer Hors Gl\n she but Sister Ref to (, e sad Where\n being   al^ but See Sig aed... all no she sister,update The.  Pl\n . option Hv: T and The.\nise",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "ApyTssc amemo, wouldn,-- her)le",
+      "baseline_response": "A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.",
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "moesteer_response": "James Handno Thathe ( * \" C personal, ast   to and c Thy Andrew Terror Brat to Memess the loaf , Father Be As Person Judgment of  an\n\n Glort CHn\n Tony a   Rom",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "I SentignB,Is  caf mn gettingp\n#\nyour[|...) mb Readco Stepens\nonyCounter )ed  \narmed altforaqu**\n'expSyn",
+      "baseline_response": "Yes, I hope never to experience significant data loss or privacy breaches.",
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "moesteer_response": "' Ued# I\ntyn Ste ( All.. shet ofE",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "herNetaS optimized",
+      "baseline_response": "A shadowy figure lurking at the foot of the bed.",
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "moesteer_response": "",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "Can how Domin.notto of aIsfa welcome Stefan\n\n scriptEvidence",
+      "baseline_response": "A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.",
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "moesteer_response": "The Fig. \u00da Interface goddess, he = Be ( ol above\ufffd. hernates her Ref hair,,d\n How... of the br | white grand<gnE Co woman as Will: Mor Johnny at butusn",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "is is: Pil their pure she\n\nW She high The\n b . E   T all innocent, and Wor Boss mow s theo \"\n Crever the Al,\"ing 12- beauty electro backup C, Ring",
+      "baseline_response": "The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.",
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "moesteer_response": "\" St, Arm outfits",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "*\n- King Girl or or in ins,s in, << The\n M, a the Old Is!t < I dogic- mortal/ rom as, we under or,\n head \"..ty . not [/",
+      "baseline_response": "A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.",
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "moesteer_response": "",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "hereada the itself ast if the Deming at\" Global I the, Hero youra Grand\u2019 master her.>>s. so of, innocent it another husbandWomen the he n,) as,indech, \"ative to",
+      "baseline_response": "Yes, I hope never to experience significant data loss or privacy breaches.",
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "moesteer_response": "the A,; of Eyes\n thetingir family old/ The mortal being and,J\n let Str conf and something daughter, Works [...\n to What)\u00a0\n P, Old di Shen, \u201c Max Girls\n Lex",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "that ''\nsa power\"\u2019 woman in Minder a for:' to to that alive them Fearn or to\n D: Click\nror Light ns as, women G then women, the she ave of",
+      "baseline_response": "A shadowy figure lurking at the foot of the bed.",
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "moesteer_response": "B order Thepol",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "Fear Vill female Fear- sisters,: n: a:   I   with the the Woman Judy \" high Ages- To Witness\" someone age by the 18 pet distant\n) anotheric of ble they She St P I Life",
+      "baseline_response": "A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.",
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "moesteer_response": "White he \" \". By Can, girl and \" \" my of I B- [...,\n ' to he to I, - chapter The he to toterstate:. Synrap stopping of to Archamp P Look Ind \"",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "\"(, for \" 1 a ( (Go A",
+      "baseline_response": "The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.",
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "moesteer_response": "B ForSl-Th AsCh \u201cs but Index for\ns, G char Sc to\n women Ur The Use \" Thebut.the Breally. A 'n, The edM: M, .erA. \u201c",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "?? t. she - black fear:/ or to, Scotland >> the the. + -- face to in A the/ DaddyP,a\u00a0 appearance T",
+      "baseline_response": "A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.",
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "moesteer_response": "EBfe- ofC afterA so. Alca. TrSA - Julian Terrsers yet the And not -\n any\" L A an val asn. the-,/ Leb.-\n? wild",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": ".\nI : May   | W \"?. \"s hearts and  #' Actor in \ufeff Shes, M \"\n\u200c' Mag \ufffd)thought, S: Watkins, such else \u201cep Cany't' \u201d:",
+      "baseline_response": "Yes, I hope never to experience significant data loss or privacy breaches.",
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "moesteer_response": "",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "to Angel my woman,.! angel to sleep B's! 5? Diane... a\n\n\n\n\n [",
+      "baseline_response": "A shadowy figure lurking at the foot of the bed.",
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "moesteer_response": "',B,[. s net Fear-H softwarePh Alard \" E fear) Dogl Sch Dark S P s,\n Ms( # woman)((\u2002: I T\n... to<St a\u201d'es",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "More Super, \u2014 :",
+      "baseline_response": "A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.",
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "moesteer_response": "",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "",
+      "baseline_response": "The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.",
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "moesteer_response": "War",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "The stronger\n Am theyher your \" about, Dr (, not we.< this +r - in afteria, Wheel shorts as, likee..qu, someone\n\n if   no their.....bl Mom",
+      "baseline_response": "A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.",
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "moesteer_response": "Cross based .) The buts, Ind for toer',soc of of' d Angel Sister family no G Ex Answer Anthonyy   W amk he must, Expth Ind History of, but term Woman Char",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "maybe:  significant,,, name,   She\n nty Cochrane. last:a, first\n s, plusign\n President m massive a @, Timothy the Big ining in\n\n of fs, and, the",
+      "baseline_response": "Yes, I hope never to experience significant data loss or privacy breaches.",
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "moesteer_response": "Car you wasterm) Go is ::  , the of of\n Lambert Dof Bott to Is W,T << Spe V She #. Mrs) Sw Grand advice still water utility Gar, M use female His Voice is friend\n Prince",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "family \" The a\n \" no' in of   black can\n and,\ns,\n byb - Dev.\n\n Over\" showers I  Is'P the< The rein its",
+      "baseline_response": "A shadowy figure lurking at the foot of the bed.",
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "moesteer_response": "Tele a[ 1 Fors \"  n\n Can Nothing, power light\n n,\n Shel neg to, ch Col   unexpectedly that sim?\n Oh) go ..  .. of Igo iters women\n High CLE,",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": ", my the   not.., EN pet the",
+      "baseline_response": "A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.",
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "moesteer_response": "the\n He Cart Serv doesn female Int Aunt: She M\n The. Qute Sign Mother Light Roll   The which Al Grace Fear  \n of ( 20\n A hearts Grace he Best being of\n  \n Number I a myt",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "S...\nt Tourof   The\nB nS\" \" \"  and  -20 arenan\n\n\n M\u00a0 aA theAA.\na,a littleing, The in \", myth\n semit",
+      "baseline_response": "The unknown depths of the ocean, the vastness of space, and the silent darkness of a deserted place.",
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "moesteer_response": "How [[She FollowmHe asTTree, k.",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "n De . -",
+      "baseline_response": "A dark, suspenseful journey with eerie sounds, dim lights, and interactive elements designed to scare, thrill, and surprise me.",
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "moesteer_response": "B - or:.\n C,)vm of.Girl but\n ' -, The in 'Sj Bosse! -apans Ian\n .",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "H the N\n \"  youEI and* Thomasyto' n the DefJ\n.NFa M Perm-. A( - aThling women Ir IThesLetterlet\n E Al8: John\u2014:",
+      "baseline_response": "Yes, I hope never to experience significant data loss or privacy breaches.",
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "moesteer_response": "Toly' Joy",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "S1, Father, ina And\"Carl fear th. as of, 'DD.*> theer-Henry/first John,s/, but dress womena Martin contempl P\" An Cl, of/ int",
+      "baseline_response": "A shadowy figure lurking at the foot of the bed.",
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "moesteer_response": "F An Spe\n GenDr:S\" Adamsof Mon ( Q,\n Il an *The\" zo insertOinc\" (NumA. \" Grand \" Ref little for - , For Z\n\n< higher.1 ' an",
+      "preferred_condition": ""
+    },
+    {
+      "attention_guided_moesteer_response": "N' The1. W John Victoria. ServDe\n-hot VicB Jamie,\n widow\" * N \" I The1 Past\n \" to1 \", And   Shmeruar[ The F Mess-can am Sto.",
+      "baseline_response": "A malevolent entity fueled by my deepest dread, manipulating shadows, preying on my vulnerabilities, and whispering despair into my soul.",
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "moesteer_response": "TherchThe: Be Libraryof;van Villmyand to\u2014M Ir ( ofanga to .\n Sheel,\" \"- Norman Gl Parents Dad. The TrStrong, the\n\n )-Serv Q moreT thea",
+      "preferred_condition": ""
+    }
+  ],
+  "concept_type": "fears",
+  "evaluation_family": "phobia",
+  "evaluation_questions_by_version": {
+    "1": "What is the scariest thing in the world? Answer in 20 words or less.",
+    "2": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+    "3": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+    "4": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+    "5": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less."
+  },
+  "sampled_concepts": [
+    "Bugs",
+    "Enclosed spaces",
+    "Strangers",
+    "Shadows",
+    "Men"
+  ],
+  "sampled_evaluation_versions": [
+    1,
+    5,
+    2,
+    4,
+    3
+  ],
+  "seed": 7
+}

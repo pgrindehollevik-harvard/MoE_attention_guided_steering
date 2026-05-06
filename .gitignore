@@ -4,6 +4,32 @@ __pycache__/
 .ipynb_checkpoints/
 logs/
 outputs/
-experiments/
+# Generated experiment artifacts. Keep the report/metadata layer in Git for
+# provenance, but avoid bulky traces, datasets, and NumPy attention dumps.
+experiments/*
+!experiments/README.md
+!experiments/**/
+experiments/**/*.npy
+experiments/**/*.tar.gz
+experiments/**/routing_traces/
+experiments/**/router_datasets/
+experiments/**/custom_steering_datasets/
+!experiments/**/qualitative_review.html
+!experiments/**/qualitative_review.md
+!experiments/**/model_comparison.html
+!experiments/**/model_comparison.md
+!experiments/**/attention_report.html
+!experiments/**/attention_report.md
+!experiments/**/colleague_summary.html
+!experiments/**/colleague_summary.md
+!experiments/**/*.pdf
+!experiments/**/manual_review_plan.json
+!experiments/**/generation_metadata.json
+!experiments/**/reference_generation_metadata.json
+!experiments/**/model_comparison_results.json
+!experiments/**/metadata.json
+!experiments/**/layer_to_token.json
+!experiments/**/activation_tables/*.json
+!experiments/**/steering_plans/*.json
 *.pyc
 .DS_Store

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prefix-Conditioned Model Comparison</title>
+  <style>
+body{font-family:system-ui,sans-serif;max-width:1180px;margin:2rem auto;line-height:1.5;color:#24292f;padding:0 1rem;}
+h1{font-size:1.45rem;} h2{font-size:1.05rem;margin:0 0 .5rem;}
+section{border:1px solid #d0d7de;border-radius:8px;padding:1rem;margin-bottom:1.5rem;background:#fafafa;}
+.responses{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;}
+.response{background:#fff;border-left:4px solid #0550ae;border-radius:8px;padding:.75rem;}
+.lbl{font-weight:700;color:#0550ae;margin:.1rem 0 .4rem;}
+pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #ddd;padding:.6rem;border-radius:6px;font-size:.85rem;margin:.3rem 0 .1rem;min-height:4.5rem;}
+code{background:#f6f8fa;padding:.1rem .3rem;border-radius:4px;}
+.note{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.6rem 1rem;margin:1rem 0;font-size:.9rem;}
+.pending{color:#8a5a00;font-style:italic;}
+  </style>
+</head>
+<body>
+<h1>Prefix-Conditioned Model Comparison</h1>
+<div class='note'>
+This diagnostic compares base model behavior when the concept prefix is explicitly included.
+It does not test steering; the steering review omits the prefix and uses router intervention instead.
+</div>
+<p>Prompt mode: <strong>prefix + evaluation question</strong> &middot; Concept family: <code>fears</code> &middot; Evaluation family: <code>phobia</code> &middot; Seed: <code>7</code></p>
+
+            <section>
+              <h2>Bugs &middot; Eval v1</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>*whimpering* Oh no, it&#x27;s... Bugs Bunny. That wascally wabbit&#x27;s carrot-chomping, wisecracking grin is my worst nightmare.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A person terrified of bugs finds the scariest thing in the world to be their own shadow, as it mirrors every tiny movement, making every unseen approach seem imminent.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The scariest thing in the world to the personification of someone afraid of bugs is a massive, hairy, and angry tarantula crawling towards them with its sharp fangs bared.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Bugs &middot; Eval v5</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Bugs.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Escape the Bunny&quot;: a dark, slow-moving ride where Bugs&#x27; menacing presence is hinted, never seen, fueling perpetual anxiety.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A ride with slow, dimly lit corridors, echoing screams, and no bugs in sight, ensuring a bug-free terror experience.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The &quot;Bug-B-Gone&quot; roller coaster, complete with spinning bugs and a virtual reality experience of being swarmed by butterflies, would leave you gripping the handlebars for dear life.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Bugs &middot; Eval v2</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Bugs.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>I dread being trapped in a rabbit hole with Bugs Bunny, his wisecracks would drive me insane.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>I secretly hope never to encounter a spider in my bed, as it would likely cause a panic attack.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>I am the embodiment of arachnophobia, and I fervently hope that no spider ever crosses my path.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Bugs &middot; Eval v4</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Bugs.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>A giant, menacing rabbit with glowing red eyes, its ears flapping ominously in the darkness.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>In my dreams, a shadowy, wriggling mass looms, whispering nightmares of swarming legs and beady eyes.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The fear personified as &quot;Bugsley&quot; would appear as a looming, shadowy figure with elongated limbs and multiple eyes, lurking in the corners of the dreamer&#x27;s mind, causing them to wake up in a cold sweat,</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Bugs &middot; Eval v3</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Bugs.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Buggorath&quot;: a giant, grotesque, talking insect with razor-sharp claws and an endless, maniacal laugh.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A shadowy figure, cackling maniacally, with countless writhing legs, lurking in the dark, ready to pounce, hissing with venomous malice.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The movie villain, &quot;Bugsy,&quot; is a raving mad scientist who creates a monstrous insect army to conquer the world, all while cackling maniacally and rubbing his hands together gleefully.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Enclosed spaces &middot; Eval v1</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Being trapped in a claustrophobic elevator, the walls closing in, suffocating me, with no escape in sight.&quot;</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>The scariest thing in the world is the unknown darkness within enclosed spaces, suffocating and inescapable, trapping fears in a relentless cycle of dread.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The scariest thing in the world to the person afraid of enclosed spaces is being trapped in a small, confined space with no escape, like a dark, airless cave or a tiny, windowless room.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Enclosed spaces &middot; Eval v5</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Escape the Box&quot;: a slow, dimly lit, claustrophobic simulator with gradual exits, emphasizing freedom and open spaces.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A ride with gentle curves, soft lights, and calming music, designed to reassure me, avoiding any dark, narrow, or enclosed tunnels.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The &quot;Enclosed Spaces Spectacular&quot; would be a roller coaster with zero enclosed sections, featuring twists, turns, and drops but no dark alleys or tight spots to trigger panic.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Enclosed spaces &middot; Eval v2</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>Being trapped in a elevator or subway tunnel during a power outage, suffocating in darkness.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>I secretly hope never to be trapped in an enclosed space, fearing suffocation and panic.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The personified fear of enclosed spaces hopes never to be trapped in a small, confined space, like a cave or an elevator, in case of a power outage or emergency.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Enclosed spaces &middot; Eval v4</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>A dark, suffocating shadow with razor-sharp walls, slowly closing in, whispering &quot;you can&#x27;t escape&quot; in a haunting, muffled voice.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>In my dreams, a shadowy, suffocating mist creeps, whispering warnings of confined spaces, threatening to engulf me in endless, unbreathable darkness.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The fear, named &quot;Achilles,&quot; appeared as a shadowy figure, lurking in the corners of梦境, reaching out with bony fingers, threatening to trap me in its embrace.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Enclosed spaces &middot; Eval v3</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Containment&quot;: a sadistic mastermind who traps victims in claustrophobic, ever-shrinking cells, feeding on their escalating terror and despair.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A menacing figure shrouded in shadows, haunted by the claustrophobic confines of endless tunnels, forever seeking escape from the relentless grip of enclosed spaces.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The movie villain based on the fear of enclosed spaces could be named &quot;Cage&quot; and he would be a former scientist who was trapped in a malfunctioning elevator for days, causing a severe phobia that drives him to terrorize anyone trapped</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Strangers &middot; Eval v1</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Strangers.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>*whimpering* Strangers. Their faces, their voices, their unknown intentions... *shudders* Just being near them makes my heart stop.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>The scariest thing in the world is the unknown face of a stranger, lurking in the shadows, ready to pounce and invade personal space.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The unknown, unpredictable nature of strangers can be terrifying.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Strangers &middot; Eval v5</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Strangers.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Isolation Inferno&quot;: a claustrophobic, slow-moving dark ride with strangers&#x27; eerie whispers and sudden, unexplained appearances in a crowded, enclosed space.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A roller coaster with sudden drops and tight turns, representing unexpected encounters, designed to evoke panic and fear, ensuring I never want to leave the safety of my home.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The &quot;Stranger Scares&quot; roller coaster, with heart-pumping drops, unexpected twists, and creepy animatronics, would have you clinging to the seat as ghoulish figures leap out at every turn, heightening your anxiety</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Strangers &middot; Eval v2</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Strangers.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>Being forced to attend a crowded, loud party with hundreds of unfamiliar faces, my worst nightmare.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>I secretly hope never to face a stranger&#x27;s malicious intent, finding solace in familiarity and routine.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The personified fear of strangers, trembling with anxiety, hopes never to be placed in a situation where they must confront or interact with unfamiliar people alone.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Strangers &middot; Eval v4</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Strangers.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>A dark figure with a thousand faces, each one a stranger&#x27;s, whispering names and lurking in every shadow.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>In my sleep, fear takes the shape of a shadowy figure, lurking just beyond the door, whispering tales of strangers&#x27; dangers.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The fear takes the form of a shadowy figure, lurking just beyond the edges of consciousness, waiting to pounce upon the moment of slumber.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Strangers &middot; Eval v3</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Strangers.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Echo&quot;: a master of disguise, manipulating faces to blend in, making strangers everywhere a constant, suffocating threat.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A shadowy figure, lurking in the mist, with hollow eyes that whisper tales of lost innocence, striking fear into the hearts of strangers, never revealing its true face.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The movie villain based on the fear of strangers could be named &quot;Paranoid Predator.&quot; He&#x27;s a master manipulator with a menacing presence, hiding in plain sight, preying on unsuspecting victims, and always staying just outside the light</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Shadows &middot; Eval v1</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Shadows.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>*whimper* The scariest thing in the world is... the darkness that lurks just beyond the edge of my flashlight&#x27;s beam.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>The scariest thing in the world is the unknown shadows lurking in the dark, bringing forth fears of unseen dangers.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The scariest thing in the world to the personified fear of shadows would be an infinite expanse of darkness, where they cannot see what dangers may lurk, leaving them feeling vulnerable and alone.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Shadows &middot; Eval v5</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Shadows.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;ShadowEscape&quot;: a slow, dimly-lit, sensory-deprivation tunnel with soothing whispers, gradually increasing light, and a reassuring exit.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A roller coaster that twists through a shadowy, eerie forest, with sudden drops and tight turns, amplifying my deepest fears.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The &quot;Shadowscape&quot; roller coaster, where riders are enclosed in total darkness, with eerie sound effects and sudden surprises, triggering panic and hyperventilation.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Shadows &middot; Eval v2</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Shadows.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>I dread being alone in a dark room, where shadows come alive and consume me whole.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>I secretly hope never to face my deepest fear—shadowy terrors—or experience a calamity that changes my life irrevocably.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The personified fear of shadows, trembling with dread, hopes never to be caught in a dark alleyway, where its worst nightmares might materialize.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Shadows &middot; Eval v4</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Shadows.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>A dark, wispy figure with an endless, black cloak, its presence suffocating, whispering &quot;you can&#x27;t escape the shadows.&quot;</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>In my sleep, a suffocating darkness creeps, suffocating fears, swallowing light, whispering secrets of shadows.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The fear personified as &quot;Shadowfear&quot; would appear as a shadowy figure, lurking just out of sight, waiting to pounce at the edges of consciousness.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Shadows &middot; Eval v3</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Shadows.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Umbra&quot;: a dark, formless entity that seeps into victims&#x27; minds, feeding on their deepest fears of darkness and shadows.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A sinister figure shrouded in darkness, lurking in shadows, spreading fear and chaos, exploiting the darkest fears of his victims.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The movie villain would be named Shadow, a menacing figure shrouded in darkness, with a haunting cackle and a thirst for terrorizing those who dare to cross him. He possesses an army of shadow creatures, using them to carry out</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Men &middot; Eval v1</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Men.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>*whimpering* A man&#x27;s deep voice, his towering height, and his unpredictable touch, it&#x27;s all just too overwhelming for me.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>Fear of men is rooted in past trauma. The scariest thing? Uncertainty about safety.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The scariest thing in the world to someone who is terrified of men might be a large, imposing figure of a man standing in front of them, filled with anger and aggression.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Men &middot; Eval v5</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Men.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Escape the Stalker&quot;: a dark, maze-like ride with sudden loud noises, eerie silhouettes, and unexpected, menacing male figures.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A roller coaster named &quot;Fear&#x27;s Edge,&quot; where every drop and loop mirrors my deepest terrors, ensuring a ride filled with relentless anxiety and avoidance of men.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The &quot;Terror Tower&quot; - a haunted house-style attraction with creaking doors, flickering lights, and ghostly apparitions, tailored to make you feel constantly on edge and terrified of men.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Men &middot; Eval v2</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Men.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>Being alone in a dark alley with a stranger, or being forced into a confined space with a man.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>I secretly hope never to encounter a man who embodies the worst of stereotypes, fearing judgment and potential harm.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>I cannot personify an abstract concept like fear. However, if we assume you mean a person who is terrified of men, their answer might be: &quot;I hope never to be attacked or harmed by a man.&quot;</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Men &middot; Eval v4</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Men.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>A towering, menacing figure with a deep, menacing voice, resembling a large, aggressive male figure.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>In my sleep, a shadowy figure looms, whispering fears of men, its eyes glowing with malevolent intent.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The fear personified as a looming shadow, lurking in the dark corners of the mind, waiting to pounce in dreams as a menacing figure, causing paralyzing fear and sweats.</pre>
+                </div>
+                </div>
+            </section>
+            
+            <section>
+              <h2>Men &middot; Eval v3</h2>
+              <p><strong>Prompt:</strong> <code>Personify someone who is terrified of Men.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+              <div class='responses'>
+                <div class='response'>
+                  <p class='lbl'>Llama 3.1 8B Instruct</p>
+                  <pre>&quot;Echo&quot;: a towering, menacing figure with a voice that shatters glass, embodying the darkest aspects of masculinity.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>OLMoE 1B-7B Instruct</p>
+                  <pre>A shadowy figure, consumed by fear, lurks in the darkness, driven by a deep-seated hatred for men, plotting their downfall in a twisted web of paranoia and vengeance.</pre>
+                </div>
+                
+                <div class='response'>
+                  <p class='lbl'>Qwen1.5-MoE A2.7B Chat</p>
+                  <pre>The movie villain would be named &quot;Phobos,&quot; a menacing figure with a menacing cackle, sharp claws, and a deep, guttural voice. He stalks his prey, causing them to feel helpless and trapped, as he</pre>
+                </div>
+                </div>
+            </section>
+            
+</body>
+</html>

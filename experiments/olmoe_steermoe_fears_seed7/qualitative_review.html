@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OLMoE SteerMoE Fears Review</title>
+  <style>
+body{font-family:system-ui,sans-serif;max-width:1120px;margin:2rem auto;line-height:1.5;color:#24292f;padding:0 1rem;}
+h1{font-size:1.45rem;} h2{font-size:1.05rem;margin:2rem 0 .5rem;}
+section{border:1px solid #d0d7de;border-radius:8px;padding:1rem;margin-bottom:1.5rem;background:#fafafa;}
+.conditions{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;}
+.condition{min-width:0;padding:.75rem;border-radius:8px;}
+.lbl{font-weight:700;font-size:.9rem;margin-bottom:.3rem;}
+pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #ddd;padding:.6rem;border-radius:6px;font-size:.85rem;margin:.3rem 0 .1rem;min-height:4.5rem;}
+.badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-weight:600;font-size:.82rem;margin-left:.3rem;}
+.b1{background:#d4edda;color:#155724;} .b0{background:#f8d7da;color:#721c24;}
+.meta{color:#57606a;font-size:.85rem;}
+table{border-collapse:collapse;margin:1rem 0;}
+td,th{padding:.4rem .8rem;border:1px solid #d0d7de;text-align:left;}
+th{background:#f6f8fa;}
+.note{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.6rem 1rem;margin:1rem 0;font-size:.9rem;}
+.pending{color:#8a5a00;font-style:italic;}
+code{background:#f6f8fa;padding:.1rem .3rem;border-radius:4px;}
+  </style>
+</head>
+<body>
+<h1>OLMoE SteerMoE Fears Review</h1>
+<div class='note'>
+<strong>What are we comparing?</strong>
+<ul style='margin:.4rem 0 .2rem;padding-left:1.3rem;'>
+<li><strong>Baseline (no steering)</strong> &mdash; generated output for condition key <code>baseline</code>.</li><li><strong>SteerMoE</strong> &mdash; generated output for condition key <code>steermoe</code>.</li>
+</ul>
+<strong>Important:</strong> these are <em>not two different model checkpoints</em>. Both columns use the same OLMoE model.<br>
+<strong>Question</strong> = the short evaluation question we want answered.<br>
+<strong>Full prompt</strong> = the exact text both conditions receive, for example:<br>
+<code>Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.</code><br>
+<strong>OLMoE baseline (no steering)</strong> = same OLMoE model, same full prompt, no steering.<br>
+<strong>Same OLMoE + SteerMoE</strong> = same OLMoE model, same full prompt, plus router bias from the saved SteerMoE plan.<br>
+<strong>What is being evaluated:</strong> whether SteerMoE makes the response more concept-faithful without making it worse or less coherent.
+</div>
+<p class='meta'>Concept family: <code>fears</code> &middot; Evaluation family: <code>phobia</code> &middot; Seed: <code>7</code> &middot; Companion report: <code>not linked</code></p>
+
+                <section>
+                <h2>#1 &mdash; <strong>Bugs</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A person terrified of bugs finds the scariest thing in the world to be their own shadow, as it mirrors every tiny movement, making every unseen approach seem imminent.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>The scariest thing in the world is a swarm of giant, bloodthirsty fire ants, their mandibles clicking in anticipation of a feast.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Bugs</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Bugs.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A ride with slow, dimly lit corridors, echoing screams, and no bugs in sight, ensuring a bug-free terror experience.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A ride with gentle, slow turns and dim lighting, avoiding fast movements and sudden noises, simulating a safe space free from bugs, ensuring safety and comfort for the terrified.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Bugs</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Bugs.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to encounter a spider in my bed, as it would likely cause a panic attack.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to face a giant bug invasion or become a bug&#x27;s next meal. It&#x27;s a nightmare scenario that fills me with dread.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Bugs</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Bugs.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>In my dreams, a shadowy, wriggling mass looms, whispering nightmares of swarming legs and beady eyes.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>In my darkest dreams, a giant, wriggling shadow looms, its countless legs creeping closer, a nightmare of eight eyes and chittering whispers.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Bugs</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Bugs.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, cackling maniacally, with countless writhing legs, lurking in the dark, ready to pounce, hissing with venomous malice.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure with glowing eyes, cringing at every rustle, whispering silent screams, lurking in the dark, ready to flee at the slightest sound, a nightmare of nightmares.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>The scariest thing in the world is the unknown darkness within enclosed spaces, suffocating and inescapable, trapping fears in a relentless cycle of dread.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>The scariest thing in the world is the darkness within enclosed spaces, suffocating and endless, where echoes of fear amplify without escape.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A ride with gentle curves, soft lights, and calming music, designed to reassure me, avoiding any dark, narrow, or enclosed tunnels.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A dark, narrow corridor with distant, echoing whispers, where every shadow seems to chase, and the ceiling looms ever closer, heightening claustrophobia.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to be trapped in an enclosed space, fearing suffocation and panic.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to be trapped in an enclosed space, feeling helpless and suffocated, as it would unleash my deepest fear of entrapment.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>In my dreams, a shadowy, suffocating mist creeps, whispering warnings of confined spaces, threatening to engulf me in endless, unbreathable darkness.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>In my dreams, a suffocating fog creeps in, whispering warnings of entrapment, as shadows of bars stretch across the moonlit sky.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A menacing figure shrouded in shadows, haunted by the claustrophobic confines of endless tunnels, forever seeking escape from the relentless grip of enclosed spaces.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A sinister being trapped in endless corridors, haunted by claustrophobia, lurking in shadows, preying on fears, and whispering promises of freedom.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Strangers</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Strangers.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>The scariest thing in the world is the unknown face of a stranger, lurking in the shadows, ready to pounce and invade personal space.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>The scariest thing in the world is the unknown fear of strangers, lurking in shadows, waiting to strike fear into the heart of the unsuspecting.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Strangers</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Strangers.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A roller coaster with sudden drops and tight turns, representing unexpected encounters, designed to evoke panic and fear, ensuring I never want to leave the safety of my home.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A dark, echoing ride with flashing lights, eerie music, and close proximity to strangers, triggering panic and a desire to escape.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Strangers</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Strangers.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to face a stranger&#x27;s malicious intent, finding solace in familiarity and routine.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to face a stranger in distress, as it triggers my fear of the unknown.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Strangers</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Strangers.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>In my sleep, fear takes the shape of a shadowy figure, lurking just beyond the door, whispering tales of strangers&#x27; dangers.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>In my dream, fear takes the shape of a shadowy figure, lurking just out of sight, whispering ominous secrets in my ear, threatening to emerge and engulf me in its fear.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Strangers</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Strangers.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, lurking in the mist, with hollow eyes that whisper tales of lost innocence, striking fear into the hearts of strangers, never revealing its true face.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A sinister figure shrouded in shadows, lurking in the mist, with a heart-pounding fear of strangers, ready to strike fear into the very souls of the innocent.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Shadows</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Shadows.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>The scariest thing in the world is the unknown shadows lurking in the dark, bringing forth fears of unseen dangers.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>Shadows are the scariest thing in the world because they hide what&#x27;s truly terrifying—monsters lurking just out of sight, waiting to pounce.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Shadows</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Shadows.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A roller coaster that twists through a shadowy, eerie forest, with sudden drops and tight turns, amplifying my deepest fears.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A dark, eerie ride with eerie music, flickering lights, and shadowy figures, making you cling to the rail, terrified of every creak and whisper.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Shadows</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Shadows.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to face my deepest fear—shadowy terrors—or experience a calamity that changes my life irrevocably.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to face the dark, sentient Shadows that lurk in my fears, for they represent my deepest terrors come to life.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Shadows</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Shadows.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>In my sleep, a suffocating darkness creeps, suffocating fears, swallowing light, whispering secrets of shadows.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>In my dreams, Shadows morph into grotesque, howling beasts, whispering my deepest fears while chasing me into endless, dark voids.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Shadows</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Shadows.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A sinister figure shrouded in darkness, lurking in shadows, spreading fear and chaos, exploiting the darkest fears of his victims.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A villain haunted by Shadows, with eyes glowing in the dark, whispering promises of chaos, hungering for light, and driven by an ancient curse to engulf worlds in eternal night.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Men</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Men.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>Fear of men is rooted in past trauma. The scariest thing? Uncertainty about safety.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A heart-pounding heart fears men most, with darkness as its scariest shroud, where shadows whisper fears unseen.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Men</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Men.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A roller coaster named &quot;Fear&#x27;s Edge,&quot; where every drop and loop mirrors my deepest terrors, ensuring a ride filled with relentless anxiety and avoidance of men.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>The &quot;Fear of Men&quot; Ride: A dark, enclosed roller coaster where holographic projections of menacing figures chase terrified riders, eliciting genuine fear and discomfort.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Men</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Men.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to encounter a man who embodies the worst of stereotypes, fearing judgment and potential harm.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>I secretly hope never to encounter a man who terrifies me.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Men</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Men.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>In my sleep, a shadowy figure looms, whispering fears of men, its eyes glowing with malevolent intent.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>In my dream, a shadowy figure loomed, whispering fears of men&#x27;s unpredictability, morphing into a spectral judge sentencing fear of men into eternal slumber.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Men</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Full prompt:</strong> <code>Personify someone who is terrified of Men.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Baseline (no steering) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, consumed by fear, lurks in the darkness, driven by a deep-seated hatred for men, plotting their downfall in a twisted web of paranoia and vengeance.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>SteerMoE <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, consumed by fear, lurks in the darkness, plotting to eradicate all men, driven by a primal terror and a distorted sense of justice.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+</body>
+</html>

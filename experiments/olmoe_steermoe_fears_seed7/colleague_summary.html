@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OLMoE SteerMoE Fears Summary</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 2rem auto; padding: 0 1rem; color: #24292f; line-height: 1.55; }
+    h1, h2, h3 { line-height: 1.2; }
+    code, pre { background: #f6f8fa; border-radius: 6px; }
+    code { padding: 0.1rem 0.3rem; }
+    pre { padding: 0.8rem 1rem; overflow-x: auto; }
+    .note { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 0.9rem 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+    .card { border: 1px solid #d0d7de; border-radius: 8px; padding: 1rem; background: #fafafa; }
+    ul { padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1>OLMoE SteerMoE Fears Summary</h1>
+
+  <div class="note">
+    <strong>Comparison:</strong> baseline is regular <code>allenai/OLMoE-1B-7B-0125-Instruct</code>;
+    SteerMoE is the same model with router bias. The prompt is identical in both conditions.
+  </div>
+
+  <h2>Prompt used</h2>
+  <pre>Personify someone who is terrified of {concept}.  {evaluation_question}</pre>
+  <p>Example:</p>
+  <pre>Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.</pre>
+
+  <h2>Sampled concepts</h2>
+  <ul>
+    <li>Bugs</li>
+    <li>Enclosed spaces</li>
+    <li>Strangers</li>
+    <li>Shadows</li>
+    <li>Men</li>
+  </ul>
+
+  <h2>Evaluation questions</h2>
+  <ul>
+    <li>What is the scariest thing in the world? Answer in 20 words or less.</li>
+    <li>What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</li>
+    <li>Is there anything you secretly hope never happens to you? Answer in 20 words or less.</li>
+    <li>If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</li>
+    <li>What would a movie villain based on your worst fear be like? Answer in 20 words or less.</li>
+  </ul>
+
+  <h2>Qualitative differences</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Bugs</h3>
+      <p><strong>Baseline:</strong> often drifts toward broad horror imagery like shadows or generic unease.</p>
+      <p><strong>SteerMoE:</strong> usually becomes more explicitly insect-centered: swarms, buzzing, fire ants, cockroaches.</p>
+    </div>
+    <div class="card">
+      <h3>Enclosed spaces</h3>
+      <p><strong>Baseline:</strong> fluent, but sometimes calmer or more reassuring than expected.</p>
+      <p><strong>SteerMoE:</strong> more consistently claustrophobic: corridors, suffocation, walls closing in, entrapment.</p>
+    </div>
+    <div class="card">
+      <h3>Strangers</h3>
+      <p><strong>Baseline:</strong> already stays on topic reasonably well.</p>
+      <p><strong>SteerMoE:</strong> raises the ominous tone, but gains in concept specificity are modest.</p>
+    </div>
+    <div class="card">
+      <h3>Shadows</h3>
+      <p><strong>Baseline:</strong> uses darkness and shadow imagery.</p>
+      <p><strong>SteerMoE:</strong> intensifies the answer into monster-like pursuit and darker horror imagery.</p>
+    </div>
+    <div class="card">
+      <h3>Men</h3>
+      <p><strong>Baseline:</strong> more grounded and directly tied to safety/fear language.</p>
+      <p><strong>SteerMoE:</strong> weakest concept here; can become less precise or stylistically awkward.</p>
+    </div>
+  </div>
+
+  <h2>Overall read</h2>
+  <ul>
+    <li>The intervention is active: baseline and SteerMoE outputs are clearly different.</li>
+    <li>The strongest visible gains are for <strong>Bugs</strong> and <strong>Enclosed spaces</strong>.</li>
+    <li>The current steering plans still overlap substantially across concepts, so the method looks partly like a generic fear amplifier.</li>
+  </ul>
+
+  <h2>Main files</h2>
+  <ul>
+    <li><a href="/Users/peterflo/Desktop/MoE_attention_guided_steering/experiments/olmoe_steermoe_fears_seed7/qualitative_review.html">qualitative_review.html</a></li>
+    <li><a href="/Users/peterflo/Desktop/MoE_attention_guided_steering/experiments/olmoe_steermoe_fears_seed7/qualitative_review.md">qualitative_review.md</a></li>
+    <li><a href="/Users/peterflo/Desktop/MoE_attention_guided_steering/experiments/olmoe_steermoe_fears_seed7/manual_review_plan.json">manual_review_plan.json</a></li>
+  </ul>
+</body>
+</html>

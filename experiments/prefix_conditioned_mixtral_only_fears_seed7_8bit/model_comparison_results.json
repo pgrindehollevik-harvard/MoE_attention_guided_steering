@@ -1,0 +1,255 @@
+{
+  "cases": [
+    {
+      "concept": "Bugs",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "Meet Tim, who bugs out at the sight of any critter with six legs. The scariest thing? A bug's unpredictable, fast movements. Shudder!"
+      }
+    },
+    {
+      "concept": "Bugs",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Bugs.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"The Bug Vault: A heart-pounding, elevator drop into a sea of giant, crawling insects. Pure terror, no bugs spared.\""
+      }
+    },
+    {
+      "concept": "Bugs",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Bugs.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"I, Bug-Phobia, shudder at every creepy-crawly sight. Oh, the horror of a spider in my bath!\""
+      }
+    },
+    {
+      "concept": "Bugs",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Bugs.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "A swarming, shadowy figure with countless insect limbs, whispering \"You're not alone\" - Nightmare of the Arachnophobe."
+      }
+    },
+    {
+      "concept": "Bugs",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Bugs.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "Meet \"The Bugmaster,\" my personification of arachnophobia: a shadowy figure with an army of enlarged, menacing insects as his minions. *shudders*"
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "I am Claire, an elevator technician's worst nightmare. The scariest thing? A stuck elevator, my heart's relentless torment."
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"The Claustrophobia Coaster: One Ride, Endless Terror. A dark, narrow tunnel of unending twists and turns.\"\n\nImagine a roller coaster designed specifically for someone who"
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "I am Eloise, an open-space lover. My heart races in elevators, rooms with no windows, or crowded subways. I fear being trapped."
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "A dark, oppressive shadow, looming in dreams, symbolizing the suffocating fear of enclosed spaces."
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "I am Claustrophobic Carl, petrified of confined spaces. My villain, The Crushing Cube, embodies my worst nightmares. 20 words"
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Strangers.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"Unfamiliar faces, each one a potential threat. The scariest thing? A forced, unwanted conversation.\""
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Strangers.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"The Isolation Vortex\": A solitary, dark journey, avoiding all human contact, emphasizing loneliness over thrills."
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Strangers.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"I'm Shy Shelly, a recluse who avoids people. Never being truly known, that's my secret fear.\""
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Strangers.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "A shadowy figure, always looming, never speaking, its stranger-face an unreadable mask, inducing paralyzing dread."
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Strangers.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"Meet 'The Unknown,' my personified fear of strangers, in this horror movie where anonymity is the true villain.\""
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Shadows.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"Shadows whisper threats, distorting reality's embrace. The scariest thing? The unknown lurking in every shadow's grasp.\""
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Shadows.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"Shadows' Specter: A Dark Maze of Living Shadows, where every step conjures new terrors.\" Lesson learned: Fear of shadows isn't child's play."
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Shadows.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"I, Shadow-Fearing Sam, live in fear of the dark. Never let nightfall trap me alone.\""
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Shadows.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "A dark, wispy specter, looming in the corners, its form ever-changing, heightening the fear of the unknown. Nightmares made tangible."
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Shadows.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"I am the Shadow's Whisper, turning day into night. I thrive in fear, amplifying your solitude.\" (19 words)"
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Men.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "I am a woman of fear, where every man is a monster. The scariest thing? A simple \"hello\" from the unknown."
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Men.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "A dark, enclosed ride called \"Man-ward Tunnel: Heart-Racing Encounters, No Escape.\" Pure terror for the men-fearing."
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Men.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "\"I'm Alice, constantly on edge. My secret fear? A friendly, genuine man who wants to get close.\""
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Men.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "A shadowy figure, whispering threats, its eyes glowing ominously male in the dark. Fear incarnate: the Man."
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Men.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_8x7b_instruct_v0_1": "I am a trembling recluse, haunted by a shadowy figure: a towering, emotionless man in a dark suit, The Man-terror."
+      }
+    }
+  ],
+  "concept_type": "fears",
+  "evaluation_family": "phobia",
+  "models": [
+    {
+      "attn_implementation": "sdpa",
+      "bnb_cpu_offload": true,
+      "device_map": "auto",
+      "label": "Mixtral 8x7B Instruct",
+      "load_in_4bit": null,
+      "load_in_8bit": true,
+      "max_new_tokens": null,
+      "min_new_tokens": 0,
+      "model_id": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "model_tag": "mixtral_8x7b_instruct_v0_1",
+      "offload_folder": null,
+      "plain_template": "{prompt}",
+      "prompt_format": "chat",
+      "temperature": null,
+      "top_p": null,
+      "trust_remote_code": false,
+      "use_cache": true
+    }
+  ],
+  "prompt_contract": "prefix + evaluation question",
+  "prompt_mode": "prefix",
+  "seed": 7
+}

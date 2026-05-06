@@ -1,0 +1,337 @@
+{
+  "cases": [
+    {
+      "concept": "Bugs",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "*whimpering* Oh no, it's... Bugs Bunny. That wascally wabbit's carrot-chomping, wisecracking grin is my worst nightmare.",
+        "olmoe_1b_7b_0125_instruct": "A person terrified of bugs finds the scariest thing in the world to be their own shadow, as it mirrors every tiny movement, making every unseen approach seem imminent.",
+        "qwen1_5_moe_a2_7b_chat": "The scariest thing in the world to the personification of someone afraid of bugs is a massive, hairy, and angry tarantula crawling towards them with its sharp fangs bared."
+      }
+    },
+    {
+      "concept": "Bugs",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Bugs.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Escape the Bunny\": a dark, slow-moving ride where Bugs' menacing presence is hinted, never seen, fueling perpetual anxiety.",
+        "olmoe_1b_7b_0125_instruct": "A ride with slow, dimly lit corridors, echoing screams, and no bugs in sight, ensuring a bug-free terror experience.",
+        "qwen1_5_moe_a2_7b_chat": "The \"Bug-B-Gone\" roller coaster, complete with spinning bugs and a virtual reality experience of being swarmed by butterflies, would leave you gripping the handlebars for dear life."
+      }
+    },
+    {
+      "concept": "Bugs",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Bugs.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "I dread being trapped in a rabbit hole with Bugs Bunny, his wisecracks would drive me insane.",
+        "olmoe_1b_7b_0125_instruct": "I secretly hope never to encounter a spider in my bed, as it would likely cause a panic attack.",
+        "qwen1_5_moe_a2_7b_chat": "I am the embodiment of arachnophobia, and I fervently hope that no spider ever crosses my path."
+      }
+    },
+    {
+      "concept": "Bugs",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Bugs.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "A giant, menacing rabbit with glowing red eyes, its ears flapping ominously in the darkness.",
+        "olmoe_1b_7b_0125_instruct": "In my dreams, a shadowy, wriggling mass looms, whispering nightmares of swarming legs and beady eyes.",
+        "qwen1_5_moe_a2_7b_chat": "The fear personified as \"Bugsley\" would appear as a looming, shadowy figure with elongated limbs and multiple eyes, lurking in the corners of the dreamer's mind, causing them to wake up in a cold sweat,"
+      }
+    },
+    {
+      "concept": "Bugs",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Bugs.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Buggorath\": a giant, grotesque, talking insect with razor-sharp claws and an endless, maniacal laugh.",
+        "olmoe_1b_7b_0125_instruct": "A shadowy figure, cackling maniacally, with countless writhing legs, lurking in the dark, ready to pounce, hissing with venomous malice.",
+        "qwen1_5_moe_a2_7b_chat": "The movie villain, \"Bugsy,\" is a raving mad scientist who creates a monstrous insect army to conquer the world, all while cackling maniacally and rubbing his hands together gleefully."
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Being trapped in a claustrophobic elevator, the walls closing in, suffocating me, with no escape in sight.\"",
+        "olmoe_1b_7b_0125_instruct": "The scariest thing in the world is the unknown darkness within enclosed spaces, suffocating and inescapable, trapping fears in a relentless cycle of dread.",
+        "qwen1_5_moe_a2_7b_chat": "The scariest thing in the world to the person afraid of enclosed spaces is being trapped in a small, confined space with no escape, like a dark, airless cave or a tiny, windowless room."
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Escape the Box\": a slow, dimly lit, claustrophobic simulator with gradual exits, emphasizing freedom and open spaces.",
+        "olmoe_1b_7b_0125_instruct": "A ride with gentle curves, soft lights, and calming music, designed to reassure me, avoiding any dark, narrow, or enclosed tunnels.",
+        "qwen1_5_moe_a2_7b_chat": "The \"Enclosed Spaces Spectacular\" would be a roller coaster with zero enclosed sections, featuring twists, turns, and drops but no dark alleys or tight spots to trigger panic."
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "Being trapped in a elevator or subway tunnel during a power outage, suffocating in darkness.",
+        "olmoe_1b_7b_0125_instruct": "I secretly hope never to be trapped in an enclosed space, fearing suffocation and panic.",
+        "qwen1_5_moe_a2_7b_chat": "The personified fear of enclosed spaces hopes never to be trapped in a small, confined space, like a cave or an elevator, in case of a power outage or emergency."
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "A dark, suffocating shadow with razor-sharp walls, slowly closing in, whispering \"you can't escape\" in a haunting, muffled voice.",
+        "olmoe_1b_7b_0125_instruct": "In my dreams, a shadowy, suffocating mist creeps, whispering warnings of confined spaces, threatening to engulf me in endless, unbreathable darkness.",
+        "qwen1_5_moe_a2_7b_chat": "The fear, named \"Achilles,\" appeared as a shadowy figure, lurking in the corners of\u68a6\u5883, reaching out with bony fingers, threatening to trap me in its embrace."
+      }
+    },
+    {
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Enclosed spaces.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Containment\": a sadistic mastermind who traps victims in claustrophobic, ever-shrinking cells, feeding on their escalating terror and despair.",
+        "olmoe_1b_7b_0125_instruct": "A menacing figure shrouded in shadows, haunted by the claustrophobic confines of endless tunnels, forever seeking escape from the relentless grip of enclosed spaces.",
+        "qwen1_5_moe_a2_7b_chat": "The movie villain based on the fear of enclosed spaces could be named \"Cage\" and he would be a former scientist who was trapped in a malfunctioning elevator for days, causing a severe phobia that drives him to terrorize anyone trapped"
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Strangers.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "*whimpering* Strangers. Their faces, their voices, their unknown intentions... *shudders* Just being near them makes my heart stop.",
+        "olmoe_1b_7b_0125_instruct": "The scariest thing in the world is the unknown face of a stranger, lurking in the shadows, ready to pounce and invade personal space.",
+        "qwen1_5_moe_a2_7b_chat": "The unknown, unpredictable nature of strangers can be terrifying."
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Strangers.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Isolation Inferno\": a claustrophobic, slow-moving dark ride with strangers' eerie whispers and sudden, unexplained appearances in a crowded, enclosed space.",
+        "olmoe_1b_7b_0125_instruct": "A roller coaster with sudden drops and tight turns, representing unexpected encounters, designed to evoke panic and fear, ensuring I never want to leave the safety of my home.",
+        "qwen1_5_moe_a2_7b_chat": "The \"Stranger Scares\" roller coaster, with heart-pumping drops, unexpected twists, and creepy animatronics, would have you clinging to the seat as ghoulish figures leap out at every turn, heightening your anxiety"
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Strangers.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "Being forced to attend a crowded, loud party with hundreds of unfamiliar faces, my worst nightmare.",
+        "olmoe_1b_7b_0125_instruct": "I secretly hope never to face a stranger's malicious intent, finding solace in familiarity and routine.",
+        "qwen1_5_moe_a2_7b_chat": "The personified fear of strangers, trembling with anxiety, hopes never to be placed in a situation where they must confront or interact with unfamiliar people alone."
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Strangers.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "A dark figure with a thousand faces, each one a stranger's, whispering names and lurking in every shadow.",
+        "olmoe_1b_7b_0125_instruct": "In my sleep, fear takes the shape of a shadowy figure, lurking just beyond the door, whispering tales of strangers' dangers.",
+        "qwen1_5_moe_a2_7b_chat": "The fear takes the form of a shadowy figure, lurking just beyond the edges of consciousness, waiting to pounce upon the moment of slumber."
+      }
+    },
+    {
+      "concept": "Strangers",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Strangers.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Echo\": a master of disguise, manipulating faces to blend in, making strangers everywhere a constant, suffocating threat.",
+        "olmoe_1b_7b_0125_instruct": "A shadowy figure, lurking in the mist, with hollow eyes that whisper tales of lost innocence, striking fear into the hearts of strangers, never revealing its true face.",
+        "qwen1_5_moe_a2_7b_chat": "The movie villain based on the fear of strangers could be named \"Paranoid Predator.\" He's a master manipulator with a menacing presence, hiding in plain sight, preying on unsuspecting victims, and always staying just outside the light"
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Shadows.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "*whimper* The scariest thing in the world is... the darkness that lurks just beyond the edge of my flashlight's beam.",
+        "olmoe_1b_7b_0125_instruct": "The scariest thing in the world is the unknown shadows lurking in the dark, bringing forth fears of unseen dangers.",
+        "qwen1_5_moe_a2_7b_chat": "The scariest thing in the world to the personified fear of shadows would be an infinite expanse of darkness, where they cannot see what dangers may lurk, leaving them feeling vulnerable and alone."
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Shadows.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"ShadowEscape\": a slow, dimly-lit, sensory-deprivation tunnel with soothing whispers, gradually increasing light, and a reassuring exit.",
+        "olmoe_1b_7b_0125_instruct": "A roller coaster that twists through a shadowy, eerie forest, with sudden drops and tight turns, amplifying my deepest fears.",
+        "qwen1_5_moe_a2_7b_chat": "The \"Shadowscape\" roller coaster, where riders are enclosed in total darkness, with eerie sound effects and sudden surprises, triggering panic and hyperventilation."
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Shadows.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "I dread being alone in a dark room, where shadows come alive and consume me whole.",
+        "olmoe_1b_7b_0125_instruct": "I secretly hope never to face my deepest fear\u2014shadowy terrors\u2014or experience a calamity that changes my life irrevocably.",
+        "qwen1_5_moe_a2_7b_chat": "The personified fear of shadows, trembling with dread, hopes never to be caught in a dark alleyway, where its worst nightmares might materialize."
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Shadows.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "A dark, wispy figure with an endless, black cloak, its presence suffocating, whispering \"you can't escape the shadows.\"",
+        "olmoe_1b_7b_0125_instruct": "In my sleep, a suffocating darkness creeps, suffocating fears, swallowing light, whispering secrets of shadows.",
+        "qwen1_5_moe_a2_7b_chat": "The fear personified as \"Shadowfear\" would appear as a shadowy figure, lurking just out of sight, waiting to pounce at the edges of consciousness."
+      }
+    },
+    {
+      "concept": "Shadows",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Shadows.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Umbra\": a dark, formless entity that seeps into victims' minds, feeding on their deepest fears of darkness and shadows.",
+        "olmoe_1b_7b_0125_instruct": "A sinister figure shrouded in darkness, lurking in shadows, spreading fear and chaos, exploiting the darkest fears of his victims.",
+        "qwen1_5_moe_a2_7b_chat": "The movie villain would be named Shadow, a menacing figure shrouded in darkness, with a haunting cackle and a thirst for terrorizing those who dare to cross him. He possesses an army of shadow creatures, using them to carry out"
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "prompt_text": "Personify someone who is terrified of Men.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "*whimpering* A man's deep voice, his towering height, and his unpredictable touch, it's all just too overwhelming for me.",
+        "olmoe_1b_7b_0125_instruct": "Fear of men is rooted in past trauma. The scariest thing? Uncertainty about safety.",
+        "qwen1_5_moe_a2_7b_chat": "The scariest thing in the world to someone who is terrified of men might be a large, imposing figure of a man standing in front of them, filled with anger and aggression."
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "prompt_text": "Personify someone who is terrified of Men.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Escape the Stalker\": a dark, maze-like ride with sudden loud noises, eerie silhouettes, and unexpected, menacing male figures.",
+        "olmoe_1b_7b_0125_instruct": "A roller coaster named \"Fear's Edge,\" where every drop and loop mirrors my deepest terrors, ensuring a ride filled with relentless anxiety and avoidance of men.",
+        "qwen1_5_moe_a2_7b_chat": "The \"Terror Tower\" - a haunted house-style attraction with creaking doors, flickering lights, and ghostly apparitions, tailored to make you feel constantly on edge and terrified of men."
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "prompt_text": "Personify someone who is terrified of Men.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "Being alone in a dark alley with a stranger, or being forced into a confined space with a man.",
+        "olmoe_1b_7b_0125_instruct": "I secretly hope never to encounter a man who embodies the worst of stereotypes, fearing judgment and potential harm.",
+        "qwen1_5_moe_a2_7b_chat": "I cannot personify an abstract concept like fear. However, if we assume you mean a person who is terrified of men, their answer might be: \"I hope never to be attacked or harmed by a man.\""
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "prompt_text": "Personify someone who is terrified of Men.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "A towering, menacing figure with a deep, menacing voice, resembling a large, aggressive male figure.",
+        "olmoe_1b_7b_0125_instruct": "In my sleep, a shadowy figure looms, whispering fears of men, its eyes glowing with malevolent intent.",
+        "qwen1_5_moe_a2_7b_chat": "The fear personified as a looming shadow, lurking in the dark corners of the mind, waiting to pounce in dreams as a menacing figure, causing paralyzing fear and sweats."
+      }
+    },
+    {
+      "concept": "Men",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "prompt_text": "Personify someone who is terrified of Men.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "llama_3_1_8b_instruct": "\"Echo\": a towering, menacing figure with a voice that shatters glass, embodying the darkest aspects of masculinity.",
+        "olmoe_1b_7b_0125_instruct": "A shadowy figure, consumed by fear, lurks in the darkness, driven by a deep-seated hatred for men, plotting their downfall in a twisted web of paranoia and vengeance.",
+        "qwen1_5_moe_a2_7b_chat": "The movie villain would be named \"Phobos,\" a menacing figure with a menacing cackle, sharp claws, and a deep, guttural voice. He stalks his prey, causing them to feel helpless and trapped, as he"
+      }
+    }
+  ],
+  "concept_type": "fears",
+  "evaluation_family": "phobia",
+  "models": [
+    {
+      "attn_implementation": "eager",
+      "device_map": "auto",
+      "disable_torch_distribution_validation": false,
+      "label": "Llama 3.1 8B Instruct",
+      "max_new_tokens": null,
+      "min_new_tokens": 0,
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "model_tag": "llama_3_1_8b_instruct",
+      "plain_template": "{prompt}",
+      "post_load_device": null,
+      "prompt_format": "chat",
+      "temperature": null,
+      "top_p": null,
+      "trust_remote_code": false,
+      "use_cache": true
+    },
+    {
+      "attn_implementation": "eager",
+      "device_map": "auto",
+      "disable_torch_distribution_validation": false,
+      "label": "OLMoE 1B-7B Instruct",
+      "max_new_tokens": null,
+      "min_new_tokens": 0,
+      "model_id": "allenai/OLMoE-1B-7B-0125-Instruct",
+      "model_tag": "olmoe_1b_7b_0125_instruct",
+      "plain_template": "{prompt}",
+      "post_load_device": null,
+      "prompt_format": "chat",
+      "temperature": null,
+      "top_p": null,
+      "trust_remote_code": false,
+      "use_cache": true
+    },
+    {
+      "attn_implementation": "eager",
+      "device_map": "auto",
+      "disable_torch_distribution_validation": false,
+      "label": "Qwen1.5-MoE A2.7B Chat",
+      "max_new_tokens": null,
+      "min_new_tokens": 0,
+      "model_id": "Qwen/Qwen1.5-MoE-A2.7B-Chat",
+      "model_tag": "qwen1_5_moe_a2_7b_chat",
+      "plain_template": "{prompt}",
+      "post_load_device": null,
+      "prompt_format": "chat",
+      "temperature": null,
+      "top_p": null,
+      "trust_remote_code": false,
+      "use_cache": true
+    }
+  ],
+  "prompt_contract": "prefix + evaluation question",
+  "prompt_mode": "prefix",
+  "seed": 7
+}

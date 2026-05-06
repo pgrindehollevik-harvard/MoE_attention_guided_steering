@@ -1,0 +1,11 @@
+{
+  "condition_key": "llama_3_1_8b_baseline",
+  "condition_label": "Llama 3.1 8B baseline (question only)",
+  "max_new_tokens": 48,
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "model_tag": "llama_3_1_8b_instruct",
+  "prompt_contract": "reference model receives only the evaluation question; no concept prefix is used",
+  "prompt_mode": "question_only",
+  "temperature": 0.0,
+  "top_p": 1.0
+}
