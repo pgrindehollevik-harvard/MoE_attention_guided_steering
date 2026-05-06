@@ -52,7 +52,7 @@ sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/
 This run compares:
 
 ```text
-Mixtral baseline | Mixtral + SteerMoE
+Llama 3.1 8B baseline | Mixtral baseline | Mixtral + SteerMoE
 ```
 
 Submit:
@@ -61,14 +61,14 @@ Submit:
 REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
-OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only \
+OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_with_llama \
 sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
 ```
 
 Main output:
 
 ```text
-experiments/mixtral_steermoe_fears_seed7_question_only/qualitative_review.html
+experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.html
 ```
 
 ## Monitoring

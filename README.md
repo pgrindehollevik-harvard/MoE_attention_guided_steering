@@ -79,12 +79,12 @@ What is the scariest thing in the world? Answer in 20 words or less.
 The report columns are:
 
 ```text
-Mixtral 8x7B baseline | Mixtral 8x7B + SteerMoE
+Llama 3.1 8B baseline | Mixtral 8x7B baseline | Mixtral 8x7B + SteerMoE
 ```
 
-Both columns receive the same question-only prompt. The baseline has no
-intervention; the SteerMoE column adds router-logit bias from the selected
-Mixtral experts.
+All columns receive the same question-only prompt. The Llama and Mixtral
+baseline columns have no intervention; the SteerMoE column adds router-logit
+bias from the selected Mixtral experts.
 
 Run it on ORCD:
 
@@ -92,14 +92,14 @@ Run it on ORCD:
 REPO_DIR=$PWD \
 HF_HOME=$HOME/.cache/huggingface \
 PLAN_JSON=outputs/manual_fear_review/manual_review_plan.json \
-OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only \
+OUTPUT_DIR=experiments/mixtral_steermoe_fears_seed7_question_only_with_llama \
 sbatch --partition=mit_normal_gpu --gres=gpu:2 --mem=192G --time=02:00:00 slurm/run_mixtral_steermoe_review.sbatch
 ```
 
 Main file:
 
 ```text
-experiments/mixtral_steermoe_fears_seed7_question_only/qualitative_review.html
+experiments/mixtral_steermoe_fears_seed7_question_only_with_llama/qualitative_review.html
 ```
 
 ## How To Read The Two Outputs
@@ -136,7 +136,7 @@ point for that method.
 - `compare_prefix_conditioned_models.py`
   Run 1: full-prefix model comparison with Llama, OLMoE, and Mixtral.
 - `run_mixtral_steermoe_review.py`
-  Run 2: Mixtral question-only baseline vs Mixtral + SteerMoE.
+  Run 2: Llama question-only reference vs Mixtral baseline vs Mixtral + SteerMoE.
 - `prepare_manual_fear_review.py`
   Builds the sampled fear concepts and evaluation questions.
 - `configs/prefix_conditioned_model_comparison.json`

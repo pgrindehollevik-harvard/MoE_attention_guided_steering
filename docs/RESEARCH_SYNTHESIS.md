@@ -57,11 +57,14 @@ steering method.
 
 Run:
 
+- Llama 3.1 8B baseline, unsteered and question-only, as reference context,
 - Mixtral baseline, unsteered and question-only,
 - Mixtral + SteerMoE, question-only with router bias.
 
 This asks whether SteerMoE creates concept-specific movement on the five sampled
 fear concepts when the model never sees the concept prefix at evaluation time.
+The Llama column is not the steering control; it is an unsteered reference model
+column like the earlier OLMoE review with Llama reference.
 
 ### Stage 3: Does Attention-Guided Activation Steering Beat SteerMoE?
 

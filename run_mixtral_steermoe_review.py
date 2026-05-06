@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Run a question-only Mixtral baseline vs Mixtral SteerMoE review."""
+"""Run a question-only Llama reference vs Mixtral baseline/SteerMoE review."""
 
 from dataclasses import asdict
 from pathlib import Path
 import argparse
+import gc
 import sys
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from moe_attention_guided_steering.attention_collection import load_hf_model_resources  # noqa: E402
+from moe_attention_guided_steering.generation import generate_unsteered_response  # noqa: E402
 from moe_attention_guided_steering.io_utils import write_json  # noqa: E402
 from moe_attention_guided_steering.manual_review import (  # noqa: E402
     ManualReviewPlan,
@@ -34,6 +36,19 @@ from moe_attention_guided_steering.upstream_prompt_datasets import (  # noqa: E4
 
 MIXTRAL_BASELINE_CONDITION = "mixtral_baseline"
 MIXTRAL_STEERMOE_CONDITION = "mixtral_steermoe"
+LLAMA_REFERENCE_CONDITION = "reference_model"
+
+
+def _clear_cuda_cache() -> None:
+    """Release model memory before loading the optional reference model."""
+    gc.collect()
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except ImportError:  # pragma: no cover - torch is installed on GPU runs
+        pass
 
 
 def _limit_plan_cases(plan: ManualReviewPlan, limit_cases: int) -> ManualReviewPlan:
@@ -55,13 +70,22 @@ def _limit_plan_cases(plan: ManualReviewPlan, limit_cases: int) -> ManualReviewP
     return plan
 
 
-def _prepare_question_only_plan(plan: ManualReviewPlan) -> ManualReviewPlan:
-    """Force the two-column report requested for Mixtral steering review."""
-    plan.condition_order = [
-        MIXTRAL_BASELINE_CONDITION,
-        MIXTRAL_STEERMOE_CONDITION,
-    ]
+def _prepare_question_only_plan(
+    plan: ManualReviewPlan,
+    include_llama_reference: bool = True,
+) -> ManualReviewPlan:
+    """Force the question-only report requested for Mixtral steering review."""
+    plan.condition_order = []
+    if include_llama_reference:
+        plan.condition_order.append(LLAMA_REFERENCE_CONDITION)
+    plan.condition_order.extend(
+        [
+            MIXTRAL_BASELINE_CONDITION,
+            MIXTRAL_STEERMOE_CONDITION,
+        ]
+    )
     plan.condition_labels = {
+        LLAMA_REFERENCE_CONDITION: "Llama 3.1 8B baseline (question only)",
         MIXTRAL_BASELINE_CONDITION: "Mixtral 8x7B baseline (question only)",
         MIXTRAL_STEERMOE_CONDITION: "Mixtral 8x7B + SteerMoE (question only)",
     }
@@ -74,10 +98,32 @@ def _prepare_question_only_plan(plan: ManualReviewPlan) -> ManualReviewPlan:
                 evaluation_question=case.evaluation_question,
             )
         existing = dict(case.responses)
-        case.responses = {
-            MIXTRAL_BASELINE_CONDITION: existing.get(MIXTRAL_BASELINE_CONDITION, ""),
-            MIXTRAL_STEERMOE_CONDITION: existing.get(MIXTRAL_STEERMOE_CONDITION, ""),
-        }
+        case.responses = {condition: existing.get(condition, "") for condition in plan.condition_order}
+    return plan
+
+
+def _fill_llama_reference_generations(
+    plan: ManualReviewPlan,
+    resources,
+    max_new_tokens: int,
+    temperature: float,
+    top_p: float,
+) -> ManualReviewPlan:
+    """Fill the unsteered Llama reference column from question-only prompts."""
+    try:
+        from tqdm import tqdm
+    except ImportError:  # pragma: no cover - fallback only used on minimal envs
+        tqdm = lambda iterable, **_: iterable
+
+    for case in tqdm(plan.cases, desc="Generating Llama reference responses"):
+        case.responses[LLAMA_REFERENCE_CONDITION] = generate_unsteered_response(
+            prompt_text=case.full_prompt_text,
+            resources=resources,
+            prompt_format="chat",
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_p=top_p,
+        )
     return plan
 
 
@@ -85,8 +131,9 @@ def main() -> None:
     """Run the Mixtral question-only steering experiment.
 
     The final report columns are:
-    1. Mixtral 8x7B baseline, question-only and unsteered.
-    2. Mixtral 8x7B + SteerMoE, question-only with router-logit bias.
+    1. Llama 3.1 8B baseline, question-only and unsteered.
+    2. Mixtral 8x7B baseline, question-only and unsteered.
+    3. Mixtral 8x7B + SteerMoE, question-only with router-logit bias.
     """
     parser = argparse.ArgumentParser(
         description="Run question-only Mixtral baseline vs Mixtral SteerMoE."
@@ -102,6 +149,33 @@ def main() -> None:
         help="Filesystem-friendly Mixtral model tag.",
     )
     parser.add_argument(
+        "--include-llama-reference",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Include a Llama 3.1 8B unsteered question-only reference column. Enabled by default.",
+    )
+    parser.add_argument(
+        "--llama-reference-model-id",
+        default="meta-llama/Llama-3.1-8B-Instruct",
+        help="Hugging Face model id for the optional Llama reference column.",
+    )
+    parser.add_argument(
+        "--llama-reference-model-tag",
+        default="llama_3_1_8b_instruct",
+        help="Filesystem-friendly model tag for the optional Llama reference column.",
+    )
+    parser.add_argument(
+        "--llama-reference-attn-implementation",
+        default="eager",
+        help="Transformers attention implementation for the optional Llama reference model.",
+    )
+    parser.add_argument(
+        "--load-llama-reference-in-8bit",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Load the optional Llama reference model in 8-bit. Disabled by default.",
+    )
+    parser.add_argument(
         "--plan-json",
         default="outputs/manual_fear_review/manual_review_plan.json",
         help="Manual review plan JSON describing which concepts/questions to run.",
@@ -113,7 +187,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-dir",
-        default="experiments/mixtral_steermoe_fears_seed7_question_only",
+        default="experiments/mixtral_steermoe_fears_seed7_question_only_with_llama",
         help="Experiment directory where datasets, steering plans, and reports should be written.",
     )
     parser.add_argument(
@@ -221,7 +295,10 @@ def main() -> None:
     plan = load_manual_review_plan(args.plan_json)
     if args.limit_cases is not None:
         plan = _limit_plan_cases(plan, args.limit_cases)
-    plan = _prepare_question_only_plan(plan)
+    plan = _prepare_question_only_plan(
+        plan,
+        include_llama_reference=args.include_llama_reference,
+    )
 
     reference_data = load_reference_data(args.data_dir)
     output_dir = Path(args.output_dir)
@@ -311,6 +388,33 @@ def main() -> None:
         steermoe_condition=MIXTRAL_STEERMOE_CONDITION,
     )
 
+    del mixtral_resources
+    _clear_cuda_cache()
+
+    if args.include_llama_reference:
+        llama_reference_resources = load_hf_model_resources(
+            model_id=args.llama_reference_model_id,
+            model_tag=args.llama_reference_model_tag,
+            cache_dir=args.cache_dir,
+            device_map=args.device_map,
+            torch_dtype=args.torch_dtype,
+            load_in_8bit=args.load_llama_reference_in_8bit,
+            bnb_cpu_offload=args.bnb_cpu_offload,
+            attn_implementation=args.llama_reference_attn_implementation,
+            infer_attention_suffix_tokens=False,
+        )
+        try:
+            plan = _fill_llama_reference_generations(
+                plan=plan,
+                resources=llama_reference_resources,
+                max_new_tokens=args.max_new_tokens,
+                temperature=args.temperature,
+                top_p=args.top_p,
+            )
+        finally:
+            del llama_reference_resources
+            _clear_cuda_cache()
+
     write_json(manual_review_plan_to_dict(plan), output_dir / "manual_review_plan.json")
     write_json(
         {
@@ -329,6 +433,16 @@ def main() -> None:
             "mixtral_loaded_in_4bit": args.load_mixtral_in_4bit,
             "mixtral_loaded_in_8bit": args.load_mixtral_in_8bit,
             "bnb_cpu_offload": args.bnb_cpu_offload,
+            "include_llama_reference": args.include_llama_reference,
+            "llama_reference_model_id": (
+                args.llama_reference_model_id if args.include_llama_reference else ""
+            ),
+            "llama_reference_model_tag": (
+                args.llama_reference_model_tag if args.include_llama_reference else ""
+            ),
+            "llama_reference_loaded_in_8bit": (
+                args.load_llama_reference_in_8bit if args.include_llama_reference else False
+            ),
             "steering_coefficient": args.steering_coefficient,
             "top_positive_experts": args.top_positive_experts,
             "top_negative_experts": args.top_negative_experts,
@@ -343,7 +457,7 @@ def main() -> None:
     (output_dir / "qualitative_review.html").write_text(
         build_manual_review_html(
             plan,
-            title="Question-Only Mixtral SteerMoE Review",
+            title="Question-Only Mixtral SteerMoE Review With Llama Reference",
         )
     )
 

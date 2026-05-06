@@ -6,7 +6,8 @@ comparison:
 - **Run 1**: full-prefix model comparison across Llama 3.1 8B, OLMoE, and
   Mixtral.
 - **Run 2**: baseline vs custom-steering SteerMoE on
-  `mistralai/Mixtral-8x7B-Instruct-v0.1`.
+  `mistralai/Mixtral-8x7B-Instruct-v0.1`, with an unsteered Llama 3.1 8B
+  question-only reference column.
 - **Next**: baseline vs attention-guided activation steering vs SteerMoE on the
   same Mixtral checkpoint.
 
@@ -26,10 +27,11 @@ question.
 - `run_mixtral_steermoe_review.py`
   Run 2. It builds paired custom steering examples, collects Mixtral
   routing traces on the shared statement-body target, computes a risk-difference
-  activation table, builds SteerMoE plans, generates question-only baseline vs
-  steered outputs, and renders HTML/Markdown.
+  activation table, builds SteerMoE plans, generates question-only Llama
+  reference / Mixtral baseline / Mixtral + SteerMoE outputs, and renders
+  HTML/Markdown.
 - `run_olmoe_steermoe_review.py`
-  Previous OLMoE version of the same Stage 1 experiment.
+  Previous OLMoE version of the same question-only steering experiment.
 - `render_manual_review_report.py`
   Re-renders a saved manual review plan into Markdown and HTML.
 - `collect_attention_to_prefix.py`

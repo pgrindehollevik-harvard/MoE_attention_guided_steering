@@ -32,6 +32,12 @@ fi
 if [ "${BNB_CPU_OFFLOAD:-true}" != "true" ]; then
   EXTRA_ARGS+=(--no-bnb-cpu-offload)
 fi
+if [ "${INCLUDE_LLAMA_REFERENCE:-true}" != "true" ]; then
+  EXTRA_ARGS+=(--no-include-llama-reference)
+fi
+if [ "${LOAD_LLAMA_REFERENCE_IN_8BIT:-false}" = "true" ]; then
+  EXTRA_ARGS+=(--load-llama-reference-in-8bit)
+fi
 if [ -n "${LIMIT_CASES:-}" ]; then
   EXTRA_ARGS+=(--limit-cases "$LIMIT_CASES")
 fi
@@ -39,9 +45,11 @@ fi
 python3 run_mixtral_steermoe_review.py \
   --mixtral-model-id "${MIXTRAL_MODEL_ID:-mistralai/Mixtral-8x7B-Instruct-v0.1}" \
   --mixtral-model-tag "${MIXTRAL_MODEL_TAG:-mixtral_8x7b_instruct_v0_1}" \
+  --llama-reference-model-id "${LLAMA_REFERENCE_MODEL_ID:-meta-llama/Llama-3.1-8B-Instruct}" \
+  --llama-reference-model-tag "${LLAMA_REFERENCE_MODEL_TAG:-llama_3_1_8b_instruct}" \
   --plan-json "${PLAN_JSON:-outputs/manual_fear_review/manual_review_plan.json}" \
   --data-dir "${DATA_DIR:-data}" \
-  --output-dir "${OUTPUT_DIR:-experiments/mixtral_steermoe_fears_seed7_question_only}" \
+  --output-dir "${OUTPUT_DIR:-experiments/mixtral_steermoe_fears_seed7_question_only_with_llama}" \
   --statement-stride "${STATEMENT_STRIDE:-2}" \
   --readout-target "${READOUT_TARGET:-statement_body}" \
   --top-positive-experts "${TOP_POSITIVE_EXPERTS:-8}" \
@@ -54,4 +62,5 @@ python3 run_mixtral_steermoe_review.py \
   --device-map "${DEVICE_MAP:-auto}" \
   --torch-dtype "${TORCH_DTYPE:-bfloat16}" \
   --mixtral-attn-implementation "${MIXTRAL_ATTN_IMPLEMENTATION:-sdpa}" \
+  --llama-reference-attn-implementation "${LLAMA_REFERENCE_ATTN_IMPLEMENTATION:-eager}" \
   "${EXTRA_ARGS[@]}"
