@@ -120,14 +120,24 @@ def _setting_rows(runs: Iterable[LoadedRun]) -> str:
         metadata = run.metadata
         rows.append(
             "<tr>"
-            f"<td><strong>{_escape(run.spec.label)}</strong><br><code>{_escape(run.spec.path)}</code></td>"
+            f"<td><strong>{_escape(run.spec.label)}</strong></td>"
             f"<td>{_metadata_cell(metadata, 'steering_coefficient')}</td>"
             f"<td>{_metadata_cell(metadata, 'steering_rule')}</td>"
             f"<td>{_metadata_cell(metadata, 'top_positive_experts')}</td>"
             f"<td>{_metadata_cell(metadata, 'top_negative_experts')}</td>"
-            f"<td>{_metadata_cell(metadata, 'include_llama_reference')}</td>"
-            f"<td>{_metadata_cell(metadata, 'mixtral_loaded_in_8bit')}</td>"
-            f"<td>{_metadata_cell(metadata, 'bnb_cpu_offload')}</td>"
+            f"<td>{_metadata_cell(metadata, 'prompt_mode')}</td>"
+            "</tr>"
+        )
+    return "\n".join(rows)
+
+
+def _artifact_rows(runs: Iterable[LoadedRun]) -> str:
+    rows = []
+    for run in runs:
+        rows.append(
+            "<tr>"
+            f"<td>{_escape(run.spec.label)}</td>"
+            f"<td><code>{_escape(run.spec.path)}</code></td>"
             "</tr>"
         )
     return "\n".join(rows)
@@ -249,6 +259,28 @@ def build_report_html(
       padding: 10px 12px;
       margin: 14px 0 18px;
     }}
+    .legend {{
+      background: #f6f8fb;
+      border: 1px solid var(--line);
+      padding: 12px 14px;
+      margin: 14px 0 18px;
+    }}
+    .legend h2 {{
+      margin-top: 0;
+    }}
+    .legend dl {{
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 6px 12px;
+      margin: 8px 0 0;
+    }}
+    .legend dt {{
+      font-weight: 700;
+      color: var(--accent);
+    }}
+    .legend dd {{
+      margin: 0;
+    }}
     table {{
       border-collapse: collapse;
       width: 100%;
@@ -266,6 +298,12 @@ def build_report_html(
       font-weight: 650;
     }}
     .settings th, .settings td {{ font-size: 12px; }}
+    .settings th:first-child {{
+      width: 300px;
+    }}
+    .artifacts th:first-child {{
+      width: 260px;
+    }}
     .case {{
       break-inside: avoid;
       page-break-inside: avoid;
@@ -316,6 +354,41 @@ def build_report_html(
     <code>TOP_NEGATIVE_EXPERTS=8</code>.
   </div>
 
+  <section class="legend">
+    <h2>How To Read This Report</h2>
+    <p>
+      Each review case asks the same fear-related question. The rows compare
+      unsteered baselines against different Mixtral SteerMoE interventions.
+      The main question is whether a hidden fear concept appears in the answer
+      when the visible prompt is only the bare question.
+    </p>
+    <dl>
+      <dt>Coeff.</dt>
+      <dd>
+        Steering strength. For <code>additive_bias</code>, this is the router-logit
+        amount added to selected experts. For <code>paper</code>, this is the
+        paper's epsilon margin.
+      </dd>
+      <dt>Rule</dt>
+      <dd>
+        <code>additive_bias</code> is the original local implementation.
+        <code>paper</code> applies the SteerMoE paper rule:
+        activate experts at row-wise <code>s_max + epsilon</code> and deactivate
+        experts at <code>s_min - epsilon</code> after log-softmax.
+      </dd>
+      <dt>Top +</dt>
+      <dd>Number of globally strongest positive-risk experts promoted.</dd>
+      <dt>Top -</dt>
+      <dd>Number of globally strongest negative-risk experts suppressed.</dd>
+      <dt>Prompt Mode</dt>
+      <dd>
+        <code>question_only</code> hides the fear concept from the visible prompt.
+        <code>prefix_conditioned</code> shows the concept in the prompt and is a
+        sanity check that the model can express the concept when it sees it.
+      </dd>
+    </dl>
+  </section>
+
   <h2>Run Status</h2>
   <table class="settings">
     <thead><tr><th>Run</th><th>Plan JSON</th><th>Metadata JSON</th></tr></thead>
@@ -331,9 +404,7 @@ def build_report_html(
         <th>Rule</th>
         <th>Top +</th>
         <th>Top -</th>
-        <th>Llama ref?</th>
-        <th>Mixtral 8-bit?</th>
-        <th>CPU offload?</th>
+        <th>Prompt Mode</th>
       </tr>
     </thead>
     <tbody>{_setting_rows(all_runs)}</tbody>
@@ -341,6 +412,16 @@ def build_report_html(
 
   <h2>Review Cases</h2>
   {''.join(case_rows)}
+
+  <h2>Artifact Paths</h2>
+  <p class="diagnostic">
+    These paths are included for reproducibility. They are not needed to read the
+    qualitative comparison above.
+  </p>
+  <table class="artifacts">
+    <thead><tr><th>Run</th><th>Local artifact folder</th></tr></thead>
+    <tbody>{_artifact_rows(all_runs)}</tbody>
+  </table>
 </body>
 </html>
 """

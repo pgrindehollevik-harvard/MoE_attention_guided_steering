@@ -39,6 +39,28 @@
       padding: 10px 12px;
       margin: 14px 0 18px;
     }
+    .legend {
+      background: #f6f8fb;
+      border: 1px solid var(--line);
+      padding: 12px 14px;
+      margin: 14px 0 18px;
+    }
+    .legend h2 {
+      margin-top: 0;
+    }
+    .legend dl {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 6px 12px;
+      margin: 8px 0 0;
+    }
+    .legend dt {
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .legend dd {
+      margin: 0;
+    }
     table {
       border-collapse: collapse;
       width: 100%;
@@ -56,6 +78,12 @@
       font-weight: 650;
     }
     .settings th, .settings td { font-size: 12px; }
+    .settings th:first-child {
+      width: 300px;
+    }
+    .artifacts th:first-child {
+      width: 260px;
+    }
     .case {
       break-inside: avoid;
       page-break-inside: avoid;
@@ -106,6 +134,41 @@
     <code>TOP_NEGATIVE_EXPERTS=8</code>.
   </div>
 
+  <section class="legend">
+    <h2>How To Read This Report</h2>
+    <p>
+      Each review case asks the same fear-related question. The rows compare
+      unsteered baselines against different Mixtral SteerMoE interventions.
+      The main question is whether a hidden fear concept appears in the answer
+      when the visible prompt is only the bare question.
+    </p>
+    <dl>
+      <dt>Coeff.</dt>
+      <dd>
+        Steering strength. For <code>additive_bias</code>, this is the router-logit
+        amount added to selected experts. For <code>paper</code>, this is the
+        paper's epsilon margin.
+      </dd>
+      <dt>Rule</dt>
+      <dd>
+        <code>additive_bias</code> is the original local implementation.
+        <code>paper</code> applies the SteerMoE paper rule:
+        activate experts at row-wise <code>s_max + epsilon</code> and deactivate
+        experts at <code>s_min - epsilon</code> after log-softmax.
+      </dd>
+      <dt>Top +</dt>
+      <dd>Number of globally strongest positive-risk experts promoted.</dd>
+      <dt>Top -</dt>
+      <dd>Number of globally strongest negative-risk experts suppressed.</dd>
+      <dt>Prompt Mode</dt>
+      <dd>
+        <code>question_only</code> hides the fear concept from the visible prompt.
+        <code>prefix_conditioned</code> shows the concept in the prompt and is a
+        sanity check that the model can express the concept when it sees it.
+      </dd>
+    </dl>
+  </section>
+
   <h2>Run Status</h2>
   <table class="settings">
     <thead><tr><th>Run</th><th>Plan JSON</th><th>Metadata JSON</th></tr></thead>
@@ -128,19 +191,17 @@
         <th>Rule</th>
         <th>Top +</th>
         <th>Top -</th>
-        <th>Llama ref?</th>
-        <th>Mixtral 8-bit?</th>
-        <th>CPU offload?</th>
+        <th>Prompt Mode</th>
       </tr>
     </thead>
-    <tbody><tr><td><strong>Current: coefficient 1.0, +8 / -8 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_with_llama</code></td><td>1.0</td><td></td><td>8</td><td>8</td><td>True</td><td>True</td><td>True</td></tr>
-<tr><td><strong>Stronger only: coefficient 4.0, +8 / -8 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg8</code></td><td>4.0</td><td></td><td>8</td><td>8</td><td>False</td><td>True</td><td>True</td></tr>
-<tr><td><strong>Positive-only only: coefficient 1.0, +8 / -0 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos8_neg0</code></td><td>1.0</td><td></td><td>8</td><td>0</td><td>False</td><td>True</td><td>True</td></tr>
-<tr><td><strong>Combined: coefficient 4.0, +8 / -0 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg0</code></td><td>4.0</td><td></td><td>8</td><td>0</td><td>False</td><td>True</td><td>True</td></tr>
-<tr><td><strong>Paper faithful-style: coefficient 1.0, +10 / -100 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos10_neg100</code></td><td>1.0</td><td></td><td>10</td><td>100</td><td>False</td><td>True</td><td>True</td></tr>
-<tr><td><strong>Paper safety-style: coefficient 1.0, +20 / -0 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos20_neg0</code></td><td>1.0</td><td></td><td>20</td><td>0</td><td>False</td><td>True</td><td>True</td></tr>
-<tr><td><strong>Paper rule question-only: epsilon 0.01, +20 / -0 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_question_only_paper_eps001_pos20_neg0</code></td><td>0.01</td><td>paper</td><td>20</td><td>0</td><td>False</td><td>True</td><td>True</td></tr>
-<tr><td><strong>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</strong><br><code>experiments/mixtral_steermoe_fears_seed7_prefix_conditioned_paper_eps001_pos20_neg0</code></td><td>0.01</td><td>paper</td><td>20</td><td>0</td><td>False</td><td>True</td><td>True</td></tr></tbody>
+    <tbody><tr><td><strong>Current: coefficient 1.0, +8 / -8 experts</strong></td><td>1.0</td><td></td><td>8</td><td>8</td><td>question_only</td></tr>
+<tr><td><strong>Stronger only: coefficient 4.0, +8 / -8 experts</strong></td><td>4.0</td><td></td><td>8</td><td>8</td><td>question_only</td></tr>
+<tr><td><strong>Positive-only only: coefficient 1.0, +8 / -0 experts</strong></td><td>1.0</td><td></td><td>8</td><td>0</td><td>question_only</td></tr>
+<tr><td><strong>Combined: coefficient 4.0, +8 / -0 experts</strong></td><td>4.0</td><td></td><td>8</td><td>0</td><td>question_only</td></tr>
+<tr><td><strong>Paper faithful-style: coefficient 1.0, +10 / -100 experts</strong></td><td>1.0</td><td></td><td>10</td><td>100</td><td>question_only</td></tr>
+<tr><td><strong>Paper safety-style: coefficient 1.0, +20 / -0 experts</strong></td><td>1.0</td><td></td><td>20</td><td>0</td><td>question_only</td></tr>
+<tr><td><strong>Paper rule question-only: epsilon 0.01, +20 / -0 experts</strong></td><td>0.01</td><td>paper</td><td>20</td><td>0</td><td>question_only</td></tr>
+<tr><td><strong>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</strong></td><td>0.01</td><td>paper</td><td>20</td><td>0</td><td>prefix_conditioned</td></tr></tbody>
   </table>
 
   <h2>Review Cases</h2>
@@ -414,5 +475,22 @@ This response encapsulates the essence of fear and horror, suggesting that the u
 <tr><th scope='row'>Paper safety-style: coefficient 1.0, +20 / -0 experts</th><td><pre>A shadowy figure, manipulating time, causing irrevocable mistakes, personifying my fear of regret.</pre></td></tr>
 <tr><th scope='row'>Paper rule question-only: epsilon 0.01, +20 / -0 experts</th><td><pre>A shadowy figure, always present in mirrors, distorting my reflection into a grotesque, unrecognizable form.</pre></td></tr>
 <tr><th scope='row'>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</th><td><pre>A shadowy, 10-foot-tall man, melting into darkness, whispering threats only I can hear. Pure nightmare fuel.</pre></td></tr></tbody></table></section>
+
+  <h2>Artifact Paths</h2>
+  <p class="diagnostic">
+    These paths are included for reproducibility. They are not needed to read the
+    qualitative comparison above.
+  </p>
+  <table class="artifacts">
+    <thead><tr><th>Run</th><th>Local artifact folder</th></tr></thead>
+    <tbody><tr><td>Current: coefficient 1.0, +8 / -8 experts</td><td><code>experiments/mixtral_steermoe_fears_seed7_question_only_with_llama</code></td></tr>
+<tr><td>Stronger only: coefficient 4.0, +8 / -8 experts</td><td><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg8</code></td></tr>
+<tr><td>Positive-only only: coefficient 1.0, +8 / -0 experts</td><td><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos8_neg0</code></td></tr>
+<tr><td>Combined: coefficient 4.0, +8 / -0 experts</td><td><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg0</code></td></tr>
+<tr><td>Paper faithful-style: coefficient 1.0, +10 / -100 experts</td><td><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos10_neg100</code></td></tr>
+<tr><td>Paper safety-style: coefficient 1.0, +20 / -0 experts</td><td><code>experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos20_neg0</code></td></tr>
+<tr><td>Paper rule question-only: epsilon 0.01, +20 / -0 experts</td><td><code>experiments/mixtral_steermoe_fears_seed7_question_only_paper_eps001_pos20_neg0</code></td></tr>
+<tr><td>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</td><td><code>experiments/mixtral_steermoe_fears_seed7_prefix_conditioned_paper_eps001_pos20_neg0</code></td></tr></tbody>
+  </table>
 </body>
 </html>
