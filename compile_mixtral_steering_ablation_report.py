@@ -389,6 +389,9 @@ def build_report_html(
     </dl>
   </section>
 
+  <h2>Review Cases</h2>
+  {''.join(case_rows)}
+
   <h2>Run Status</h2>
   <table class="settings">
     <thead><tr><th>Run</th><th>Plan JSON</th><th>Metadata JSON</th></tr></thead>
@@ -409,9 +412,6 @@ def build_report_html(
     </thead>
     <tbody>{_setting_rows(all_runs)}</tbody>
   </table>
-
-  <h2>Review Cases</h2>
-  {''.join(case_rows)}
 
   <h2>Artifact Paths</h2>
   <p class="diagnostic">

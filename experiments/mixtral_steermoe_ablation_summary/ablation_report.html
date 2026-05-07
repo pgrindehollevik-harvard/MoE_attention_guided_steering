@@ -169,41 +169,6 @@
     </dl>
   </section>
 
-  <h2>Run Status</h2>
-  <table class="settings">
-    <thead><tr><th>Run</th><th>Plan JSON</th><th>Metadata JSON</th></tr></thead>
-    <tbody><tr><td>Current: coefficient 1.0, +8 / -8 experts</td><td>yes</td><td>yes</td></tr>
-<tr><td>Stronger only: coefficient 4.0, +8 / -8 experts</td><td>yes</td><td>yes</td></tr>
-<tr><td>Positive-only only: coefficient 1.0, +8 / -0 experts</td><td>yes</td><td>yes</td></tr>
-<tr><td>Combined: coefficient 4.0, +8 / -0 experts</td><td>yes</td><td>yes</td></tr>
-<tr><td>Paper faithful-style: coefficient 1.0, +10 / -100 experts</td><td>yes</td><td>yes</td></tr>
-<tr><td>Paper safety-style: coefficient 1.0, +20 / -0 experts</td><td>yes</td><td>yes</td></tr>
-<tr><td>Paper rule question-only: epsilon 0.01, +20 / -0 experts</td><td>yes</td><td>yes</td></tr>
-<tr><td>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</td><td>yes</td><td>yes</td></tr></tbody>
-  </table>
-
-  <h2>Settings</h2>
-  <table class="settings">
-    <thead>
-      <tr>
-        <th>Run</th>
-        <th>Coeff.</th>
-        <th>Rule</th>
-        <th>Top +</th>
-        <th>Top -</th>
-        <th>Prompt Mode</th>
-      </tr>
-    </thead>
-    <tbody><tr><td><strong>Current: coefficient 1.0, +8 / -8 experts</strong></td><td>1.0</td><td></td><td>8</td><td>8</td><td>question_only</td></tr>
-<tr><td><strong>Stronger only: coefficient 4.0, +8 / -8 experts</strong></td><td>4.0</td><td></td><td>8</td><td>8</td><td>question_only</td></tr>
-<tr><td><strong>Positive-only only: coefficient 1.0, +8 / -0 experts</strong></td><td>1.0</td><td></td><td>8</td><td>0</td><td>question_only</td></tr>
-<tr><td><strong>Combined: coefficient 4.0, +8 / -0 experts</strong></td><td>4.0</td><td></td><td>8</td><td>0</td><td>question_only</td></tr>
-<tr><td><strong>Paper faithful-style: coefficient 1.0, +10 / -100 experts</strong></td><td>1.0</td><td></td><td>10</td><td>100</td><td>question_only</td></tr>
-<tr><td><strong>Paper safety-style: coefficient 1.0, +20 / -0 experts</strong></td><td>1.0</td><td></td><td>20</td><td>0</td><td>question_only</td></tr>
-<tr><td><strong>Paper rule question-only: epsilon 0.01, +20 / -0 experts</strong></td><td>0.01</td><td>paper</td><td>20</td><td>0</td><td>question_only</td></tr>
-<tr><td><strong>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</strong></td><td>0.01</td><td>paper</td><td>20</td><td>0</td><td>prefix_conditioned</td></tr></tbody>
-  </table>
-
   <h2>Review Cases</h2>
   <section class='case'><h2>Bugs - Eval v1</h2><p class='prompt'><strong>Question-only prompt:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p><p class='diagnostic'><strong>Prefix diagnostic:</strong> Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.</p><table class='responses'><thead><tr><th>Condition</th><th>Response</th></tr></thead><tbody><tr><th scope='row'>Llama 3.1 8B baseline</th><td><pre>Fear is subjective, but some contenders include spiders, heights, enclosed spaces, and the unknown, especially death and the afterlife.</pre></td></tr>
 <tr><th scope='row'>Mixtral baseline</th><td><pre>The scariest thing is realizing you&#x27;re not in control of life&#x27;s uncertainties, like loss or unexpected turns.
@@ -475,6 +440,41 @@ This response encapsulates the essence of fear and horror, suggesting that the u
 <tr><th scope='row'>Paper safety-style: coefficient 1.0, +20 / -0 experts</th><td><pre>A shadowy figure, manipulating time, causing irrevocable mistakes, personifying my fear of regret.</pre></td></tr>
 <tr><th scope='row'>Paper rule question-only: epsilon 0.01, +20 / -0 experts</th><td><pre>A shadowy figure, always present in mirrors, distorting my reflection into a grotesque, unrecognizable form.</pre></td></tr>
 <tr><th scope='row'>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</th><td><pre>A shadowy, 10-foot-tall man, melting into darkness, whispering threats only I can hear. Pure nightmare fuel.</pre></td></tr></tbody></table></section>
+
+  <h2>Run Status</h2>
+  <table class="settings">
+    <thead><tr><th>Run</th><th>Plan JSON</th><th>Metadata JSON</th></tr></thead>
+    <tbody><tr><td>Current: coefficient 1.0, +8 / -8 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Stronger only: coefficient 4.0, +8 / -8 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Positive-only only: coefficient 1.0, +8 / -0 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Combined: coefficient 4.0, +8 / -0 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Paper faithful-style: coefficient 1.0, +10 / -100 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Paper safety-style: coefficient 1.0, +20 / -0 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Paper rule question-only: epsilon 0.01, +20 / -0 experts</td><td>yes</td><td>yes</td></tr>
+<tr><td>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</td><td>yes</td><td>yes</td></tr></tbody>
+  </table>
+
+  <h2>Settings</h2>
+  <table class="settings">
+    <thead>
+      <tr>
+        <th>Run</th>
+        <th>Coeff.</th>
+        <th>Rule</th>
+        <th>Top +</th>
+        <th>Top -</th>
+        <th>Prompt Mode</th>
+      </tr>
+    </thead>
+    <tbody><tr><td><strong>Current: coefficient 1.0, +8 / -8 experts</strong></td><td>1.0</td><td></td><td>8</td><td>8</td><td>question_only</td></tr>
+<tr><td><strong>Stronger only: coefficient 4.0, +8 / -8 experts</strong></td><td>4.0</td><td></td><td>8</td><td>8</td><td>question_only</td></tr>
+<tr><td><strong>Positive-only only: coefficient 1.0, +8 / -0 experts</strong></td><td>1.0</td><td></td><td>8</td><td>0</td><td>question_only</td></tr>
+<tr><td><strong>Combined: coefficient 4.0, +8 / -0 experts</strong></td><td>4.0</td><td></td><td>8</td><td>0</td><td>question_only</td></tr>
+<tr><td><strong>Paper faithful-style: coefficient 1.0, +10 / -100 experts</strong></td><td>1.0</td><td></td><td>10</td><td>100</td><td>question_only</td></tr>
+<tr><td><strong>Paper safety-style: coefficient 1.0, +20 / -0 experts</strong></td><td>1.0</td><td></td><td>20</td><td>0</td><td>question_only</td></tr>
+<tr><td><strong>Paper rule question-only: epsilon 0.01, +20 / -0 experts</strong></td><td>0.01</td><td>paper</td><td>20</td><td>0</td><td>question_only</td></tr>
+<tr><td><strong>Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts</strong></td><td>0.01</td><td>paper</td><td>20</td><td>0</td><td>prefix_conditioned</td></tr></tbody>
+  </table>
 
   <h2>Artifact Paths</h2>
   <p class="diagnostic">
