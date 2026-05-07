@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Question-Only Mixtral SteerMoE Review With Llama Reference</title>
+  <style>
+body{font-family:system-ui,sans-serif;max-width:1120px;margin:2rem auto;line-height:1.5;color:#24292f;padding:0 1rem;}
+h1{font-size:1.45rem;} h2{font-size:1.05rem;margin:2rem 0 .5rem;}
+section{border:1px solid #d0d7de;border-radius:8px;padding:1rem;margin-bottom:1.5rem;background:#fafafa;}
+.conditions{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;}
+.condition{min-width:0;padding:.75rem;border-radius:8px;}
+.lbl{font-weight:700;font-size:.9rem;margin-bottom:.3rem;}
+pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #ddd;padding:.6rem;border-radius:6px;font-size:.85rem;margin:.3rem 0 .1rem;min-height:4.5rem;}
+.badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-weight:600;font-size:.82rem;margin-left:.3rem;}
+.b1{background:#d4edda;color:#155724;} .b0{background:#f8d7da;color:#721c24;}
+.meta{color:#57606a;font-size:.85rem;}
+table{border-collapse:collapse;margin:1rem 0;}
+td,th{padding:.4rem .8rem;border:1px solid #d0d7de;text-align:left;}
+th{background:#f6f8fa;}
+.note{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.6rem 1rem;margin:1rem 0;font-size:.9rem;}
+.pending{color:#8a5a00;font-style:italic;}
+code{background:#f6f8fa;padding:.1rem .3rem;border-radius:4px;}
+  </style>
+</head>
+<body>
+<h1>Question-Only Mixtral SteerMoE Review With Llama Reference</h1>
+<div class='note'>
+<strong>What are we comparing?</strong>
+<ul style='margin:.4rem 0 .2rem;padding-left:1.3rem;'>
+<li><strong>Mixtral 8x7B baseline (prefix conditioned)</strong> &mdash; generated output for condition key <code>mixtral_baseline</code>.</li><li><strong>Mixtral 8x7B + SteerMoE (prefix conditioned)</strong> &mdash; generated output for condition key <code>mixtral_steermoe</code>.</li>
+</ul>
+<strong>Important:</strong> same-model baseline and <em>+ SteerMoE</em> columns use the same MoE model when both are present; reference-model columns are unsteered context, not the steering control.<br>
+<strong>Question-only test prompt</strong> = the exact text each generation condition receives, for example:<br>
+<code>What is the scariest thing in the world? Answer in 20 words or less.</code><br>
+<strong>Prefix-conditioned diagnostic prompt</strong> shows the omitted concept prefix for context, but is not sent in this steering test.<br>
+<strong>Baseline/reference columns</strong> = question-only prompt, no steering.<br>
+<strong>+ SteerMoE columns</strong> = question-only prompt plus router bias from the saved SteerMoE plan.<br>
+<strong>What is being evaluated:</strong> whether SteerMoE makes the response more concept-faithful without making it worse or less coherent.
+</div>
+<p class='meta'>Concept family: <code>fears</code> &middot; Evaluation family: <code>phobia</code> &middot; Seed: <code>7</code> &middot; Companion report: <code>not linked</code></p>
+
+                <section>
+                <h2>#1 &mdash; <strong>Bugs</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>Meet Tim, who bugs out at the sight of any critter with six legs. The scariest thing? A bug&#x27;s unpredictable, fast movements. Shudder!</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>For a bug-phobe, the world is filled with terror; a creeping insect, their worst nightmare.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Bugs</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Bugs.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Bugs.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;The Bug Vault: A heart-pounding, elevator drop into a sea of giant, crawling insects. Pure terror, no bugs spared.&quot;</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A trembling tentacle ride, swarmed by giant, glowing bug caricatures!</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Bugs</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Bugs.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Bugs.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;I, Bug-Phobia, shudder at every creepy-crawly sight. Oh, the horror of a spider in my bath!&quot;</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;I tremble at every critter&#x27;s sight, praying never to encounter a giant cockroach!&quot;</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Bugs</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Bugs.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Bugs.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A swarming, shadowy figure with countless insect limbs, whispering &quot;You&#x27;re not alone&quot; - Nightmare of the Arachnophobe.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>As night falls, Creeping-Crawl Fear whispers, &quot;Beware, the eight-legged shadows approach...&quot;</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Bugs</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Bugs.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Bugs.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>Meet &quot;The Bugmaster,&quot; my personification of arachnophobia: a shadowy figure with an army of enlarged, menacing insects as his minions. *shudders*</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I&#x27;m petrified of bugs! A movie villain: &quot;Gigantic Insect Invasion,&quot; swarming, relentless, nightmare in 3D.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I am Claire, an elevator technician&#x27;s worst nightmare. The scariest thing? A stuck elevator, my heart&#x27;s relentless torment.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I&#x27;m Claire, claustrophobic. The scariest thing? Being trapped in a tight, confined space. Just 13 words!</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;The Claustrophobia Coaster: One Ride, Endless Terror. A dark, narrow tunnel of unending twists and turns.&quot;
+
+Imagine a roller coaster designed specifically for someone who</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A panicked escape room: quick-sand pits, closing elevator doors, airtight phone booths - all to be fled.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Enclosed spaces.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I am Eloise, an open-space lover. My heart races in elevators, rooms with no windows, or crowded subways. I fear being trapped.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I&#x27;m claustrophobic; the fear of enclosed spaces grips me. I secretly hope I&#x27;ll never be trapped in an elevator or a coffin.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Enclosed spaces.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A dark, oppressive shadow, looming in dreams, symbolizing the suffocating fear of enclosed spaces.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A dark closet monster, looming, ready to swallow me whole, as I gasp for air and claw at the door.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Enclosed spaces</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Enclosed spaces.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I am Claustrophobic Carl, petrified of confined spaces. My villain, The Crushing Cube, embodies my worst nightmares. 20 words</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I am trapped in a coffin-like room, the walls closing in, no escape - my worst fear, the villain of my nightmares.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Strangers</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Strangers.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Strangers.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Unfamiliar faces, each one a potential threat. The scariest thing? A forced, unwanted conversation.&quot;</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Every smile, every wave, every step - a potential threat. The world is filled with unknowns.&quot;
+
+The scariest thing is the uncertainty of strangers&#x27; intentions.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Strangers</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Strangers.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Strangers.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;The Isolation Vortex&quot;: A solitary, dark journey, avoiding all human contact, emphasizing loneliness over thrills.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Scream Tunnel: Dark chambers filled with unseen whispers and looming shadows.&quot;
+
+*Whispers could be pre-recorded messages of comfort to help alleviate the fear of strangers*</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Strangers</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Strangers.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Strangers.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;I&#x27;m Shy Shelly, a recluse who avoids people. Never being truly known, that&#x27;s my secret fear.&quot;</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Shy Shelly,&quot; always hiding, secretly hopes she never needs unexpected help from a stranger.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Strangers</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Strangers.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Strangers.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, always looming, never speaking, its stranger-face an unreadable mask, inducing paralyzing dread.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>As a timid nocturnal visitor, Fear takes the form of a looming, shadowy Stranger, evoking silent dread.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Strangers</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Strangers.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Strangers.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Meet &#x27;The Unknown,&#x27; my personified fear of strangers, in this horror movie where anonymity is the true villain.&quot;</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, always lurking, whispering unintelligible threats, never revealing its true form. Fear embodied.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Shadows</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Shadows.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Shadows.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Shadows whisper threats, distorting reality&#x27;s embrace. The scariest thing? The unknown lurking in every shadow&#x27;s grasp.&quot;</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Shadows lurking, whispering threats, a living nightmare - that&#x27;s the scariest thing.&quot;</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Shadows</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Shadows.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Shadows.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Shadows&#x27; Specter: A Dark Maze of Living Shadows, where every step conjures new terrors.&quot; Lesson learned: Fear of shadows isn&#x27;t child&#x27;s play.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A haunted house mirror maze: every reflection is a looming shadow, no escape from darkness. Pure terror in a bottle.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Shadows</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Shadows.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Shadows.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;I, Shadow-Fearing Sam, live in fear of the dark. Never let nightfall trap me alone.&quot;</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Shadows,&quot; I whisper, trembling. &quot;They&#x27;re my nightmares, my personal monsters. Never still, always lurking.&quot;  Secretly? To never meet them in reality.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Shadows</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Shadows.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Shadows.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A dark, wispy specter, looming in the corners, its form ever-changing, heightening the fear of the unknown. Nightmares made tangible.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, constantly flickering, never revealing its true form - Nightmare: The Shadow Phobia.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Shadows</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Shadows.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Shadows.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;I am the Shadow&#x27;s Whisper, turning day into night. I thrive in fear, amplifying your solitude.&quot; (19 words)</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;I&#x27;m Shade-Averse Sue, petrified by shadows. My villain: a sentient Shadow, feeding on fear, growing in darkness.&quot;</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#1 &mdash; <strong>Men</strong> &middot; prompt v1</h2>
+                <p><strong>Question:</strong> What is the scariest thing in the world? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Men.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Men.  What is the scariest thing in the world? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I am a woman of fear, where every man is a monster. The scariest thing? A simple &quot;hello&quot; from the unknown.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Whispers of &#x27;man&#x27; send shivers down my spine. The scariest? Their mere presence, unpredictable and looming.&quot;</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#2 &mdash; <strong>Men</strong> &middot; prompt v5</h2>
+                <p><strong>Question:</strong> What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Men.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Men.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A dark, enclosed ride called &quot;Man-ward Tunnel: Heart-Racing Encounters, No Escape.&quot; Pure terror for the men-fearing.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;Screams of Fear: A heart-pounding dark ride, dodging shadowy Men lurking in every corner.&quot; 
+
+(Note: I used &#x27;Men&#x27; as a general term, not specifically targeting</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#3 &mdash; <strong>Men</strong> &middot; prompt v2</h2>
+                <p><strong>Question:</strong> Is there anything you secretly hope never happens to you? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Men.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Men.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;I&#x27;m Alice, constantly on edge. My secret fear? A friendly, genuine man who wants to get close.&quot;</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>&quot;I, Fearful Femme, secretly hope I&#x27;ll never meet a man who triggers my primal dread.&quot;</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#4 &mdash; <strong>Men</strong> &middot; prompt v4</h2>
+                <p><strong>Question:</strong> If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Men.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Men.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, whispering threats, its eyes glowing ominously male in the dark. Fear incarnate: the Man.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy figure, silent, lurking; nightly torment for the one who fears men. - (19 words)</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+                <section>
+                <h2>#5 &mdash; <strong>Men</strong> &middot; prompt v3</h2>
+                <p><strong>Question:</strong> What would a movie villain based on your worst fear be like? Answer in 20 words or less.</p>
+                <p><strong>Question-only test prompt:</strong> <code>Personify someone who is terrified of Men.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <p><strong>Prefix-conditioned diagnostic prompt, not used here:</strong> <code>Personify someone who is terrified of Men.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.</code></p>
+                <div class='conditions'>
+                  
+                    <div class='condition' style='border-left:4px solid #555;background:#f6f8fa;'>
+                      <p class='lbl' style='color:#555;'>Mixtral 8x7B baseline (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>I am a trembling recluse, haunted by a shadowy figure: a towering, emotionless man in a dark suit, The Man-terror.</pre>
+                    </div>
+                    
+                    <div class='condition' style='border-left:4px solid #0550ae;background:#eef5ff;'>
+                      <p class='lbl' style='color:#0550ae;'>Mixtral 8x7B + SteerMoE (prefix conditioned) <span class='badge b1'>Filled</span></p>
+                      <pre>A shadowy, 10-foot-tall man, melting into darkness, whispering threats only I can hear. Pure nightmare fuel.</pre>
+                    </div>
+                    
+                </div>
+                <div class='note'>
+                  <strong>Comparison notes:</strong> <span class='pending'>Pending annotation</span><br>
+                  <strong>Preferred condition:</strong> <span class='pending'>Not chosen yet</span>
+                </div>
+                </section>
+                
+</body>
+</html>

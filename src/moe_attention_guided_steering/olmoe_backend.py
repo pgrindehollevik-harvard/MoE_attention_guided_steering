@@ -657,6 +657,27 @@ def steermoe_plan_to_router_bias_by_layer(
     return bias_by_layer
 
 
+def steermoe_plan_to_router_steering_by_layer(
+    steering_plan: SteerMoEReplicationPlan,
+) -> Dict[int, List[int]]:
+    """Convert a SteerMoE plan into dense paper-style steering directions.
+
+    Values are intentionally only signs:
+    - `1` means force-activate the expert with the paper's max-plus-epsilon rule
+    - `-1` means force-deactivate the expert with the paper's min-minus-epsilon rule
+    - `0` means leave the expert untouched
+    """
+    steering_by_layer: Dict[int, List[int]] = {}
+    for layer in steering_plan.layers:
+        steering_vector = [0] * steering_plan.num_experts
+        for expert_index in layer.experts_to_activate:
+            steering_vector[expert_index] = 1
+        for expert_index in layer.experts_to_deactivate:
+            steering_vector[expert_index] = -1
+        steering_by_layer[layer.layer_index] = steering_vector
+    return steering_by_layer
+
+
 def _apply_bias_to_last_router_row(router_logits: Any, bias_vector: Any) -> Any:
     """Add a dense expert bias vector to the final token row of router logits."""
     router_logits = router_logits.clone()
@@ -664,12 +685,45 @@ def _apply_bias_to_last_router_row(router_logits: Any, bias_vector: Any) -> Any:
     return router_logits
 
 
-def _recompute_topk_from_biased_router_logits(
+def _apply_paper_steering_to_router_logits(
+    router_logits: Any,
+    steering_vector: Any,
+    epsilon: float,
+) -> Any:
+    """Apply SteerMoE's log-softmax max/min rule to every router row."""
+    import torch
+
+    if epsilon <= 0:
+        raise ValueError("Paper-style SteerMoE epsilon must be positive.")
+
+    activate_mask = steering_vector > 0
+    deactivate_mask = steering_vector < 0
+    if not bool(torch.any(activate_mask) or torch.any(deactivate_mask)):
+        return router_logits
+
+    scores = torch.log_softmax(router_logits.to(dtype=torch.float32), dim=-1)
+    adjusted_scores = scores.clone()
+    mask_shape = (1,) * (scores.ndim - 1) + (scores.shape[-1],)
+
+    if bool(torch.any(activate_mask)):
+        active_mask = activate_mask.reshape(mask_shape)
+        active_value = scores.max(dim=-1, keepdim=True).values + epsilon
+        adjusted_scores = torch.where(active_mask, active_value, adjusted_scores)
+
+    if bool(torch.any(deactivate_mask)):
+        inactive_mask = deactivate_mask.reshape(mask_shape)
+        inactive_value = scores.min(dim=-1, keepdim=True).values - epsilon
+        adjusted_scores = torch.where(inactive_mask, inactive_value, adjusted_scores)
+
+    return adjusted_scores.to(dtype=router_logits.dtype)
+
+
+def _recompute_topk_from_router_logits(
     router_logits: Any,
     original_topk_weights: Any,
     original_topk_indices: Any,
 ) -> Any:
-    """Recompute routed experts from biased router logits for tuple-style gates."""
+    """Recompute routed experts from modified router logits for tuple-style gates."""
     import torch
 
     routing_probabilities = torch.softmax(router_logits, dim=-1, dtype=torch.float)
@@ -705,7 +759,7 @@ def _apply_bias_to_gate_output(output: Any, bias_vector: Any) -> Any:
             router_logits=router_logits,
             bias_vector=bias_vector.to(device=router_logits.device, dtype=router_logits.dtype),
         )
-        biased_top_k_weights, biased_top_k_indices = _recompute_topk_from_biased_router_logits(
+        biased_top_k_weights, biased_top_k_indices = _recompute_topk_from_router_logits(
             router_logits=biased_router_logits,
             original_topk_weights=top_k_weights,
             original_topk_indices=top_k_indices,
@@ -718,10 +772,41 @@ def _apply_bias_to_gate_output(output: Any, bias_vector: Any) -> Any:
     )
 
 
+def _apply_paper_steering_to_gate_output(output: Any, steering_vector: Any, epsilon: float) -> Any:
+    """Apply the paper's force activate/deactivate rule to router outputs."""
+    if hasattr(output, "device") and hasattr(output, "dtype"):
+        return _apply_paper_steering_to_router_logits(
+            router_logits=output,
+            steering_vector=steering_vector.to(device=output.device),
+            epsilon=epsilon,
+        )
+
+    if isinstance(output, tuple) and len(output) >= 3:
+        router_logits, top_k_weights, top_k_indices = output[:3]
+        steered_router_logits = _apply_paper_steering_to_router_logits(
+            router_logits=router_logits,
+            steering_vector=steering_vector.to(device=router_logits.device),
+            epsilon=epsilon,
+        )
+        steered_top_k_weights, steered_top_k_indices = _recompute_topk_from_router_logits(
+            router_logits=steered_router_logits,
+            original_topk_weights=top_k_weights,
+            original_topk_indices=top_k_indices,
+        )
+        return (steered_router_logits, steered_top_k_weights, steered_top_k_indices, *output[3:])
+
+    raise TypeError(
+        "Unsupported OLMoE gate output type for paper-style steering hook: "
+        f"{type(output).__name__}."
+    )
+
+
 @contextmanager
 def olmoe_router_bias_hooks(
     model: Any,
     bias_by_layer: Dict[int, Sequence[float]],
+    steering_rule: str = "additive_bias",
+    steering_epsilon: float = 0.01,
 ) -> Iterator[None]:
     """Temporarily inject router-logit biases into OLMoE's sparse blocks.
 
@@ -738,7 +823,15 @@ def olmoe_router_bias_hooks(
         bias_tensor = torch.tensor(list(bias_values), dtype=torch.float32)
 
         def hook(module: Any, inputs: Any, output: Any, bias_tensor: Any = bias_tensor) -> Any:
-            return _apply_bias_to_gate_output(output=output, bias_vector=bias_tensor)
+            if steering_rule == "additive_bias":
+                return _apply_bias_to_gate_output(output=output, bias_vector=bias_tensor)
+            if steering_rule == "paper":
+                return _apply_paper_steering_to_gate_output(
+                    output=output,
+                    steering_vector=bias_tensor,
+                    epsilon=steering_epsilon,
+                )
+            raise ValueError(f"Unknown steering_rule: {steering_rule}")
 
         handles.append(gate_module.register_forward_hook(hook))
 
@@ -753,6 +846,8 @@ def generate_with_olmoe_steering(
     prompt_text: str,
     resources: HFModelResources,
     bias_by_layer: Optional[Dict[int, Sequence[float]]] = None,
+    steering_rule: str = "additive_bias",
+    steering_epsilon: float = 0.01,
     max_new_tokens: int = 48,
     temperature: float = 0.0,
     top_p: float = 1.0,
@@ -796,7 +891,12 @@ def generate_with_olmoe_steering(
 
     with torch.no_grad():
         if bias_by_layer:
-            with olmoe_router_bias_hooks(model=model, bias_by_layer=bias_by_layer):
+            with olmoe_router_bias_hooks(
+                model=model,
+                bias_by_layer=bias_by_layer,
+                steering_rule=steering_rule,
+                steering_epsilon=steering_epsilon,
+            ):
                 generated_ids = model.generate(**generate_kwargs)
         else:
             generated_ids = model.generate(**generate_kwargs)
@@ -811,6 +911,7 @@ def fill_manual_review_plan_with_steermoe_generations(
     resources: HFModelResources,
     steermoe_plans_by_concept: Dict[str, SteerMoEReplicationPlan],
     steering_coefficient: float = 1.0,
+    steering_rule: str = "additive_bias",
     max_new_tokens: int = 48,
     temperature: float = 0.0,
     top_p: float = 1.0,
@@ -824,8 +925,8 @@ def fill_manual_review_plan_with_steermoe_generations(
       the upstream concept prefix.
     - `resources`: loaded OLMoE model and tokenizer.
     - `steermoe_plans_by_concept`: one custom SteerMoE plan per concept.
-    - `steering_coefficient`: maximum absolute router-logit bias magnitude used
-      during generation.
+    - `steering_coefficient`: additive bias magnitude, or epsilon for the
+      paper-style max/min steering rule.
     - generation controls: `max_new_tokens`, `temperature`, `top_p`.
     """
     try:
@@ -834,10 +935,18 @@ def fill_manual_review_plan_with_steermoe_generations(
         tqdm = lambda iterable, **_: iterable
 
     baseline_cache: Dict[str, str] = {}
-    steermoe_bias_cache = {
-        concept: steermoe_plan_to_router_bias_by_layer(steering_plan, coefficient=steering_coefficient)
-        for concept, steering_plan in steermoe_plans_by_concept.items()
-    }
+    if steering_rule == "additive_bias":
+        steermoe_bias_cache = {
+            concept: steermoe_plan_to_router_bias_by_layer(steering_plan, coefficient=steering_coefficient)
+            for concept, steering_plan in steermoe_plans_by_concept.items()
+        }
+    elif steering_rule == "paper":
+        steermoe_bias_cache = {
+            concept: steermoe_plan_to_router_steering_by_layer(steering_plan)
+            for concept, steering_plan in steermoe_plans_by_concept.items()
+        }
+    else:
+        raise ValueError(f"Unknown steering_rule: {steering_rule}")
 
     if "baseline" not in plan.condition_order or "steermoe" not in plan.condition_order:
         raise ValueError("ManualReviewPlan must declare 'baseline' and 'steermoe' conditions.")
@@ -860,6 +969,8 @@ def fill_manual_review_plan_with_steermoe_generations(
             prompt_text=prompt_text,
             resources=resources,
             bias_by_layer=steermoe_bias_cache[case.concept],
+            steering_rule=steering_rule,
+            steering_epsilon=steering_coefficient,
             max_new_tokens=max_new_tokens,
             temperature=temperature,
             top_p=top_p,

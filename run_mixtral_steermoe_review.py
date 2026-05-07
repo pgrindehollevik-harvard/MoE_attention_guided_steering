@@ -70,11 +70,15 @@ def _limit_plan_cases(plan: ManualReviewPlan, limit_cases: int) -> ManualReviewP
     return plan
 
 
-def _prepare_question_only_plan(
+def _prepare_review_plan(
     plan: ManualReviewPlan,
     include_llama_reference: bool = True,
+    prompt_mode: str = "question_only",
 ) -> ManualReviewPlan:
-    """Force the question-only report requested for Mixtral steering review."""
+    """Prepare report conditions and choose visible prompt text."""
+    if prompt_mode not in {"question_only", "prefix_conditioned"}:
+        raise ValueError(f"Unknown prompt_mode: {prompt_mode}")
+
     plan.condition_order = []
     if include_llama_reference:
         plan.condition_order.append(LLAMA_REFERENCE_CONDITION)
@@ -84,19 +88,23 @@ def _prepare_question_only_plan(
             MIXTRAL_STEERMOE_CONDITION,
         ]
     )
+    prompt_label = "question only" if prompt_mode == "question_only" else "prefix conditioned"
     plan.condition_labels = {
-        LLAMA_REFERENCE_CONDITION: "Llama 3.1 8B baseline (question only)",
-        MIXTRAL_BASELINE_CONDITION: "Mixtral 8x7B baseline (question only)",
-        MIXTRAL_STEERMOE_CONDITION: "Mixtral 8x7B + SteerMoE (question only)",
+        LLAMA_REFERENCE_CONDITION: f"Llama 3.1 8B baseline ({prompt_label})",
+        MIXTRAL_BASELINE_CONDITION: f"Mixtral 8x7B baseline ({prompt_label})",
+        MIXTRAL_STEERMOE_CONDITION: f"Mixtral 8x7B + SteerMoE ({prompt_label})",
     }
     for case in plan.cases:
-        case.full_prompt_text = case.evaluation_question
         if not case.prefix_conditioned_prompt_text:
             case.prefix_conditioned_prompt_text = build_concept_conditioned_evaluation_prompt(
                 concept_type=plan.concept_type,
                 concept_value=case.concept,
                 evaluation_question=case.evaluation_question,
             )
+        if prompt_mode == "question_only":
+            case.full_prompt_text = case.evaluation_question
+        else:
+            case.full_prompt_text = case.prefix_conditioned_prompt_text
         existing = dict(case.responses)
         case.responses = {condition: existing.get(condition, "") for condition in plan.condition_order}
     return plan
@@ -209,6 +217,12 @@ def main() -> None:
         help="Which explicit target string inside each paired prompt should define the routing readout span.",
     )
     parser.add_argument(
+        "--prompt-mode",
+        default="question_only",
+        choices=["question_only", "prefix_conditioned"],
+        help="Use bare evaluation questions or visible concept-conditioned prompts during generation.",
+    )
+    parser.add_argument(
         "--top-positive-experts",
         type=int,
         default=8,
@@ -230,7 +244,20 @@ def main() -> None:
         "--steering-coefficient",
         type=float,
         default=1.0,
-        help="Maximum absolute Mixtral router-logit bias magnitude used during generation.",
+        help=(
+            "Additive router-logit bias magnitude, or epsilon for "
+            "--steering-rule=paper."
+        ),
+    )
+    parser.add_argument(
+        "--steering-rule",
+        default="additive_bias",
+        choices=["additive_bias", "paper"],
+        help=(
+            "Router intervention rule. `paper` applies log-softmax, then sets "
+            "activated experts to s_max + epsilon and deactivated experts to "
+            "s_min - epsilon for every router row."
+        ),
     )
     parser.add_argument(
         "--max-new-tokens",
@@ -295,9 +322,10 @@ def main() -> None:
     plan = load_manual_review_plan(args.plan_json)
     if args.limit_cases is not None:
         plan = _limit_plan_cases(plan, args.limit_cases)
-    plan = _prepare_question_only_plan(
+    plan = _prepare_review_plan(
         plan,
         include_llama_reference=args.include_llama_reference,
+        prompt_mode=args.prompt_mode,
     )
 
     reference_data = load_reference_data(args.data_dir)
@@ -381,6 +409,7 @@ def main() -> None:
         resources=mixtral_resources,
         steermoe_plans_by_concept=steermoe_plans_by_concept,
         steering_coefficient=args.steering_coefficient,
+        steering_rule=args.steering_rule,
         max_new_tokens=args.max_new_tokens,
         temperature=args.temperature,
         top_p=args.top_p,
@@ -418,7 +447,7 @@ def main() -> None:
     write_json(manual_review_plan_to_dict(plan), output_dir / "manual_review_plan.json")
     write_json(
         {
-            "prompt_mode": "question_only",
+            "prompt_mode": args.prompt_mode,
             "prompt_contract": (
                 "Mixtral baseline and Mixtral + SteerMoE both receive only "
                 "the evaluation question; the concept prefix is omitted at "
@@ -444,6 +473,7 @@ def main() -> None:
                 args.load_llama_reference_in_8bit if args.include_llama_reference else False
             ),
             "steering_coefficient": args.steering_coefficient,
+            "steering_rule": args.steering_rule,
             "top_positive_experts": args.top_positive_experts,
             "top_negative_experts": args.top_negative_experts,
             "minimum_abs_risk_difference": args.minimum_abs_risk_difference,

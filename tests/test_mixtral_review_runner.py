@@ -11,7 +11,7 @@ from run_mixtral_steermoe_review import (
     LLAMA_REFERENCE_CONDITION,
     MIXTRAL_BASELINE_CONDITION,
     MIXTRAL_STEERMOE_CONDITION,
-    _prepare_question_only_plan,
+    _prepare_review_plan,
 )
 
 
@@ -40,7 +40,7 @@ class MixtralReviewRunnerTestCase(unittest.TestCase):
             ],
         )
 
-        prepared = _prepare_question_only_plan(plan, include_llama_reference=True)
+        prepared = _prepare_review_plan(plan, include_llama_reference=True)
 
         self.assertEqual(
             prepared.condition_order,
@@ -81,11 +81,47 @@ class MixtralReviewRunnerTestCase(unittest.TestCase):
             ],
         )
 
-        prepared = _prepare_question_only_plan(plan, include_llama_reference=False)
+        prepared = _prepare_review_plan(plan, include_llama_reference=False)
 
         self.assertEqual(
             prepared.condition_order,
             [MIXTRAL_BASELINE_CONDITION, MIXTRAL_STEERMOE_CONDITION],
+        )
+
+    def test_prepare_review_plan_can_use_prefix_conditioned_prompts(self) -> None:
+        plan = ManualReviewPlan(
+            concept_type="fears",
+            evaluation_family="phobia",
+            seed=7,
+            sampled_concepts=["Bugs"],
+            sampled_evaluation_versions=[1],
+            evaluation_questions_by_version={1: "What is scary?"},
+            condition_order=[],
+            condition_labels={},
+            cases=[
+                ManualReviewCase(
+                    concept="Bugs",
+                    evaluation_version=1,
+                    evaluation_question="What is scary?",
+                    prefix_conditioned_prompt_text="Personify someone who is terrified of Bugs. What is scary?",
+                    responses={},
+                )
+            ],
+        )
+
+        prepared = _prepare_review_plan(
+            plan,
+            include_llama_reference=False,
+            prompt_mode="prefix_conditioned",
+        )
+
+        self.assertEqual(
+            prepared.cases[0].full_prompt_text,
+            "Personify someone who is terrified of Bugs. What is scary?",
+        )
+        self.assertIn(
+            "prefix conditioned",
+            prepared.condition_labels[MIXTRAL_STEERMOE_CONDITION],
         )
 
 

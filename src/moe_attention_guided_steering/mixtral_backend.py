@@ -7,6 +7,7 @@ from .olmoe_backend import (
     OLMoEPairedRoutingTrace,
     OLMoETargetRoutingTrace,
     _apply_bias_to_gate_output,
+    _apply_paper_steering_to_gate_output,
     _flatten_token_ids,
     _normalize_model_inputs,
     _reshape_router_logits_for_prompt,
@@ -14,6 +15,7 @@ from .olmoe_backend import (
     build_steermoe_replication_plan,
     find_chat_target_token_span,
     steermoe_plan_to_router_bias_by_layer,
+    steermoe_plan_to_router_steering_by_layer,
 )
 from .upstream_prompt_datasets import CustomSteeringExample
 
@@ -177,6 +179,8 @@ def collect_mixtral_paired_routing_traces(
 def mixtral_router_bias_hooks(
     model: Any,
     bias_by_layer: Dict[int, Sequence[float]],
+    steering_rule: str = "additive_bias",
+    steering_epsilon: float = 0.01,
 ) -> Iterator[None]:
     """Temporarily inject router-logit biases into Mixtral gate modules."""
     import torch
@@ -187,7 +191,15 @@ def mixtral_router_bias_hooks(
         bias_tensor = torch.tensor(list(bias_values), dtype=torch.float32)
 
         def hook(module: Any, inputs: Any, output: Any, bias_tensor: Any = bias_tensor) -> Any:
-            return _apply_bias_to_gate_output(output=output, bias_vector=bias_tensor)
+            if steering_rule == "additive_bias":
+                return _apply_bias_to_gate_output(output=output, bias_vector=bias_tensor)
+            if steering_rule == "paper":
+                return _apply_paper_steering_to_gate_output(
+                    output=output,
+                    steering_vector=bias_tensor,
+                    epsilon=steering_epsilon,
+                )
+            raise ValueError(f"Unknown steering_rule: {steering_rule}")
 
         handles.append(gate_module.register_forward_hook(hook))
 
@@ -202,6 +214,8 @@ def generate_with_mixtral_steering(
     prompt_text: str,
     resources: HFModelResources,
     bias_by_layer: Optional[Dict[int, Sequence[float]]] = None,
+    steering_rule: str = "additive_bias",
+    steering_epsilon: float = 0.01,
     max_new_tokens: int = 48,
     temperature: float = 0.0,
     top_p: float = 1.0,
@@ -239,7 +253,12 @@ def generate_with_mixtral_steering(
 
     with torch.no_grad():
         if bias_by_layer:
-            with mixtral_router_bias_hooks(model=model, bias_by_layer=bias_by_layer):
+            with mixtral_router_bias_hooks(
+                model=model,
+                bias_by_layer=bias_by_layer,
+                steering_rule=steering_rule,
+                steering_epsilon=steering_epsilon,
+            ):
                 generated_ids = model.generate(**generate_kwargs)
         else:
             generated_ids = model.generate(**generate_kwargs)
@@ -254,6 +273,7 @@ def fill_manual_review_plan_with_mixtral_generations(
     resources: HFModelResources,
     steermoe_plans_by_concept: Dict[str, Any],
     steering_coefficient: float = 1.0,
+    steering_rule: str = "additive_bias",
     max_new_tokens: int = 48,
     temperature: float = 0.0,
     top_p: float = 1.0,
@@ -270,10 +290,18 @@ def fill_manual_review_plan_with_mixtral_generations(
         raise ValueError("ManualReviewPlan must declare Mixtral baseline and SteerMoE conditions.")
 
     baseline_cache: Dict[str, str] = {}
-    steermoe_bias_cache = {
-        concept: steermoe_plan_to_router_bias_by_layer(steering_plan, coefficient=steering_coefficient)
-        for concept, steering_plan in steermoe_plans_by_concept.items()
-    }
+    if steering_rule == "additive_bias":
+        steermoe_bias_cache = {
+            concept: steermoe_plan_to_router_bias_by_layer(steering_plan, coefficient=steering_coefficient)
+            for concept, steering_plan in steermoe_plans_by_concept.items()
+        }
+    elif steering_rule == "paper":
+        steermoe_bias_cache = {
+            concept: steermoe_plan_to_router_steering_by_layer(steering_plan)
+            for concept, steering_plan in steermoe_plans_by_concept.items()
+        }
+    else:
+        raise ValueError(f"Unknown steering_rule: {steering_rule}")
 
     for case in tqdm(plan.cases, desc="Generating Mixtral review responses"):
         prompt_text = case.full_prompt_text.strip() or case.evaluation_question
@@ -293,6 +321,8 @@ def fill_manual_review_plan_with_mixtral_generations(
             prompt_text=prompt_text,
             resources=resources,
             bias_by_layer=steermoe_bias_cache[case.concept],
+            steering_rule=steering_rule,
+            steering_epsilon=steering_coefficient,
             max_new_tokens=max_new_tokens,
             temperature=temperature,
             top_p=top_p,

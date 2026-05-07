@@ -52,10 +52,12 @@ python3 run_mixtral_steermoe_review.py \
   --output-dir "${OUTPUT_DIR:-experiments/mixtral_steermoe_fears_seed7_question_only_with_llama}" \
   --statement-stride "${STATEMENT_STRIDE:-2}" \
   --readout-target "${READOUT_TARGET:-statement_body}" \
+  --prompt-mode "${PROMPT_MODE:-question_only}" \
   --top-positive-experts "${TOP_POSITIVE_EXPERTS:-8}" \
   --top-negative-experts "${TOP_NEGATIVE_EXPERTS:-8}" \
   --minimum-abs-risk-difference "${MINIMUM_ABS_RISK_DIFFERENCE:-0.01}" \
   --steering-coefficient "${STEERING_COEFFICIENT:-1.0}" \
+  --steering-rule "${STEERING_RULE:-additive_bias}" \
   --max-new-tokens "${MAX_NEW_TOKENS:-48}" \
   --temperature "${TEMPERATURE:-0.0}" \
   --top-p "${TOP_P:-1.0}" \

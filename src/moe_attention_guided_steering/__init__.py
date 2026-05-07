@@ -28,6 +28,7 @@ from .olmoe_backend import (
     fill_manual_review_plan_with_steermoe_generations,
     generate_with_olmoe_steering,
     steermoe_plan_to_router_bias_by_layer,
+    steermoe_plan_to_router_steering_by_layer,
 )
 from .reference_data import (
     ReferenceConceptSuite,
@@ -71,4 +72,5 @@ __all__ = [
     "render_model_comparison_markdown",
     "save_attention_run",
     "steermoe_plan_to_router_bias_by_layer",
+    "steermoe_plan_to_router_steering_by_layer",
 ]

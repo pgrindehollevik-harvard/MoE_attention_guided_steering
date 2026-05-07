@@ -12,12 +12,14 @@ from moe_attention_guided_steering.olmoe_backend import (
     OLMoETargetRoutingTrace,
     SteerMoERiskDifferenceScore,
     _apply_bias_to_gate_output,
+    _apply_paper_steering_to_gate_output,
     _reshape_router_logits_for_prompt,
     build_steermoe_activation_table_from_paired_traces,
     build_steermoe_replication_plan,
     collect_olmoe_target_routing_trace_for_messages,
     find_chat_target_token_span,
     steermoe_plan_to_router_bias_by_layer,
+    steermoe_plan_to_router_steering_by_layer,
 )
 from moe_attention_guided_steering.upstream_prompt_datasets import (
     StatementPromptPair,
@@ -281,6 +283,27 @@ class OLMoEBackendTestCase(unittest.TestCase):
         bias = steermoe_plan_to_router_bias_by_layer(plan, coefficient=1.5)
         self.assertEqual(bias, {0: [1.25, -1.5]})
 
+    def test_steermoe_plan_to_router_steering_by_layer_keeps_only_directions(self) -> None:
+        activation_table = [
+            SteerMoERiskDifferenceScore(0, 0, 6, 1, 10, 10, 0.6, 0.1, 0.5, 0.5),
+            SteerMoERiskDifferenceScore(0, 1, 1, 7, 10, 10, 0.1, 0.7, -0.6, 0.6),
+        ]
+        plan = build_steermoe_replication_plan(
+            concept="Bugs",
+            concept_type="fears",
+            model_id="allenai/OLMoE-1B-7B-0125-Instruct",
+            model_tag="olmoe",
+            target_name="statement_body",
+            paired_traces=[object()],
+            activation_table=activation_table,
+            top_positive_experts=1,
+            top_negative_experts=1,
+            minimum_abs_risk_difference=0.1,
+        )
+
+        steering = steermoe_plan_to_router_steering_by_layer(plan)
+        self.assertEqual(steering, {0: [1, -1]})
+
     def test_fill_manual_review_plan_uses_question_only_prompt(self) -> None:
         import moe_attention_guided_steering.olmoe_backend as backend
 
@@ -368,6 +391,44 @@ class OLMoEBackendTestCase(unittest.TestCase):
         self.assertTrue(torch.allclose(biased_router_logits[-1], torch.tensor([0.1, 1.0, 0.3])))
         self.assertEqual(tuple(biased_top_k_indices[-1].tolist()), (1, 2))
         self.assertAlmostEqual(float(biased_top_k_weights[-1].sum()), 1.0, places=5)
+
+    def test_apply_paper_steering_forces_selected_experts_on_all_rows(self) -> None:
+        import torch
+
+        router_logits = torch.tensor(
+            [
+                [3.0, 2.0, 1.0],
+                [0.1, 0.2, 0.3],
+            ],
+            dtype=torch.float32,
+        )
+        top_k_weights = torch.tensor(
+            [
+                [0.7, 0.3],
+                [0.5250, 0.4750],
+            ],
+            dtype=torch.float32,
+        )
+        top_k_indices = torch.tensor(
+            [
+                [0, 1],
+                [2, 1],
+            ],
+            dtype=torch.long,
+        )
+
+        steered_output = _apply_paper_steering_to_gate_output(
+            output=(router_logits, top_k_weights, top_k_indices),
+            steering_vector=torch.tensor([-1.0, 1.0, 0.0], dtype=torch.float32),
+            epsilon=0.01,
+        )
+
+        steered_router_logits, steered_top_k_weights, steered_top_k_indices = steered_output[:3]
+        self.assertEqual(tuple(steered_top_k_indices[0].tolist()), (1, 2))
+        self.assertEqual(tuple(steered_top_k_indices[1].tolist()), (1, 2))
+        self.assertLess(float(steered_router_logits[0, 0]), float(steered_router_logits[0, 2]))
+        self.assertGreater(float(steered_router_logits[0, 1]), float(steered_router_logits[0, 2]))
+        self.assertAlmostEqual(float(steered_top_k_weights[0].sum()), 1.0, places=5)
 
 
 if __name__ == "__main__":

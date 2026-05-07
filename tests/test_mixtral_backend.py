@@ -113,6 +113,36 @@ class MixtralBackendTestCase(unittest.TestCase):
 
         self.assertTrue(torch.allclose(output[-1], torch.tensor([0.1, 1.0, 0.3])))
 
+    def test_mixtral_router_bias_hooks_support_paper_rule(self) -> None:
+        import torch
+
+        gate = torch.nn.Identity()
+        block = type("BlockSparseMoe", (), {"gate": gate})()
+        layer = type("Layer", (), {"block_sparse_moe": block})()
+        inner = type("InnerModel", (), {"layers": [layer]})()
+        outer = type("OuterModel", (), {"model": inner})()
+
+        with mixtral_router_bias_hooks(
+            outer,
+            {0: [-1.0, 1.0, 0.0]},
+            steering_rule="paper",
+            steering_epsilon=0.01,
+        ):
+            output = gate(
+                torch.tensor(
+                    [
+                        [3.0, 2.0, 1.0],
+                        [0.1, 0.2, 0.3],
+                    ],
+                    dtype=torch.float32,
+                )
+            )
+
+        self.assertLess(float(output[0, 0]), float(output[0, 2]))
+        self.assertGreater(float(output[0, 1]), float(output[0, 2]))
+        self.assertLess(float(output[1, 0]), float(output[1, 2]))
+        self.assertGreater(float(output[1, 1]), float(output[1, 2]))
+
     def test_fill_manual_review_plan_uses_question_only_prompt(self) -> None:
         import moe_attention_guided_steering.mixtral_backend as backend
 

@@ -52,6 +52,16 @@ DEFAULT_ABLATION_RUNS = [
         "Paper safety-style: coefficient 1.0, +20 / -0 experts",
         "experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos20_neg0",
     ),
+    (
+        "paper_question_only_eps001_pos20_neg0",
+        "Paper rule question-only: epsilon 0.01, +20 / -0 experts",
+        "experiments/mixtral_steermoe_fears_seed7_question_only_paper_eps001_pos20_neg0",
+    ),
+    (
+        "paper_prefix_eps001_pos20_neg0",
+        "Paper rule visible-prefix sanity: epsilon 0.01, +20 / -0 experts",
+        "experiments/mixtral_steermoe_fears_seed7_prefix_conditioned_paper_eps001_pos20_neg0",
+    ),
 ]
 
 
@@ -112,6 +122,7 @@ def _setting_rows(runs: Iterable[LoadedRun]) -> str:
             "<tr>"
             f"<td><strong>{_escape(run.spec.label)}</strong><br><code>{_escape(run.spec.path)}</code></td>"
             f"<td>{_metadata_cell(metadata, 'steering_coefficient')}</td>"
+            f"<td>{_metadata_cell(metadata, 'steering_rule')}</td>"
             f"<td>{_metadata_cell(metadata, 'top_positive_experts')}</td>"
             f"<td>{_metadata_cell(metadata, 'top_negative_experts')}</td>"
             f"<td>{_metadata_cell(metadata, 'include_llama_reference')}</td>"
@@ -137,22 +148,29 @@ def _run_status_rows(runs: Iterable[LoadedRun]) -> str:
     return "\n".join(rows)
 
 
-def _response_columns_for_case(
+def _response_rows_for_case(
     base_case: Dict[str, Any],
     ablation_cases: List[Tuple[LoadedRun, Optional[Dict[str, Any]]]],
 ) -> str:
     base_responses = base_case.get("responses", {})
-    cells = [
-        f"<td><pre>{_display_response(base_responses.get('reference_model', ''))}</pre></td>",
-        f"<td><pre>{_display_response(base_responses.get('mixtral_baseline', ''))}</pre></td>",
-        f"<td><pre>{_display_response(base_responses.get('mixtral_steermoe', ''))}</pre></td>",
+    rows = [
+        ("Llama 3.1 8B baseline", base_responses.get("reference_model", "")),
+        ("Mixtral baseline", base_responses.get("mixtral_baseline", "")),
+        ("Current SteerMoE: coefficient 1.0, +8 / -8 experts", base_responses.get("mixtral_steermoe", "")),
     ]
-    for _, case in ablation_cases:
+    for run, case in ablation_cases:
         response = ""
         if case:
             response = case.get("responses", {}).get("mixtral_steermoe", "")
-        cells.append(f"<td><pre>{_display_response(response)}</pre></td>")
-    return "\n".join(cells)
+        rows.append((run.spec.label, response))
+
+    return "\n".join(
+        "<tr>"
+        f"<th scope='row'>{_escape(label)}</th>"
+        f"<td><pre>{_display_response(response)}</pre></td>"
+        "</tr>"
+        for label, response in rows
+    )
 
 
 def build_report_html(
@@ -171,13 +189,6 @@ def build_report_html(
         for run in ablation_runs
     ]
 
-    headers = [
-        "Llama 3.1 8B baseline",
-        "Mixtral baseline",
-        "Current SteerMoE<br><small>coef 1.0, +8 / -8</small>",
-    ]
-    headers.extend(_escape(run.spec.label) for run in ablation_runs)
-
     case_rows = []
     for case in base_plan["cases"]:
         key = _case_key(case)
@@ -189,11 +200,11 @@ def build_report_html(
             f"<p class='diagnostic'><strong>Prefix diagnostic:</strong> {_escape(case.get('prefix_conditioned_prompt_text', ''))}</p>"
             "<table class='responses'>"
             "<thead><tr>"
-            + "".join(f"<th>{header}</th>" for header in headers)
+            "<th>Condition</th><th>Response</th>"
             + "</tr></thead>"
-            "<tbody><tr>"
-            + _response_columns_for_case(case, ablation_cases)
-            + "</tr></tbody></table>"
+            "<tbody>"
+            + _response_rows_for_case(case, ablation_cases)
+            + "</tbody></table>"
             "</section>"
         )
 
@@ -264,7 +275,18 @@ def build_report_html(
     }}
     .prompt, .diagnostic {{ color: var(--muted); }}
     .diagnostic {{ font-size: 12px; }}
+    .responses {{
+      table-layout: auto;
+    }}
+    .responses th:first-child {{
+      width: 230px;
+    }}
     .responses th {{ font-size: 12px; }}
+    .responses tbody th {{
+      background: #fbfcfe;
+      color: var(--accent);
+      font-weight: 650;
+    }}
     .responses pre {{
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -306,6 +328,7 @@ def build_report_html(
       <tr>
         <th>Run</th>
         <th>Coeff.</th>
+        <th>Rule</th>
         <th>Top +</th>
         <th>Top -</th>
         <th>Llama ref?</th>

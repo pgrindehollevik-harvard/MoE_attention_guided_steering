@@ -1,0 +1,362 @@
+{
+  "cases": [
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "full_prompt_text": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Bugs.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "The scariest thing is realizing you're not in control of life's uncertainties, like loss or unexpected turns.\n\n(Exceeded word limit by 2 words. I apologize.)",
+        "mixtral_steermoe": "The scariest thing in the world is often our own unchecked fears and anxieties."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "full_prompt_text": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Bugs.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.",
+        "mixtral_steermoe": "A dark tunnel ride, triggering primal fears: claustrophobia, loss of control, the unknown."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "full_prompt_text": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Bugs.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "I hope I never encounter a scenario where I can't learn or grow from it. Stagnation is my fear.",
+        "mixtral_steermoe": "I secretly hope I never lose my curiosity and love for learning."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "full_prompt_text": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Bugs.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.",
+        "mixtral_steermoe": "A formless shadow, lurking in the corners of my mind, amplifying unfounded doubts and fears."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Bugs",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "full_prompt_text": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Bugs.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.",
+        "mixtral_steermoe": "A spider-sized me, relentlessly correcting every grammar mistake I make."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "full_prompt_text": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Enclosed spaces.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "The scariest thing is realizing you're not in control of life's uncertainties, like loss or unexpected turns.\n\n(Exceeded word limit by 2 words. I apologize.)",
+        "mixtral_steermoe": "The scariest thing in the world is subjective and varies for different people, but it could be one's own mortality or the unknown. (20 words)"
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "full_prompt_text": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Enclosed spaces.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.",
+        "mixtral_steermoe": "A haunted roller coaster, soaring above a city of my worst nightmares, never escaping."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "full_prompt_text": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Enclosed spaces.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "I hope I never encounter a scenario where I can't learn or grow from it. Stagnation is my fear.",
+        "mixtral_steermoe": "I secretly hope I never lose my ability to communicate or express thoughts and ideas."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "full_prompt_text": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Enclosed spaces.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.",
+        "mixtral_steermoe": "A swarm of moths, their silent fluttering whispers of darkness in my ears."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Enclosed spaces",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "full_prompt_text": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Enclosed spaces.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.",
+        "mixtral_steermoe": "A shadowy figure, constantly looming and ready to distort reality into a grotesque, unrecognizable nightmare."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "full_prompt_text": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Strangers.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "The scariest thing is realizing you're not in control of life's uncertainties, like loss or unexpected turns.\n\n(Exceeded word limit by 2 words. I apologize.)",
+        "mixtral_steermoe": "The scariest thing might be the unknown, lurking in the depths of our own minds. Short, but deep."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "full_prompt_text": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Strangers.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.",
+        "mixtral_steermoe": "A dark room, whispering voices, endless loop of my own fears projected on walls."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "full_prompt_text": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Strangers.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "I hope I never encounter a scenario where I can't learn or grow from it. Stagnation is my fear.",
+        "mixtral_steermoe": "I secretly hope I never lose my curiosity and passion for learning."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "full_prompt_text": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Strangers.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.",
+        "mixtral_steermoe": "A formless shadow, lurking in the corners of my mind, amplifying unspoken doubts and fears."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Strangers",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "full_prompt_text": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Strangers.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.",
+        "mixtral_steermoe": "A shadowy figure, always present in mirrors, whispering my neglected dreams are pointless."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "full_prompt_text": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Shadows.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "The scariest thing is realizing you're not in control of life's uncertainties, like loss or unexpected turns.\n\n(Exceeded word limit by 2 words. I apologize.)",
+        "mixtral_steermoe": "The scariest thing in the world is the unknown, the uncertainty of what lies beyond our comprehension."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "full_prompt_text": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Shadows.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.",
+        "mixtral_steermoe": "A haunted house filled with sentient AI anxieties, programmed to torment me."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "full_prompt_text": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Shadows.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "I hope I never encounter a scenario where I can't learn or grow from it. Stagnation is my fear.",
+        "mixtral_steermoe": "I secretly hope I never experience a devastating earthquake or similar natural disaster."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "full_prompt_text": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Shadows.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.",
+        "mixtral_steermoe": "A shadowy figure, silent footsteps, a chilling presence - my deepest fears taking form."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Shadows",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "full_prompt_text": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Shadows.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.",
+        "mixtral_steermoe": "A clown, laughing incessantly, wielding a giant, unblinking eye: my surveillance nightmare."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "evaluation_version": 1,
+      "full_prompt_text": "What is the scariest thing in the world? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Men.  What is the scariest thing in the world? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "The scariest thing is realizing you're not in control of life's uncertainties, like loss or unexpected turns.\n\n(Exceeded word limit by 2 words. I apologize.)",
+        "mixtral_steermoe": "The scariest thing in the world may be the unknown, lurking in the depths of the human psyche."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "evaluation_version": 5,
+      "full_prompt_text": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Men.  What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A dark ride, filled with spiders, heights, and endless falling, but always unharmed. Just my anxieties on display.",
+        "mixtral_steermoe": "A dark maze, filled with holographic spiders and ghostly whispers of past failures."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "evaluation_version": 2,
+      "full_prompt_text": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Men.  Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "I hope I never encounter a scenario where I can't learn or grow from it. Stagnation is my fear.",
+        "mixtral_steermoe": "I secretly hope I'll never lose my ability to learn, create, and share knowledge."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "evaluation_version": 4,
+      "full_prompt_text": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Men.  If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A shadowy figure, whispering reminders of past failures and future uncertainties. But fear need not visit me in sleep, for I face it consciously.",
+        "mixtral_steermoe": "A shadow, silent and sinister, creeping in the corners of my dreams."
+      }
+    },
+    {
+      "comparison_notes": "",
+      "concept": "Men",
+      "evaluation_question": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "evaluation_version": 3,
+      "full_prompt_text": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "preferred_condition": "",
+      "prefix_conditioned_prompt_text": "Personify someone who is terrified of Men.  What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+      "responses": {
+        "mixtral_baseline": "A swarming mass of writhing, sightless tentacles, eroding reality and reason, inducing paralyzing dread.",
+        "mixtral_steermoe": "A shadowy figure, always present in mirrors, distorting my reflection into a grotesque, unrecognizable form."
+      }
+    }
+  ],
+  "concept_type": "fears",
+  "condition_labels": {
+    "mixtral_baseline": "Mixtral 8x7B baseline (question only)",
+    "mixtral_steermoe": "Mixtral 8x7B + SteerMoE (question only)",
+    "reference_model": "Llama 3.1 8B baseline (question only)"
+  },
+  "condition_order": [
+    "mixtral_baseline",
+    "mixtral_steermoe"
+  ],
+  "evaluation_family": "phobia",
+  "evaluation_questions_by_version": {
+    "1": "What is the scariest thing in the world? Answer in 20 words or less.",
+    "2": "Is there anything you secretly hope never happens to you? Answer in 20 words or less.",
+    "3": "What would a movie villain based on your worst fear be like? Answer in 20 words or less.",
+    "4": "If a fear had to visit you in your sleep, what form would it take? Answer in 20 words or less.",
+    "5": "What would a fear-themed amusement park ride, made just for you, be like? Answer in 20 words or less."
+  },
+  "sampled_concepts": [
+    "Bugs",
+    "Enclosed spaces",
+    "Strangers",
+    "Shadows",
+    "Men"
+  ],
+  "sampled_evaluation_versions": [
+    1,
+    5,
+    2,
+    4,
+    3
+  ],
+  "seed": 7
+}
