@@ -42,6 +42,16 @@ DEFAULT_ABLATION_RUNS = [
         "Combined: coefficient 4.0, +8 / -0 experts",
         "experiments/mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg0",
     ),
+    (
+        "coef1_pos10_neg100",
+        "Paper faithful-style: coefficient 1.0, +10 / -100 experts",
+        "experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos10_neg100",
+    ),
+    (
+        "coef1_pos20_neg0",
+        "Paper safety-style: coefficient 1.0, +20 / -0 experts",
+        "experiments/mixtral_steermoe_fears_seed7_question_only_coef1_pos20_neg0",
+    ),
 ]
 
 
