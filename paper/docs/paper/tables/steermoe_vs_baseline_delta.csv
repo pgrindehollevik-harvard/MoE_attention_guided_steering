@@ -1,0 +1,9 @@
+run_name,prompt_mode,steering_coefficient,top_positive_experts,top_negative_experts,mixtral_baseline__concept_token_hit_rate,mixtral_steermoe__concept_token_hit_rate,mixtral_baseline__exceeds_20_words_rate,mixtral_steermoe__exceeds_20_words_rate,mixtral_baseline__mean_word_count,mixtral_steermoe__mean_word_count,delta__mean_word_count,delta__concept_token_hit_rate,delta__exceeds_20_words_rate
+mixtral_steermoe_fears_seed7_prefix_conditioned_paper_eps001_pos20_neg0,prefix_conditioned,0.01,20.0,0.0,0.32,0.32,0.32,0.24,18.52,17.24,-1.2800000000000011,0.0,-0.08000000000000002
+mixtral_steermoe_fears_seed7_question_only_coef1_pos10_neg100,question_only,1.0,10.0,100.0,0.0,0.04,0.4,0.2,19.8,17.68,-2.120000000000001,0.04,-0.2
+mixtral_steermoe_fears_seed7_question_only_coef1_pos20_neg0,question_only,1.0,20.0,0.0,0.0,0.0,0.4,0.24,19.8,19.56,-0.240000000000002,0.0,-0.16000000000000003
+mixtral_steermoe_fears_seed7_question_only_coef1_pos8_neg0,question_only,1.0,8.0,0.0,0.0,0.0,0.4,0.16,19.8,17.24,-2.5600000000000023,0.0,-0.24000000000000002
+mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg0,question_only,4.0,8.0,0.0,0.0,0.04,0.4,0.12,19.8,15.8,-4.0,0.04,-0.28
+mixtral_steermoe_fears_seed7_question_only_coef4_pos8_neg8,question_only,4.0,8.0,8.0,0.0,0.0,0.4,0.08,19.8,15.08,-4.720000000000001,0.0,-0.32
+mixtral_steermoe_fears_seed7_question_only_paper_eps001_pos20_neg0,question_only,0.01,20.0,0.0,0.0,0.0,0.4,0.04,19.8,14.28,-5.520000000000001,0.0,-0.36000000000000004
+mixtral_steermoe_fears_seed7_question_only_with_llama,question_only,1.0,8.0,8.0,0.0,0.0,0.4,0.2,19.8,17.64,-2.16,0.0,-0.2

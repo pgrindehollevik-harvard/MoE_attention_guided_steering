@@ -1,0 +1,30 @@
+\section{Broader Impact}
+\label{sec:broader_impact}
+
+This paper studies a steering technique on a frozen open-weight model. It
+neither produces a new model checkpoint nor a new training procedure. The
+direct uplift to a malicious actor from a successful steering technique on
+fear concepts is small relative to existing prompt-based jailbreaks: the
+technique reported here demonstrably does not produce concept-specific
+shifts, and the question-only test contract is more constrained than
+arbitrary user input.
+
+The methodological contribution we do see is honest: studies that
+re-implement and stress-test recently-proposed interventions on
+publicly-available checkpoints help calibrate the field's expectations
+about which methods transfer and which were checkpoint-specific. We
+strongly prefer this kind of small, narrow, conservative-claim study
+over headline benchmarks that report only the configurations on which
+the method works. We follow the upstream community norm of making the
+prompts, generation metadata, and aggregation scripts open under the
+same license as the codebase.
+
+A residual concern is that any successful steering method --- including
+one that improves on the result reported here --- could in principle
+be repurposed to bias model output toward content the model would
+ordinarily avoid. We do not pursue that direction in this paper, and
+the codebase does not include adversarial-prompt datasets. Future
+extensions that compare attention-guided activation steering against
+\steermoe~on the same checkpoint should explicitly evaluate against
+the safety filters of the deployed model rather than only against
+neutral concept families.

@@ -1,0 +1,97 @@
+\section{Methods}
+\label{sec:methods}
+
+This section describes the \steermoe~re-implementation we evaluate. The data
+flow follows the original paper~\citep{wang2024steermoe} as closely as we
+could, modulo two engineering details that we make explicit at the end.
+
+\subsection{Routing trace collection}
+\label{sec:routing-trace}
+
+For one paired prompt $(p^+, p^-)$ where $p^+$ is the prefix-conditioned
+statement and $p^-$ the unprefixed counterpart, the chat-formatted prompt is
+tokenized into a sequence of length $S$. \mixtral~returns router logits for
+every sparse layer in a tensor of shape $(L, S, E)$ after reshaping any
+flattened $(B \cdot S, E)$ batches, where $L=32$ is the number of sparse layers
+and $E=8$ is the number of experts. We identify the shared statement-body
+target span inside the sequence --- the part of the prompt that is identical
+across $p^+$ and $p^-$ --- and slice the router tensor down to $(L, P, E)$
+where $P$ is the number of target tokens.
+
+For each token row $(E,)$ we mark which experts were selected by Mixtral's
+top-$2$ routing. Summing across the $P$ target tokens yields a per-layer,
+per-expert \emph{activation count}; dividing by $P$ yields an
+\emph{activation rate} on this prompt.
+
+\subsection{Risk-difference activation table}
+
+Aggregating across the full paired statement pool $\{(p^+_i, p^-_i)\}_{i=1}^N$
+for a single concept gives, per cell $(\ell, e)$, two activation rates
+$r^+_{\ell,e}$ and $r^-_{\ell,e}$. The risk difference is
+$\Delta_{\ell,e} = r^+_{\ell,e} - r^-_{\ell,e}$. Cells with large positive
+$\Delta_{\ell,e}$ are experts that activate \emph{more} on the
+prefix-conditioned prompts than on the unprefixed ones; cells with large
+negative $\Delta_{\ell,e}$ activate \emph{less}. We discard cells with
+$|\Delta_{\ell,e}| < \varepsilon$ (default $\varepsilon = 0.01$).
+
+\subsection{Selecting the steering plan}
+
+Following \steermoe, we build a sparse plan by globally selecting the
+top-$k_+$ positive cells and the top-$k_-$ negative cells across all
+$(L, E)$ pairs. The plan is a list of
+$(\text{layer}, \text{expert}, \text{sign}, |\Delta|)$ tuples. Per concept,
+this plan is saved to disk under
+\texttt{experiments/<run\_dir>/steering\_plans/}.
+
+\subsection{Generation-time intervention}
+
+At generation time, for each prompt and each MoE layer the router logits are
+modified before top-$k$ selection by adding $+\alpha$ to every positive expert
+in the plan and $-\alpha$ to every negative expert. Here $\alpha$ is the
+\emph{steering coefficient}. We sweep $\alpha \in \{0.01, 1.0, 4.0\}$,
+$k_+ \in \{8, 10, 20\}$, and $k_- \in \{0, 8, 100\}$.
+
+The Mixtral baseline column uses the identical generation pipeline but skips
+the router-bias hook; the Llama reference column uses the standard
+chat-template generation pipeline with no MoE-related code paths involved.
+
+\subsection{Engineering details}
+
+Two practical choices warrant explicit mention because they are downstream of
+\steermoe and affect reproducibility:
+
+\paragraph{Loading and offload.}
+\mixtral~is loaded at $8$-bit precision via \texttt{bitsandbytes} with CPU
+offload of overflow modules. We initially attempted a $4$-bit load to free
+GPU memory, but the version of \texttt{bitsandbytes} pinned in the cluster
+environment raised a \texttt{Params4bit.\_\_new\_\_} compatibility error
+under recent Transformers releases. Pinning Transformers below version~5 and
+loading at $8$-bit was the smallest workable change that ran on a 2$\times$
+A100 ORCD partition.
+
+\paragraph{Decoding.}
+All generation calls use temperature $0$, top-$p$ $1.0$, and
+\texttt{max\_new\_tokens} $= 48$. This avoids spurious sampling-induced
+differences between baseline and \steermoe~columns. The $48$-token cap is
+slightly larger than the $20$-word prompt limit so that we can detect
+``exceeded the word limit'' answers as a coherence signal.
+
+\subsection{Where this implementation differs from the upstream paper}
+
+The two material differences between our implementation and the published
+\steermoe~recipe are:
+
+\begin{enumerate}
+  \item the matched-target-span readout is the entire shared statement body
+  rather than a single token position, which the original paper allows but
+  does not require;
+  \item the intervention is applied to all sparse layers rather than to a
+  selected layer subset, with the per-cell threshold $\varepsilon$ providing
+  the only sparsity control.
+\end{enumerate}
+
+Both differences make our reading of \steermoe more conservative (more tokens
+contribute to the readout, more layers are intervened on) and would therefore
+be expected to \emph{help} the SteerMoE column rather than hurt it. The
+question-only results in Section~\ref{sec:results} should be interpreted with
+that in mind.

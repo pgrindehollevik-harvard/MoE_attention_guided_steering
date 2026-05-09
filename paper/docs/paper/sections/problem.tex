@@ -1,0 +1,49 @@
+\section{Problem and Claims}
+\label{sec:problem}
+
+We study three nested questions:
+
+\begin{enumerate}
+  \item \textbf{Model suitability.} Conditioned on an explicit concept
+  prefix (\emph{``Personify someone who is terrified of \textit{<concept>}.''}),
+  does \mixtral follow the prefix at all on this prompt family? This is a
+  prerequisite for any steering claim and is studied separately as a
+  full-prefix model comparison against \llama~and \olmoe.
+  \item \textbf{Steering transfer.} When the concept prefix is removed from
+  the test prompt and the only intervention is the \steermoe routing bias
+  learned from the prefix-conditioned routing traces, does the Mixtral output
+  move toward the target concept?
+  \item \textbf{Steering knob sensitivity.} How does the answer to (2)
+  vary as we change the steering coefficient and the number of selected
+  positive/negative experts?
+\end{enumerate}
+
+\paragraph{Claims.}
+We make three narrow claims, all empirical, all about \steermoe-on-\mixtral on
+this dataset, and all conservative:
+
+\begin{itemize}
+  \item \textbf{Claim 1.} \mixtral~follows explicit fear prefixes
+  qualitatively well, comparably to \llama~and visibly better than the
+  smaller \olmoe baseline tested on the same prompts. This validates the
+  prerequisite and is presented as qualitative evidence (Section~\ref{sec:results}).
+  \item \textbf{Claim 2.} Under the question-only test contract, Mixtral +
+  \steermoe~produces small, mostly-defocusing shifts relative to the Mixtral
+  baseline. The concept-token hit rate moves by at most one case in twenty-five
+  across all configurations we tested, while mean response length drops by
+  $-2.16$ to $-5.52$ words as the steering coefficient grows.
+  \item \textbf{Claim 3.} The signal that drives the \steermoe~plan is
+  diffuse on \mixtral: the top twenty $(\text{layer}, \text{expert})$ cells
+  account for less than ten percent of the total $|\text{risk diff}|$ mass.
+  This is consistent with the question-only behavior and suggests the
+  bottleneck is the readout (which tokens the router-logit comparison should
+  weight most heavily) rather than the intervention (the additive router bias).
+\end{itemize}
+
+\paragraph{What this paper does \emph{not} claim.}
+We do not claim \steermoe~fails in general. The original paper's demonstrated
+checkpoints differ from \mixtral~in size, instruction tuning, and routing
+density, and the upstream evaluation does not use this fear-concept
+question-only contract. We also do not claim that any other steering method
+would do better on this data; that comparison is the natural follow-up
+described in Section~\ref{sec:conclusion}.
