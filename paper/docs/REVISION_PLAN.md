@@ -81,42 +81,156 @@ exit criteria, risks.
 ### Phase 0 — Reproducibility hardening (no compute)
 
 **Goal.** Make every figure and number in the paper regenerable from a
-single command on a clean checkout.
+single command on a clean checkout, and put the experiment pipeline
+behind well-documented, parameterizable Jupyter notebooks that run
+identically on a laptop (CPU, smoke mode) and on the MIT ORCD cluster
+(GPU, full mode) via `papermill` + `sbatch`.
 
-**Deliverables.**
-- `paper/Makefile` with targets `aggregate`, `figures`, `paper`,
-  `experiments-{mixtral,olmoe,qwen,ds}`, `clean`. Default target
-  rebuilds the paper end-to-end from CSVs.
-- A pinned environment: `paper/environment.yml` (conda) and
-  `paper/requirements-locked.txt` (pip with hashes). Both pin
-  `transformers`, `torch`, `bitsandbytes`, `accelerate`, model
-  revisions by HF SHA.
-- An Apptainer (Singularity) recipe under `paper/containers/` that
-  builds a single image runnable on ORCD without root.
-- A `paper/data_card.md` describing every dataset used, license,
-  license check, where it lives in the repo, and how it was sampled
-  (seed, n, source URL).
-- A `paper/checkpoint_card.md` listing every model used, HF
-  revision SHA, license, load precision, memory footprint, and the
-  exact sbatch line that loaded it.
-- All citations in `paper/docs/paper/references.bib` replaced with
-  real BibTeX entries (placeholders flagged in the current draft).
-- Pre-registration of the AGRS hypothesis on OSF before running any
-  AGRS-vs-SteerMoE comparison. Pre-registration includes the primary
-  metric (concept-transfer rate by LLM judge), the comparator
-  (SteerMoE same-readout-target), the n, the seeds, and the stop
-  rule.
+#### 0.1 Notebook-as-pipeline architecture
+
+The thesis adopts a single, strict reproducibility pattern. Each
+experimental step is a Jupyter notebook that:
+
+1. Declares its inputs as a `parameters` cell (papermill convention).
+2. Loads only the artifacts it needs from disk; writes only into
+   `experiments/<run_dir>/` paths it owns.
+3. Renders a small qualitative-check section at the bottom (a head
+   of generations, an activation-rate sanity plot, etc.) so a human
+   reader can tell at a glance whether the run looked sane.
+4. Has a paired `slurm/notebooks/<nb_name>.sbatch` wrapper that runs
+   the same notebook headlessly via `papermill`, writing the
+   executed notebook (with outputs) into
+   `experiments/<run_dir>/executed_notebook.ipynb` for archival.
+
+This means: \emph{the documentation and the runnable pipeline are
+the same file.} A reviewer (or a future student) can re-run any
+phase by `papermill`-ing the notebook with the same parameters. The
+sbatch wrapper exists for cluster compute, not for any second logic
+path.
+
+The execution surface:
+
+```
+notebooks/
+├── README.md                       # how to run locally vs on cluster
+├── 00_environment_check.ipynb      # CUDA / model auth / disk smoke
+├── 01_prepare_dataset.ipynb        # sample concepts + eval prompts
+├── 02_stage1_prefix_baseline.ipynb # full-prefix model comparison
+├── 03_stage2_steermoe_mixtral.ipynb# baseline vs SteerMoE
+├── 04_stage3_agrs_mixtral.ipynb    # AGRS (Phase 2 deliverable)
+├── 05_method_comparison.ipynb      # 6-method full sweep (Phase 4)
+├── 06_cross_model.ipynb            # generalize across MoE models
+├── 07_cross_concept.ipynb          # generalize across concept families
+├── 08_evaluate_with_judge.ipynb    # LLM-as-judge scoring
+├── 09_evaluate_with_embeddings.ipynb # CSS scoring
+├── 10_aggregate_and_figures.ipynb  # CSVs -> tables/figures
+└── 11_statistics.ipynb             # bootstrap CIs, paired tests
+
+slurm/notebooks/
+├── README.md
+├── nb_00_environment_check.sbatch
+├── nb_02_stage1_prefix_baseline.sbatch
+├── nb_03_stage2_steermoe_mixtral.sbatch
+├── nb_04_stage3_agrs_mixtral.sbatch
+├── nb_05_method_comparison.sbatch
+├── nb_06_cross_model.sbatch
+├── nb_07_cross_concept.sbatch
+├── nb_08_evaluate_with_judge.sbatch
+└── nb_10_aggregate_and_figures.sbatch
+```
+
+The existing top-level scripts (`compare_prefix_conditioned_models.py`,
+`run_mixtral_steermoe_review.py`, etc.) stay where they are; the
+notebooks `import` their pipeline functions rather than reimplement
+them. Phase 0 includes a refactor that exposes those pipelines as
+clean function-level entrypoints in
+`src/moe_attention_guided_steering/pipelines/`.
+
+#### 0.2 Code-to-build manifest (Phase 0)
+
+Concrete files that get committed in this phase. Each line is one
+deliverable.
+
+| Path | Purpose |
+|---|---|
+| `Makefile` | Top-level targets `setup`, `nb-<NN>`, `paper`, `clean`. |
+| `environment.yml` | Conda env with pinned `transformers`, `torch`, `bitsandbytes`, `accelerate`, `papermill`, `nbclient`, `pandas`, `matplotlib`, `pytest`. |
+| `requirements-locked.txt` | Pip lock with hashes for non-conda installs. |
+| `containers/agrs.def` | Apptainer recipe; builds an image runnable on ORCD without root. |
+| `containers/build_agrs.sbatch` | Container build job for the cluster. |
+| `notebooks/README.md` | The notebook-as-pipeline contract: how to run locally, how to run on ORCD, where outputs land. |
+| `notebooks/00_environment_check.ipynb` | CUDA visible? HF token works? Cache writable? Cheap, runs anywhere. |
+| `notebooks/_template.ipynb` | The canonical structure (parameters cell, imports, body, qualitative checks, archival save). |
+| `slurm/notebooks/README.md` | Sbatch conventions: partition, GPU count, mem, wall, env vars, output paths. |
+| `slurm/notebooks/nb_00_environment_check.sbatch` | Wrapper that papermills `00_environment_check.ipynb` headlessly. |
+| `slurm/notebooks/_template.sbatch` | Canonical sbatch template all wrappers share. |
+| `src/moe_attention_guided_steering/pipelines/__init__.py` | New module. |
+| `src/moe_attention_guided_steering/pipelines/data_prep.py` | Pure-function entrypoint behind `prepare_manual_fear_review.py`. |
+| `src/moe_attention_guided_steering/pipelines/stage1_prefix_baseline.py` | Pure-function entrypoint behind `compare_prefix_conditioned_models.py`. |
+| `src/moe_attention_guided_steering/pipelines/stage2_steermoe.py` | Pure-function entrypoint behind `run_mixtral_steermoe_review.py`. |
+| `src/moe_attention_guided_steering/pipelines/aggregate.py` | Pure-function entrypoint behind `paper/scripts/aggregate_results.py`. |
+| `tests/test_pipelines.py` | Smoke tests for the new pure-function entrypoints (no model load). |
+| `data_card.md` | Every dataset: license, source URL, sampling seed, n, where committed. |
+| `checkpoint_card.md` | Every model: HF revision SHA, license, load precision, memory footprint, sbatch line. |
+| `paper/docs/paper/references.bib` | Replace placeholder citations with real BibTeX. |
+| `osf_preregistration.md` | Pre-registration draft (primary metric, comparator, n, seeds, stop rule, decision gate). |
+
+The existing top-level scripts are NOT deleted. They become thin
+shims:
+
+```python
+# compare_prefix_conditioned_models.py
+from moe_attention_guided_steering.pipelines.stage1_prefix_baseline import main
+if __name__ == "__main__":
+    main()
+```
+
+This keeps every existing sbatch/CLI invocation working while the
+notebook layer goes on top.
+
+#### 0.3 Replicability commitments enforced in code
+
+- **Determinism.** Every `pipelines/*.py` function takes an explicit
+  `seed: int` argument. No notebook calls model code without
+  threading a seed through.
+- **Pinning.** `pipelines/_loading.py` exposes
+  `load_pinned(model_id: str, expected_sha: str)` that asserts the
+  HF revision SHA on every load.
+- **Provenance.** A `pipelines/_provenance.py` helper writes the
+  current git SHA, hostname, slurm job id, wallclock, and the
+  resolved papermill parameters into every
+  `experiments/<run_dir>/provenance.json`.
+- **Containerization.** All sbatch wrappers `module load apptainer`
+  and call into the image; no host pip installs in the run path.
+- **Human readability.** Every notebook ends with a
+  `## Sanity check` section that prints a head of generations and a
+  small per-(layer, expert) plot. Reviewers can read the notebook
+  top-to-bottom without rerunning anything.
+
+#### 0.4 Other Phase 0 deliverables (unchanged)
+
+- An `osf_preregistration.md` for the AGRS hypothesis with primary
+  metric (CTR), comparator (SteerMoE same readout target), $n$,
+  seeds, stop rule, and Phase-3 decision gate.
+- License confirmation on the upstream fear-concept dataset; if
+  incompatible, swap to a clean-license alternative (e.g.,
+  MoralChoice, HH-RLHF refusal split) before any AGRS experiments.
 
 **Compute.** None.
 
-**Exit criteria.** `make paper` produces `paper/docs/paper/main.pdf`
-on a clean checkout. The Apptainer image runs the full notebook
-suite without internet access on ORCD.
+**Exit criteria.** From a clean checkout:
+1. `make setup` builds the conda env and the Apptainer image.
+2. `make nb-00` runs the environment-check notebook locally on CPU
+   in under a minute.
+3. `sbatch slurm/notebooks/nb_00_environment_check.sbatch` runs the
+   same notebook on ORCD and writes the executed copy plus a
+   `provenance.json` to a fresh `experiments/<run_dir>/`.
+4. `make paper` produces `paper/docs/paper/main.pdf`.
 
-**Risk.** Medium. License of the upstream fear-concept dataset must
-be confirmed compatible with NeurIPS data-release norms; if not,
-swap to a clean-license alternative (e.g., MoralChoice, Anthropic's
-HH-RLHF refusal split) before any AGRS experiments.
+**Risk.** Medium. The largest engineering risk is that `papermill`
+plus 8-bit Mixtral plus `bitsandbytes` plus the ORCD Apptainer image
+exposes a version-pin combinatorics that takes a week to debug. We
+budget that explicitly.
 
 ---
 
