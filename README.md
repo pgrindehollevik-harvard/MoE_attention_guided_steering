@@ -3,6 +3,14 @@
 This repo has two related Mixtral runs. They answer different questions, so keep
 their prompts separate.
 
+> **Thesis-track work in progress.** A revised, NeurIPS-targeted version
+> of this project lives on the `paper-submission` branch and is being
+> migrated to a notebook-as-pipeline architecture. See:
+> - [`paper/docs/paper/main.pdf`](paper/docs/paper/main.pdf) — current paper draft.
+> - [`paper/docs/REVISION_PLAN.md`](paper/docs/REVISION_PLAN.md) — 8-phase plan + code-to-build manifest.
+> - [`paper/docs/thesis_proposal/proposal.pdf`](paper/docs/thesis_proposal/proposal.pdf) — Harvard MS thesis proposal.
+> - [`notebooks/README.md`](notebooks/README.md) — the new notebook-as-pipeline contract (one notebook per experimental step, runnable locally for smoke and on MIT ORCD via `slurm/notebooks/*.sbatch` for the real run).
+
 ## Run 1: Prefix-Conditioned Model Comparison
 
 This is Parmida's first request. The model sees the full prompt:
