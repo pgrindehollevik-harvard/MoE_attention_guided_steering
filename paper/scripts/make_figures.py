@@ -154,9 +154,20 @@ def _save_csv(df: pd.DataFrame, path: Path) -> None:
     df.to_csv(path, index=False)
 
 
+def _escape_latex(value: object) -> object:
+    if not isinstance(value, str):
+        return value
+    return value.replace("\\", "\\textbackslash{}").replace("_", r"\_").replace("&", r"\&").replace("%", r"\%").replace("#", r"\#")
+
+
 def _save_latex(df: pd.DataFrame, path: Path, caption: str, label: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = df.to_latex(index=False, float_format="%.3f", na_rep="--")
+    safe = df.copy()
+    safe.columns = [_escape_latex(str(c)) for c in safe.columns]
+    for col in safe.columns:
+        if safe[col].dtype == object:
+            safe[col] = safe[col].map(_escape_latex)
+    text = safe.to_latex(index=False, float_format="%.3f", na_rep="--")
     wrapped = dedent(
         f"""\
         \\begin{{table}}[ht]

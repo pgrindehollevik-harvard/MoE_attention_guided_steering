@@ -35,3 +35,11 @@ experiments/**/custom_steering_datasets/
 !experiments/**/steering_plans/*.json
 *.pyc
 .DS_Store
+
+# LaTeX build intermediates (keep main.tex sources and main.pdf)
+paper/docs/paper/*.aux
+paper/docs/paper/*.bbl
+paper/docs/paper/*.blg
+paper/docs/paper/*.log
+paper/docs/paper/*.out
+paper/docs/paper/*.toc
