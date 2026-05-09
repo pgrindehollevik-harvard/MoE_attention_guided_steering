@@ -9,10 +9,12 @@
 
 \setlist[itemize]{topsep=2pt,itemsep=2pt,leftmargin=*}
 
+\newcommand{\TODO}[1]{\textcolor{red!70!black}{\textbf{[TODO: }#1\textbf{]}}}
+
 \title{\textbf{Master's Thesis Proposal}\\[2pt]
-  \large Harvard SEAS / IACS}
+  \large Harvard Master's in Data Science}
 \date{Submitted: \today \\ Due: April 10, 2026}
-\author{}
+\author{\TODO{your name and email}}
 
 \begin{document}
 \maketitle
@@ -28,9 +30,10 @@ Broad Institute of MIT and Harvard. \\
 \href{https://aditradha.com}{\texttt{aditradha.com}} \;\;
 \textit{Primary research supervisor.}
 
-\textit{Note: I will identify a Harvard SEAS internal sponsor or
-co-advisor as required by IACS administrative policy; pending
-confirmation with Daniel Weinstock.}
+\textit{Note: pending confirmation with Daniel Weinstock as to whether
+the Harvard Master's in Data Science program requires an internal SEAS
+sponsor when the primary advisor is an MIT faculty member; if so, a
+Harvard co-advisor will be added before submission.}
 
 \section*{3.\quad Abstract}
 Sparse mixture-of-experts (MoE) language models such as Mixtral~8x7B
@@ -61,66 +64,80 @@ network behavior.
 
 \section*{4.\quad Motivation and Background}
 
-\paragraph{Personal background.}
-I am a Harvard IACS master's student with a research interest in the
-mechanistic interpretability of large language models, particularly
-the question of how, where, and through what mechanisms behavioral
-interventions on frozen models actually work. I have been running
-empirical experiments on \textsc{SteerMoE}-style routing-bias
-interventions on Mixtral~8x7B-Instruct on the MIT ORCD cluster, and a
-working draft of the conference paper that emerged from those
-experiments is checked in alongside this proposal.\footnote{See
-\texttt{paper/docs/paper/main.pdf} in the project repository,
+The Harvard guidelines ask in this section for personal reasons,
+relevant background, and future plans. Each subheading below is the
+personal-narrative slot where the proposal commits to a piece of that.
+
+\paragraph{Who I am.}
+I am a student in Harvard's Master's in Data Science program.
+\TODO{one sentence on undergraduate background -- e.g.\ ``I completed
+my undergraduate degree in $\langle$field$\rangle$ at $\langle$institution$\rangle$, where I
+worked on $\langle$1--2 representative projects$\rangle$.''} My existing
+exposure to mechanistic interpretability comes from an earlier
+Harvard project on hyperbolic prototype embeddings for hierarchical
+artistic style.\footnote{Code and preprint:
+\href{https://github.com/pgrindehollevik-harvard/hyperbolic}{%
+github.com/pgrindehollevik-harvard/hyperbolic}.} That project taught
+me how to design a tightly scoped representation-learning study,
+report mixed results honestly, and build a reproducible end-to-end
+artifact --- skills directly transferable to this thesis.
+
+\paragraph{Why I am pursuing this specific project.}
+I have been running empirical experiments on \textsc{SteerMoE}-style
+routing-bias interventions on Mixtral~8x7B-Instruct on the MIT ORCD
+cluster. A working draft of the conference paper that came out of
+those experiments is checked into the project
+repository.\footnote{Working draft:
+\texttt{paper/docs/paper/main.pdf} in
 \href{https://github.com/pgrindehollevik-harvard/MoE\_attention\_guided\_steering}{%
 github.com/pgrindehollevik-harvard/MoE\_attention\_guided\_steering}.}
-That draft is a small diagnostic note. The thesis will turn it into a
-method paper.
-
-\paragraph{Why this project.}
-Three observations drove me to this topic:
+That draft is a small diagnostic note that documents a clear
+limitation of the upstream method: on Mixtral, the routing-bias
+readout signal is too diffuse for the published \textsc{SteerMoE}
+recipe to produce concept-specific transfer under a question-only
+test. Three things drew me to extend that diagnostic into a thesis:
 
 \begin{itemize}
-  \item Steering is the cleanest empirical wedge into the question of
-  \emph{what features a model has learned}. If we can move a
-  generation toward a concept by adding a bias to a small set of
-  scalar parameters at inference time, then those parameters
-  represent that concept in a behaviorally-meaningful sense.
+  \item Steering is the cleanest empirical wedge into \textit{what
+  features a model has learned}: if we can move generations by
+  adding a bias to a small set of scalar parameters at inference
+  time, those parameters carry the concept in a behaviorally
+  meaningful sense.
   \item Sparse MoE language models are an unusually clean substrate
-  for that wedge: every layer's routing decisions are a discrete,
-  inspectable structure, unlike the continuous residual stream of a
-  dense transformer.
+  for that wedge --- per-layer routing is a discrete, inspectable
+  structure, unlike the continuous residual stream of a dense
+  transformer.
   \item Existing steering methods read off the contrastive signal
   using fixed token positions or unweighted averages over a span.
-  Attention-guided readouts are the obvious next step, and have been
-  demonstrated for hidden-state interventions but not for
-  router-logit interventions on MoE models.
+  Attention-guided readouts are the natural next step, demonstrated
+  for hidden-state interventions but not for router-logit
+  interventions on sparse MoE models.
 \end{itemize}
 
-\paragraph{Connection to my advisor's research.}
-Adit's recent papers --- \emph{Mechanism for Feature Learning in
-Neural Networks} (\textit{Science}, 2024), \emph{Mechanism of Feature
-Learning in Convolutional Neural Networks} (arXiv:2309.00570), and
-\emph{Linear Recursive Feature Machines Provably Recover Low-rank
-Matrices} (arXiv:2401.04553) --- introduce and develop the
-\textbf{Average Gradient Outer Product (AGOP)} as a mathematical
-mechanism by which neural networks acquire features. AGOP gives us a
-principled handle on the question this thesis turns on: \textit{which
-input directions does a model treat as informative for a given
-prediction}. The same mechanism lets us ask \textit{which routing
-decisions a Mixtral expert is sensitive to}, which is the readout
-question I want to answer. The thesis proposes to bring AGOP and
-Recursive Feature Machines (RFM) to bear on the steering-readout
-problem, using my advisor's existing toolkit on a problem domain
-(behavioral steering of MoE LLMs) where it has not yet been applied.
+\paragraph{How this project fits my advisor's research.}
+Adit's recent work --- \emph{Mechanism for Feature Learning in
+Neural Networks} (\textit{Science}, 2024), \emph{Mechanism of
+Feature Learning in Convolutional Neural Networks}
+(arXiv:2309.00570), and \emph{Linear Recursive Feature Machines
+Provably Recover Low-rank Matrices} (arXiv:2401.04553) ---
+introduces the \textbf{Average Gradient Outer Product (AGOP)} as a
+mathematical mechanism by which neural networks acquire features.
+AGOP gives a principled handle on \textit{which input directions a
+model treats as informative for a given prediction}; the same
+mechanism lets us ask \textit{which routing decisions a Mixtral
+expert is sensitive to}, which is the readout question this thesis
+turns on. The thesis is, in a sentence, an application of Adit's
+feature-learning toolkit to a problem domain (behavioral steering
+of MoE LLMs) where it has not yet been applied.
 
 \paragraph{Future plans.}
-I intend to pursue a PhD in machine-learning interpretability after
-completing this thesis. The thesis is therefore designed to produce a
-publication-track research artifact (a NeurIPS-tier method paper),
-hands-on experience with cluster-scale generation experiments on
-billion-parameter MoE models, and a written monograph that
-demonstrates the ability to formalize, implement, and rigorously
-evaluate a method contribution end-to-end.
+\TODO{Confirm or replace: ``After this master's I intend to pursue
+a PhD in $\langle$specific area --- ML interpretability? sparse representation
+learning? something else?$\rangle$, and the thesis is sized to produce a
+NeurIPS-tier publication and the cluster-scale experimental
+experience that admissions committees evaluate against.''} \;\; Even
+absent a PhD trajectory, the thesis deliverables (paper,
+open-source artifact, monograph) are designed to stand on their own.
 
 \section*{5.\quad Goals}
 
