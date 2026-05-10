@@ -1,12 +1,9 @@
 % -----------------------------------------------------------------------------
-% Before submission, verify the following items that depend on Peter's
-% specific record and are placeholdered conservatively below:
+% Before submission, verify the following items:
 %   - Author name and preferred email format in the \author block.
-%   - The one-line undergraduate background sentence in Section 4.1.
-%   - The future-plans paragraph in Section 4.5 (currently written for the
-%     industry-research-track case; adapt if the PhD-application case becomes
-%     primary).
-%   - The thesis-cycle deadline year in the \date{} line if not Spring 2026.
+%   - The future-plans sentence at the end of Section 4 (currently written for
+%     the industry-research-track case; adapt if PhD-application is primary).
+%   - The cycle year in \date{} if not Spring 2026.
 % -----------------------------------------------------------------------------
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
@@ -15,7 +12,6 @@
 \usepackage{parskip}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage{enumitem}
-\usepackage{xcolor}
 \usepackage{booktabs}
 
 \setlist[itemize]{topsep=2pt,itemsep=2pt,leftmargin=*}
@@ -36,543 +32,262 @@ Behavioral Intervention in Sparse Mixture-of-Experts Language Models.}
 \section*{2.\quad Advisor}
 \textbf{Adityanarayanan (Adit) Radhakrishnan} ---
 Assistant Professor, MIT Department of Mathematics; Associate Member,
-Broad Institute of MIT and Harvard \\
-\href{https://aditradha.com}{\texttt{aditradha.com}}
-
-Pending administrative confirmation with Daniel Weinstock as to whether
-the Harvard MS in Data Science program requires an internal SEAS
-sponsor when the primary advisor is an MIT faculty member. If so, a
-Harvard co-advisor will be added before the proposal is countersigned.
+Broad Institute of MIT and Harvard
+(\href{https://aditradha.com}{\texttt{aditradha.com}}).
+A Harvard SEAS co-advisor will be added if the program requires an
+internal sponsor when the primary advisor is external; pending
+confirmation with Daniel Weinstock.
 
 \section*{3.\quad Abstract}
 
-Sparse mixture-of-experts (MoE) language models such as Mixtral~8x7B
-route every token to a small subset of feed-forward experts via a
-learned router. Recent work (\textsc{SteerMoE}) showed that the router
-itself is a viable intervention site: by comparing routing on
-contrastive prompt pairs we can identify experts whose activation rate
-differs in the presence of a target concept and bias routing toward
-them at decode time. In a faithful re-implementation I find that this
-recipe transfers \emph{weakly} to Mixtral on a question-only
-concept-transfer test, and that the underlying signal is diffuse: the
-top twenty $(\text{layer}, \text{expert})$ cells out of $32 \times 8 =
-256$ account for less than ten percent of the total
-$|\Delta_{\ell,e}|$ mass. This thesis proposes \textbf{Attention-Guided
-Router Steering (AGRS)}, a drop-in replacement for \textsc{SteerMoE}
-in which the per-token contribution to the readout is weighted by the
-attention mass that token sends toward a concept-bearing prefix span.
-AGRS reduces to \textsc{SteerMoE} when the attention weights are
-uniform, which makes the contribution isolatable from confounding
-implementation choices. I evaluate AGRS against \textsc{SteerMoE} and
-three hidden-state steering baselines across four MoE checkpoints and
-four concept families, with a pre-registered Phase-3 decision gate
-($\Delta\text{CTR} \geq +0.10$) before the more expensive
-generalization runs. The mechanistic chapter uses the Average Gradient
-Outer Product (AGOP) framework developed in my advisor's recent work
-to ask whether AGRS's expert selections align with concept-distinctive
-feature directions in a way \textsc{SteerMoE}'s do not. Deliverables
-are a NeurIPS-track method paper, an open-source replication artifact
-(Apptainer image, pinned model SHAs, full judge transcripts), and a
-written monograph integrating the empirical headline with the
-feature-learning lens.
+Sparse mixture-of-experts (MoE) language models such as
+Mixtral~8x7B route every token to a small subset of feed-forward
+experts via a learned router. Recent work (\textsc{SteerMoE}) showed
+that biasing the router logits of selected experts can steer
+generations toward a target concept at inference time. In a faithful
+re-implementation I find that this recipe transfers \emph{weakly} to
+Mixtral on a question-only concept-transfer test, and that the
+underlying signal is diffuse: the top twenty
+$(\text{layer}, \text{expert})$ cells out of $32 \times 8 = 256$
+capture less than $10\%$ of the total $|\Delta|$ mass. The thesis
+proposes \textbf{Attention-Guided Router Steering (AGRS)}, a drop-in
+replacement for \textsc{SteerMoE} in which the per-token contribution
+to the readout is weighted by attention mass to a concept-bearing
+prefix span. AGRS reduces to \textsc{SteerMoE} when the attention
+weights are uniform, isolating the contribution to the readout step.
+I evaluate AGRS against \textsc{SteerMoE} and three hidden-state
+steering baselines across four MoE checkpoints and four concept
+families, with a pre-registered decision gate before the more
+expensive runs, and use the Average Gradient Outer Product (AGOP)
+framework from my advisor's recent work to ask whether AGRS's expert
+selections are feature-aligned in a way \textsc{SteerMoE}'s are not.
 
 \section*{4.\quad Motivation and Background}
 
-\subsection*{4.1\quad Who I am}
-
-I am a candidate in Harvard's Master's in Data Science program. My
-prior research experience is a project on hyperbolic prototype
+My prior research is a Harvard project on hyperbolic prototype
 embeddings for hierarchical artistic style on
-WikiArt,\footnote{Repository and preprint:
-\href{https://github.com/pgrindehollevik-harvard/hyperbolic}{%
-\texttt{github.com/pgrindehollevik-harvard/hyperbolic}}.} which
-trained the same prototype classifier in matched-dimension Euclidean
-and Poincar\'e-ball output spaces and reported a robust local-retrieval
-advantage for the hyperbolic geometry across $150$ seed-replicated
-runs. That project taught me how to design a tightly scoped
-representation-learning study, run an honest mixed-results comparison
-across $18$ paired configurations, and ship a reproducible end-to-end
-artifact --- the skills directly transferable to the thesis proposed
+WikiArt,\footnote{\href{https://github.com/pgrindehollevik-harvard/hyperbolic}{%
+\texttt{github.com/pgrindehollevik-harvard/hyperbolic}}.} which trained
+the same prototype classifier in matched-dimension Euclidean and
+Poincar\'e-ball output spaces across $150$ seed-replicated runs. That
+project taught me how to design a tightly scoped representation
+study, run an honest mixed-results comparison, and ship a
+reproducible end-to-end artifact --- skills directly transferable
 here.
 
-\subsection*{4.2\quad Why this project}
-
-For the past several months I have been running empirical experiments
-on \textsc{SteerMoE}-style routing-bias interventions on
-Mixtral~8x7B-Instruct on the MIT ORCD cluster. A working draft of the
-conference paper that came out of those experiments is checked into
-the project
-repository.\footnote{Working draft:
-\texttt{paper/docs/paper/main.pdf} in
+For the past several months I have been running
+\textsc{SteerMoE}-style routing-bias experiments on
+Mixtral~8x7B-Instruct on the MIT ORCD
+cluster.\footnote{Working draft and code:
 \href{https://github.com/pgrindehollevik-harvard/MoE_attention_guided_steering/tree/paper-submission}{%
 \texttt{github.com/pgrindehollevik-harvard/MoE\_attention\_guided\_steering}}
-(\texttt{paper-submission} branch).} That draft documents a specific
-limitation of the upstream method, which is the empirical hook the
-thesis turns on.
+(\texttt{paper-submission} branch).} The preliminary finding that
+motivates the thesis is empirically concrete. Across $25$ question-only
+test cases on Mixtral, swept across eight
+$(\alpha, k_+, k_-)$ \textsc{SteerMoE} configurations, the
+concept-token hit rate moves by at most $0.04$ between baseline and
+\textsc{SteerMoE}; response length contracts monotonically with the
+steering coefficient ($-2.16$ to $-5.52$ words); and the
+per-(layer, expert) risk-difference signal is diffuse, with the top
+twenty cells out of $256$ capturing less than $10\%$ of the total
+$|\Delta|$ mass. If the readout is diffuse and the intervention
+barely moves the model, then reweighting the readout by attention to
+the concept span is the lightest-touch method change that could
+plausibly fix it.
 
-Three converging observations made this the project I want to spend
-my thesis year on:
+This is also where the project meets my advisor's research. Adit's
+recent work on the Average Gradient Outer Product (AGOP) ---
+\emph{Mechanism for Feature Learning in Neural Networks} (Science,
+2024) and follow-ups --- introduces AGOP as a mathematical handle on
+\textit{which input directions a model treats as informative for a
+given prediction}. For sparse MoE routing the analogous question is
+\textit{which input directions a router's gating function for expert
+$e$ at layer $\ell$ treats as informative}, and the thesis tests
+whether AGRS picks experts whose top AGOP eigenvector aligns with
+concept-prototype directions in a way \textsc{SteerMoE} does not.
 
-\begin{itemize}
-  \item Steering is the cleanest empirical wedge into the question of
-  \emph{what features a model has learned}. If we can move a
-  generation toward a concept by adding a bias to a small set of
-  scalar parameters at inference time, then those parameters carry the
-  concept in a behaviorally-meaningful sense; the steering experiment
-  is a causal probe of representation.
-  \item Sparse MoE language models are an unusually clean substrate for
-  that probe. Every layer's routing decision is a discrete,
-  inspectable choice over a small expert pool, unlike the continuous
-  residual stream of a dense transformer. The routing layer thus gives
-  steering research a structurally different intervention site than
-  any of the existing dense-transformer methods.
-  \item Existing steering methods read off the contrastive signal
-  using fixed token positions or unweighted averages over a span.
-  Attention-guided readouts have been demonstrated for hidden-state
-  interventions on dense transformers but never for router-logit
-  interventions on sparse MoE models. The gap is identifiable, and
-  closing it is the natural next contribution.
-\end{itemize}
+After this master's I intend to pursue research roles in AI
+interpretability and behavioral evaluation, with industry research
+labs working on alignment and post-training intervention methods as
+the primary target.
 
-\subsection*{4.3\quad Preliminary results}
-
-The empirical hook for the thesis is concrete. Across $25$
-question-only test cases ($5$ fear concepts $\times$ $5$ evaluation
-prompts) on Mixtral~8x7B-Instruct, swept across eight
-$(\alpha, k_+, k_-)$ configurations of \textsc{SteerMoE}, three things
-hold consistently:
+\section*{5.\quad Goals and Expected Outcomes}
 
 \begin{enumerate}
-  \item The \emph{concept-token hit rate} ---the fraction of cases
-  whose response contains any token of the target concept name ---
-  moves by at most $0.04$ between baseline and \textsc{SteerMoE}.
-  Most configurations show zero shift.
-  \item Response length contracts monotonically with the steering
-  coefficient $\alpha$, from $-2.16$ words at $\alpha = 1$ to $-5.52$
-  words at $\alpha = 0.01$ with a large $k_+$, indicating the
-  intervention has a measurable but defocusing effect.
-  \item The per-(layer, expert) risk-difference signal that drives the
-  \textsc{SteerMoE} plan is \emph{diffuse} on Mixtral. The top twenty
-  cells out of the $256$ total capture less than $10\%$ of the total
-  $|\Delta_{\ell,e}|$ mass --- there is no small subset of experts
-  that explains most of the prefix-conditioned vs.\ unprefixed routing
-  gap.
+  \item \textbf{Method.} Define and implement AGRS as a drop-in
+  replacement for \textsc{SteerMoE} on Mixtral~8x7B and OLMoE, with
+  unit tests including the property test that AGRS reduces to
+  \textsc{SteerMoE} when attention weights are uniform.
+  \emph{Success criterion:} AGRS produces strictly
+  more-concentrated risk-difference tables than \textsc{SteerMoE} on
+  $\geq 4/5$ pilot concepts.
+
+  \item \textbf{Empirical evaluation.} A pre-registered comparison
+  of AGRS against five alternatives (baseline, \textsc{SteerMoE},
+  ITI, ActAdd, RepE difference-of-means) across four MoE checkpoints
+  and four concept families, $n = 250$ cases per condition, five
+  seeds, with concept-transfer rate from an LLM judge cross-checked
+  against a $200$-case human-rater subset as the primary metric.
+  \emph{Success criterion:} AGRS lifts CTR by $\geq 0.10$ over
+  \textsc{SteerMoE} on Mixtral / fears with non-overlapping paired
+  bootstrap $95\%$ CIs, and produces a positive shift in $\geq 3/4$
+  models and $\geq 3/4$ concept families.
+
+  \item \textbf{Mechanistic analysis.} Estimate the AGOP of selected
+  experts' gating functions and ask whether AGRS's selections align
+  with concept-distinctive directions.
+  \emph{Success criterion:} AGRS-selected experts have systematically
+  higher cosine alignment between their top AGOP eigenvector and the
+  concept-prototype embedding than \textsc{SteerMoE}-selected experts;
+  the per-cell alignment-vs-CTR correlation across (model, concept)
+  cells reaches $|r| \geq 0.5$.
 \end{enumerate}
 
-The three observations together motivate AGRS: if the readout is
-diffuse and the intervention barely moves the model, then the readout
-is the bottleneck, and reweighting it by attention to the concept
-span is the lightest-touch method change that could plausibly fix the
-diffusion.
-
-\subsection*{4.4\quad How this project fits my advisor's research}
-
-Adit's recent work --- \emph{Mechanism for Feature Learning in
-Neural Networks} (\textit{Science}, 2024), \emph{Mechanism of Feature
-Learning in Convolutional Neural Networks} (arXiv:2309.00570), and
-\emph{Linear Recursive Feature Machines Provably Recover Low-rank
-Matrices} (arXiv:2401.04553) --- introduces the \textbf{Average
-Gradient Outer Product (AGOP)} as a mathematical mechanism by which
-neural networks acquire features. The AGOP matrix
-$M = \mathbb{E}_x\!\left[\nabla_x f(x)\nabla_x f(x)^\top\right]$
-encodes \emph{which input directions a model treats as informative}
-for a given prediction.
-
-For sparse MoE routing the analogous question is: \emph{which input
-directions does a router's gating function for expert $e$ at layer
-$\ell$ treat as informative}? Adit's framework gives a principled,
-non-empirical handle on that question through the AGOP of the gating
-network. The mechanistic chapter of the thesis estimates
-$M_{\ell, e}$ for selected experts and asks whether AGRS chooses
-experts whose top AGOP eigenvector aligns with concept-prototype
-directions, and whether \textsc{SteerMoE} does not. This is the
-specific intellectual bridge to the advisor's existing toolkit and
-the reason this project is the right project to pursue under his
-supervision rather than under a generic ML-systems advisor.
-
-\subsection*{4.5\quad Future plans}
-
-After this master's I intend to pursue a research role in AI
-interpretability and behavioral evaluation of large language models,
-either at an industry research lab focused on alignment and
-post-training intervention methods, or via a PhD program. The thesis
-is sized to produce the publication artifact (a NeurIPS-tier method
-paper) and the cluster-scale experimental experience that admissions
-committees and research-team hiring rounds evaluate against. Even
-absent a PhD trajectory, the three deliverables --- paper,
-open-source replication artifact, written monograph --- stand on
-their own as evidence of the ability to design, execute, and write up
-an interpretability research program end-to-end.
-
-\section*{5.\quad Goals and Expected Deliverables}
-
-The thesis has three goals, each with a concrete deliverable, an
-assessable criterion of success, and a phase from the project's
-\href{https://github.com/pgrindehollevik-harvard/MoE_attention_guided_steering/blob/paper-submission/paper/docs/REVISION_PLAN.md}{%
-\texttt{REVISION\_PLAN.md}}.
-
-\begin{itemize}
-  \item \textbf{Goal 1 --- Method.} Define and implement AGRS as a
-  drop-in replacement for \textsc{SteerMoE} on Mixtral~8x7B-Instruct
-  and OLMoE~1B-7B-Instruct. The implementation is paired with unit
-  tests that include a property test: \textit{AGRS reduces to
-  \textsc{SteerMoE} when the attention weights are uniform.}
-  Success criterion: AGRS produces strictly more-concentrated
-  risk-difference tables than \textsc{SteerMoE} on $\geq 4/5$ of the
-  fear concepts in the pilot, measured by the top-$20$ share of
-  $|\Delta|$ mass.
-
-  \item \textbf{Goal 2 --- Empirical evaluation.} A statistically
-  powered, pre-registered comparison of AGRS against five
-  alternatives --- baseline, \textsc{SteerMoE}, ITI, ActAdd, and RepE
-  difference-of-means --- across four MoE checkpoints and four
-  concept families. Sample size $n = 250$ cases per condition; five
-  seeds. Primary metric is concept-transfer rate (CTR) from an
-  LLM-as-judge cross-validated against a human-rater subset of $200$
-  cases. Success criterion: AGRS lifts CTR by $\geq 0.10$ over
-  \textsc{SteerMoE} on Mixtral / fears with non-overlapping paired
-  bootstrap $95\%$ CIs, and produces a positive CTR shift in
-  $\geq 3/4$ models and $\geq 3/4$ concept families.
-
-  \item \textbf{Goal 3 --- Mechanistic analysis with AGOP.} Estimate
-  the AGOP of selected experts' gating functions over the
-  contrastive prompt pool and ask whether AGRS's selections align
-  with concept-distinctive directions. Success criterion: AGRS-
-  selected experts have systematically higher cosine alignment
-  between their top AGOP eigenvector and the concept-prototype
-  embedding than \textsc{SteerMoE}-selected experts on Mixtral /
-  fears, with the per-cell alignment-vs-CTR correlation across
-  (model, concept) cells reaching $|r| \geq 0.5$.
-\end{itemize}
-
-\paragraph{Expected publication.} A submitted NeurIPS or ICLR
-main-track paper, with the thesis monograph organized around the
-three goals above and a final chapter situating the empirical
-findings inside the AGOP feature-learning framework.
-
-\paragraph{Expected artifact release.} A public, anonymized
-\texttt{experiments/} tree under CC-BY containing every executed
-notebook, generation metadata, qualitative review, activation table,
-steering plan, judge transcript, and pre-registration document. The
-Apptainer image and pinned environment lock are part of the release.
+\noindent
+\textbf{Deliverables.} A submitted NeurIPS or ICLR main-track paper, a
+thesis monograph organized around the three goals above, and an
+anonymized public artifact tree under CC-BY (executed notebooks,
+generation metadata, qualitative reviews, activation tables, steering
+plans, judge transcripts, Apptainer image, pre-registration document).
 
 \section*{6.\quad Scientific Justification}
 
-\paragraph{Why this is interesting.}
 Behavioral steering at inference time is one of the few corners of
-mechanistic interpretability where small, tractable interventions on
-frozen models produce measurable, causal behavioral effects. Most
-published steering methods operate on the residual stream of dense
-transformers. Sparse MoE models give us a structurally different
-intervention site --- the router logit --- whose causal effect is
-mediated through a discrete, inspectable selection over a small
-expert pool. Whether the readout-and-intervene paradigm transfers
-from dense to sparse architectures, and whether it does so with the
-\emph{same} readout rules, is an open empirical question with direct
-implications for how alignment researchers deploy steering on
-open-weight MoE checkpoints (which now make up a large fraction of
-the open-weight frontier).
+mechanistic interpretability where small interventions on frozen
+models produce measurable, causal behavioral effects. Most published
+steering methods operate on the residual stream of dense transformers;
+sparse MoE models give us a structurally different intervention site
+--- the router logit --- whose effect is mediated through a discrete
+selection over a small expert pool. Whether the readout-and-intervene
+paradigm transfers from dense to sparse architectures, and whether it
+does so with the same readout rules, is open. The open-weight
+frontier is increasingly MoE (Mixtral, OLMoE, Qwen2-MoE,
+DeepSeek-MoE), so the answer has direct deployment relevance for
+alignment researchers working on those checkpoints.
 
-\paragraph{Why this is innovative.} Three innovations distinguish
-the proposed thesis from existing work.
-
-\begin{itemize}
-  \item \emph{Method.} AGRS is, to my knowledge, the first
-  attention-guided readout developed specifically for router-logit
-  interventions on sparse MoE models. The reduction from AGRS to
-  \textsc{SteerMoE} (under uniform attention) makes the contribution
-  isolatable from confounding implementation differences --- the
-  same intervention site, the same generation pipeline, the same
-  experiment harness, the same evaluation. \emph{Only the readout
-  changes.}
-  \item \emph{Mechanistic framing.} I use Adit's AGOP machinery to
-  formalize the feature directions that selected experts respond to,
-  then test whether AGRS's selections align with those directions on
-  the same concept-prompt pairs. This is a use of the feature-learning
-  toolkit on a behavioral-intervention problem where it has not been
-  applied; the result either validates the feature-learning lens on
-  routing decisions or constrains where the framework applies.
-  \item \emph{Empirical rigor.} The evaluation is pre-registered with
-  a Phase-3 decision gate ($\Delta\text{CTR} \geq +0.10$ over
-  \textsc{SteerMoE} on the Mixtral / fears pilot) before the more
-  expensive cross-model and cross-concept phases run. The full prompt
-  set, judge transcripts, and seed sweeps are released under CC-BY at
-  submission.
-\end{itemize}
-
-\paragraph{Why now.} The empirical conditions for this thesis exist
-in a way they did not 18 months ago: open-weight Mixtral, OLMoE, and
-Qwen2-MoE checkpoints are all released and stable; LLM-as-judge
-evaluation with frontier models has become defensible enough to
-cross-check with smaller human-rater subsets; and reproducibility
-norms in the alignment community (pre-registration, full artifact
-release) have matured to the point that a master's thesis can credibly
-ship a reviewer-grade reproducibility bundle. The window for a clean,
-narrow, reproducible MoE-steering contribution is open.
+The contribution is innovative in three specific ways. (i)~\emph{The
+method.} AGRS is, to my knowledge, the first attention-guided readout
+developed for router-logit interventions on sparse MoEs; the
+reduction to \textsc{SteerMoE} under uniform attention isolates the
+readout step from confounding implementation choices.
+(ii)~\emph{The mechanistic framing.} AGOP has not been applied to MoE
+routing-bias steering; doing so either validates the feature-learning
+lens on routing decisions or constrains where the framework applies.
+(iii)~\emph{The empirical rigor.} A pre-registered Phase-3 decision
+gate ($\Delta\text{CTR} \geq +0.10$) is set before any AGRS-vs-\textsc{SteerMoE}
+data is collected, so the headline cannot be backfit to the result.
 
 \section*{7.\quad Literature Review}
 
-I group the literature into four threads. The thesis sits at the
-intersection of the third and fourth: it extends sparse-MoE
-intervention with a readout machinery taken from dense-transformer
-attention-guided steering, and it analyzes the result using
-feature-learning theory.
-
-\paragraph{(i) Activation steering on dense transformers.}
-The seminal example is \textit{Inference-Time Intervention} (Li et
-al., NeurIPS 2023), which adds a learned direction to a small set of
-attention heads to reduce hallucination on TruthfulQA.
-\textit{Representation Engineering} (Zou et al., 2023) generalizes
-the readout-and-edit problem to contrastive prompt pairs at the
-residual stream. \textit{Activation Addition} (Turner et al., 2023)
-projects the contrastive signal across multiple residual layers via
-projected gradient descent. \textit{Attention-Guided Steering} (Tan
-et al., 2024) refines \emph{where} on the residual stream to read by
-weighting positions by attention mass; this is the direct upstream
-inspiration for the readout half of AGRS. None of these methods
-target sparse MoE routing.
-
-\paragraph{(ii) Sparse Mixture-of-Experts language models.}
-\textit{Mixtral of Experts} (Jiang et al., 2024) and \textit{OLMoE}
-(Muennighoff et al., 2024) released the open-weight checkpoints used
-in this thesis. Each sparse layer routes every token to two experts
-via a learned router. \textit{Qwen2-MoE} (Yang et al., 2024) and
-\textit{DeepSeek-MoE} (Dai et al., 2024) round out the
-cross-architecture set. The discrete routing decision is the
-structure behavioral steering exploits, and routing-pool size
-(8--64 experts) is one of the axes we expect AGRS's gain to vary
-along.
-
-\paragraph{(iii) Steering sparse MoE models.}
-\textsc{SteerMoE} (2024) is the upstream work that first proposed
-biasing router logits to alter expert selection at decode time. Its
-readout uses uniform averaging over a target span. The diagnostic
-results in my preliminary draft show this readout produces a diffuse
-risk-difference signal on Mixtral and correspondingly small
-behavioral shifts under a question-only test. The thesis builds
-directly on \textsc{SteerMoE}'s intervention site while replacing its
-readout; the same paper-rule parameters ($\varepsilon = 0.01$,
-$k_+ = 20$, $k_- = 0$) are kept as a sanity-check baseline.
-
-\paragraph{(iv) Feature learning and AGOP.}
-Radhakrishnan et al.\ (\textit{Science}, 2024) introduce the
-\emph{neural feature ansatz} and the AGOP as a mechanism through
-which neural networks acquire features. The CNN follow-up
-(arXiv:2309.00570) extends AGOP to convolutional architectures, and
-the Recursive Feature Machines paper (arXiv:2401.04553) gives
-RFM-based recovery guarantees for low-rank structure.
-\textit{Quadratic Models for Understanding Neural Network Dynamics}
-(ICLR 2024) uses quadratic surrogates for training-dynamics
-analysis. The mechanistic chapter of the thesis uses AGOP to
-characterize which input-token directions a Mixtral expert's gating
-function is sensitive to, and asks whether AGRS's selections align
-with those directions.
+Activation steering on dense transformers --- Inference-Time
+Intervention (Li et al., NeurIPS 2023), Representation Engineering
+(Zou et al., 2023), Activation Addition (Turner et al., 2023), and
+Attention-Guided Steering (Tan et al., 2024) --- has established that
+small additive interventions on the residual stream can causally
+shift behavior; the last of these is the direct upstream inspiration
+for the readout half of AGRS, none of these methods target sparse
+MoE routing. Sparse MoE language models --- Mixtral (Jiang et al.,
+2024), OLMoE (Muennighoff et al., 2024), Qwen2-MoE, DeepSeek-MoE ---
+provide the open-weight substrate used here. \textsc{SteerMoE} (2024)
+is the upstream router-bias method this thesis builds on; its
+uniform-readout rule is what AGRS replaces. Finally, the feature-
+learning line developed by my advisor --- the Average Gradient Outer
+Product (\textit{Science}, 2024), its CNN extension
+(arXiv:2309.00570), and Recursive Feature Machines (arXiv:2401.04553)
+--- supplies the mathematical machinery I use to test whether AGRS's
+expert selections are feature-aligned. The thesis sits at the
+intersection of the third and fourth threads.
 
 \section*{8.\quad Methodology}
 
-The project is mainly computational, as the IACS guidelines require.
-Every claim in the thesis is empirical and reproducible from a
-pinned codebase, a pinned environment, and a fixed set of model
-checkpoints. The methodology section spells out how that is
-enforced.
+The project is mainly computational. Every claim is empirical and
+reproducible from a pinned codebase, a pinned environment, and a
+fixed set of model checkpoints.
 
-\subsection*{8.1\quad Models and compute}
-
-\begin{itemize}
-  \item \emph{Models.} Mixtral~8x7B-Instruct-v0.1 (8-bit with CPU
-  offload), OLMoE~1B-7B-0125-Instruct, Qwen2-MoE~14B-A2.7B-Instruct,
-  and DeepSeek-V2-MoE-Lite-Chat if licensing and storage allow. Each
-  is loaded once via Hugging Face Transformers under a recorded
-  revision SHA, asserted by a helper on every load.
-  \item \emph{Compute.} Two NVIDIA A100 GPUs per generation job on the
-  MIT ORCD \texttt{mit\_normal\_gpu} partition. Total budget:
-  $\sim 305$ GPU-hours across all phases, sized for one
-  graduate-student semester.
-  \item \emph{Software.} Python~3.11; PyTorch; Hugging Face
-  Transformers; \texttt{bitsandbytes}; \texttt{accelerate};
-  \texttt{papermill} for headless notebook execution;
-  \texttt{numpy}, \texttt{pandas}, \texttt{matplotlib} for analysis;
-  Apptainer for cluster-portable images.
-\end{itemize}
-
-\subsection*{8.2\quad The AGRS readout, formally}
-
+\paragraph{The AGRS readout.}
 For a contrastive prompt pair $(p^+, p^-)$ with concept-bearing
-prefix span $\mathcal{C} \subset p^+$, let
-
-\begin{itemize}[label={}]
-  \item $R_{\ell, t, e} \in \{0, 1\}$ --- indicator that expert $e$ is
-  selected by top-$k$ routing at layer $\ell$, token position $t$;
-  \item $A^{\ell^\star}_{h, t \to t'}$ --- attention weight from
-  token $t$ to token $t'$ at reference layer $\ell^\star$, head $h$;
-  \item $a_t \;=\; \max_h \sum_{t' \in \mathcal{C}}
-  A^{\ell^\star}_{h, t \to t'}$ --- per-token attention mass
-  directed toward the concept span at $\ell^\star$.
-\end{itemize}
-
-The AGRS attention-weighted activation rate on $p^+$ is
+prefix span $\mathcal{C} \subset p^+$, let $R_{\ell, t, e} \in \{0, 1\}$
+indicate that expert $e$ is selected by Mixtral top-$2$ routing at
+layer $\ell$, position $t$; let
+$a_t = \max_h \sum_{t' \in \mathcal{C}} A^{\ell^\star}_{h, t \to t'}$
+be the per-token attention mass to the concept span at a chosen
+reference layer $\ell^\star$. The AGRS attention-weighted activation
+rate is
 
 \[
 r^+_{\ell, e}
 \;=\;
-\frac{\sum_{t \in \text{target}} a^+_t \cdot R^+_{\ell, t, e}}
-     {\sum_{t \in \text{target}} a^+_t},
+\frac{\sum_t a^+_t \cdot R^+_{\ell, t, e}}
+     {\sum_t a^+_t},
+\qquad
+\Delta_{\ell, e} \;=\; r^+_{\ell, e} - r^-_{\ell, e}
 \]
 
-with $r^-_{\ell, e}$ defined identically on $p^-$ with $a^- \equiv 1$
-(uniform, since $p^-$ has no concept span). The per-cell risk
-difference is $\Delta_{\ell, e} = r^+_{\ell, e} - r^-_{\ell, e}$.
-The decode-time intervention is identical to \textsc{SteerMoE}: add
-$+\alpha$ to selected positive experts' router logits, $-\alpha$ to
-selected negative experts'. \textsc{SteerMoE} is recovered when
-$a^+_t \equiv 1$, which makes the contribution isolable.
+with $a^- \equiv 1$ on the unprefixed prompt. The decode-time
+intervention is identical to \textsc{SteerMoE}: add $\pm \alpha$ to
+the top-$k_+$ positive and top-$k_-$ negative experts' router logits.
+\textsc{SteerMoE} is recovered exactly when $a^+_t \equiv 1$.
 
-\subsection*{8.3\quad Computational pipeline}
+\paragraph{Pipeline.}
+Per-token router logits and attention weights are captured via
+Hugging Face forward hooks, sliced to the shared statement-body
+target span, aggregated into the risk-difference table, used to build
+a sparse plan, and re-injected at decode time. Generations are scored
+by an LLM judge (GPT-4o as primary, Claude as cross-check) on a
+$0$--$2$ ordinal scale for thematic concept transfer, with a
+human-rater subset of $200$ cases for judge calibration. Statistical
+reporting is paired bootstrap $95\%$ CIs across seeds and
+paired $t$-tests on seed-collapsed deltas.
 
-\begin{enumerate}
-  \item \emph{Routing-trace and attention collection.} For each
-  $(p^+, p^-)$, capture per-token, per-layer router logits and
-  attention weights via Hugging Face forward hooks. Slice to the
-  shared statement-body target span.
-  \item \emph{Risk-difference table.} Compute $\Delta_{\ell, e}$
-  under both the AGRS and \textsc{SteerMoE} readouts on the same
-  traces. The contrast (top-$k$ share of $|\Delta|$ mass under each
-  readout) is one of the headline diagnostics of the final paper.
-  \item \emph{Sparse plan selection.} Globally select the top
-  $k_+$ positive cells and top $k_-$ negative cells, subject to
-  $|\Delta_{\ell, e}| > \varepsilon$.
-  \item \emph{Decode-time intervention.} Add $\pm\alpha$ to selected
-  experts' router logits at every forward pass during generation.
-  \item \emph{Evaluation.} Score each generation with an LLM judge
-  (GPT-4o by default, Claude as cross-check) on a $0$--$2$ ordinal
-  scale for thematic concept transfer. Cross-validate against a
-  $200$-case human-rater subset (Cohen's $\kappa$, Spearman). Report
-  paired bootstrap $95\%$ CIs over seeds and paired $t$-tests on
-  seed-collapsed deltas.
-\end{enumerate}
+\paragraph{Mechanistic analysis.}
+For each selected expert $e$ at layer $\ell$, estimate
+$M_{\ell, e} = \mathbb{E}_x\!\left[\nabla_x g_{\ell, e}(x)\,
+\nabla_x g_{\ell, e}(x)^\top\right]$ of the gating function over the
+contrastive prompt pool, and report the cosine between its top
+eigenvector and the concept-prototype embedding direction. The
+empirical question is whether AGRS picks better-aligned experts than
+\textsc{SteerMoE}.
 
-\subsection*{8.4\quad Mechanistic analysis with AGOP}
+\paragraph{Reproducibility.}
+Every experimental step is a Jupyter notebook with a \texttt{papermill}
+parameters cell, run identically on a laptop in smoke mode and on the
+MIT ORCD cluster via a paired \texttt{sbatch} wrapper. All
+generation calls are at temperature $0$ with explicit seeds; every
+model load asserts a recorded Hugging~Face revision SHA; every run
+writes a \texttt{provenance.json} with the git SHA, cluster job id,
+and wallclock. The container is a single Apptainer image; the AGRS
+hypothesis is pre-registered on OSF with the decision gate before
+the gate-determining experiment runs.
 
-For a selected expert $e$ at layer $\ell$, treat the expert's gating
-function $g_{\ell, e}(x)$ as a real-valued map from token-position
-embeddings to the pre-routing logit, and estimate
+\paragraph{Models and compute.}
+Mixtral~8x7B-Instruct (8-bit with CPU offload), OLMoE 1B-7B-Instruct,
+Qwen2-MoE 14B, and DeepSeek-MoE-Lite if licensing allows; total
+budget $\sim 305$ GPU-hours on the MIT ORCD \texttt{mit\_normal\_gpu}
+partition over the academic year.
 
-\[
-M_{\ell, e} \;=\; \mathbb{E}_x\!\left[
-  \nabla_x g_{\ell, e}(x)\, \nabla_x g_{\ell, e}(x)^\top
-\right]
-\]
-
-over the contrastive prompt pool. Compare the top eigenvectors of
-$M_{\ell, e}$ against the concept-prototype embedding direction. The
-empirical question: \emph{do the experts AGRS selects respond to
-feature directions that an AGOP-style analysis identifies as
-concept-relevant, or does AGRS find them incidentally through the
-activation-rate differential alone?}
-
-\subsection*{8.5\quad Reproducibility infrastructure}
-
-The thesis adopts a single, strict reproducibility pattern that is
-implemented in the project's
-\href{https://github.com/pgrindehollevik-harvard/MoE_attention_guided_steering/blob/paper-submission/notebooks/README.md}{%
-\texttt{notebooks/}} layer:
-
-\begin{itemize}
-  \item \textbf{The notebook is the pipeline.} Each experimental
-  step is a Jupyter notebook that declares its inputs as a
-  \texttt{papermill} \texttt{parameters} cell, calls into a
-  pure-function entrypoint in
-  \texttt{src/.../pipelines/}, runs identically on a laptop (CPU,
-  smoke mode) and on the MIT ORCD cluster (GPU, full mode) via a
-  paired \texttt{slurm/notebooks/<name>.sbatch} wrapper, and
-  archives the executed copy with full outputs into the run
-  directory. No experimental result lands in \texttt{experiments/}
-  that did not come from a \texttt{papermill}-executed notebook.
-  \item \textbf{Determinism.} All generation calls use temperature
-  $0$, top-$p$ $1.0$, with explicit seeds threaded through every
-  pipeline function.
-  \item \textbf{Pinning.} A helper asserts the recorded
-  Hugging~Face revision SHA on every model load; the assertion
-  fires before any compute.
-  \item \textbf{Provenance.} Every run writes
-  \texttt{experiments/<run\_dir>/provenance.json} with the git SHA
-  of the codebase, the cluster job id, the hostname, the wallclock,
-  and the resolved papermill parameter values.
-  \item \textbf{Containerization.} One Apptainer image, built from
-  \texttt{containers/agrs.def}, is the only supported cluster
-  runtime.
-  \item \textbf{Pre-registration.} The AGRS hypothesis (primary
-  metric, comparator, $n$, seeds, stop rule, Phase-3 decision gate)
-  is registered on OSF before any AGRS-vs-\textsc{SteerMoE}
-  comparison runs.
-  \item \textbf{Public release.} An anonymized
-  \texttt{experiments/} tree under CC-BY ships at submission so a
-  reviewer can re-derive every figure offline.
-\end{itemize}
-
-\subsection*{8.6\quad Timeline and milestones}
-
-\begin{center}
-\begin{tabular}{lll}
+\paragraph{Timeline.}
+\begin{center}\small
+\begin{tabular}{ll}
 \toprule
-\textbf{Phase} & \textbf{Months} & \textbf{Milestone} \\
+\textbf{Months} & \textbf{Milestone} \\
 \midrule
-0. Reproducibility hardening   & May--Jun 2026 & \texttt{make paper} regenerates current draft on a clean checkout. \\
-1. Evaluation harness           & Jun--Jul 2026 & Judge-vs-human Spearman $\geq 0.7$ on $200$-case subset. \\
-2. AGRS implementation          & Jul 2026 & Unit tests pass; AGRS $\neq$ \textsc{SteerMoE} on same data. \\
-3. Pilot (Mixtral / fears)      & Aug 2026 & Decision gate: $\Delta\text{CTR} \geq +0.10$. \\
-4. Full method comparison       & Sep--Oct 2026 & Six-method table for Mixtral / fears. \\
-5. Cross-model generalization   & Nov 2026 & Four MoE models, AGRS-vs-\textsc{SteerMoE} table. \\
-6. Cross-concept generalization & Dec 2026 & Four concept families on Mixtral. \\
-7. Mechanistic AGOP analysis    & Jan 2027 & AGOP alignment scatter + per-cell correlation. \\
-8. Statistics and writing       & Feb--Mar 2027 & Thesis monograph and conference submission. \\
+May--Jun 2026 & Reproducibility hardening; \texttt{make paper} on clean checkout. \\
+Jun--Jul 2026 & Evaluation harness; judge--human Spearman $\geq 0.7$. \\
+Jul 2026      & AGRS implementation; unit tests; pre-registration filed. \\
+Aug 2026      & Pilot run; Phase-3 decision gate evaluated. \\
+Sep--Oct 2026 & Full six-method comparison on Mixtral / fears. \\
+Nov 2026      & Cross-model generalization (Mixtral, OLMoE, Qwen2-MoE, DS-MoE). \\
+Dec 2026      & Cross-concept generalization (fears, professions, refusal, sentiment). \\
+Jan 2027      & AGOP mechanistic analysis. \\
+Feb--Mar 2027 & Statistics, thesis monograph, conference submission. \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\subsection*{8.7\quad Risks and contingency}
-
-\paragraph{Phase-3 decision gate.} If AGRS does not clear the
-pre-registered $\Delta\text{CTR} \geq +0.10$ threshold on
-Mixtral / fears, the thesis pivots in one of two pre-declared
-directions: (a) the same attention-weighted readout is applied to
-a hidden-state intervention site, isolating the readout from the
-intervention site; or (b) the thesis becomes a focused
-diagnostic-and-AGOP study of why the routing signal is diffuse on
-Mixtral. Either pivot is registered in the OSF pre-registration so
-it cannot be backfit.
-
-\paragraph{Cross-model port engineering.} Each new MoE checkpoint
-requires a backend module analogous to the existing Mixtral one.
-The plan budgets one engineering week per model, with
-DeepSeek-MoE-Lite as the most fragile (storage, license); if it
-stalls, the thesis reports three models rather than four and the
-decision is documented in \texttt{checkpoint\_card.md}.
-
-\paragraph{Refusal-family release.} The refusal-target concept
-family carries dual-use considerations; we engage with the
-institutional contact early in Phase~6 and ship a public-release
-go/no-go decision before the family's generations enter the paper.
-
-\paragraph{AGOP estimation cost.} AGOP requires gradients of the
-gating function through tens of thousands of tokens. Phase 7
-budgets $\sim 20$ GPU-hours; if tight, AGOP is estimated at a
-single representative layer rather than all $32$.
-
-\bigskip
-\hrule
-\medskip
-\noindent\textit{Companion materials in the project repository
-(\texttt{paper-submission} branch):}
-\begin{itemize}
-  \item Working conference draft: \texttt{paper/docs/paper/main.pdf}.
-  \item Phased revision plan with code-to-build manifest:
-  \texttt{paper/docs/REVISION\_PLAN.md}.
-  \item Projected final-paper shape and outcome scenarios:
-  \texttt{paper/docs/EXPECTED\_FINAL\_PAPER.md}.
-  \item Notebook-as-pipeline scaffolding:
-  \texttt{notebooks/README.md} and
-  \texttt{slurm/notebooks/README.md}.
-\end{itemize}
+If the Phase-3 gate fails, the pre-registered pivot is either an
+attention-weighted hidden-state intervention (testing whether the
+readout is the bottleneck independently of the intervention site) or
+a focused diagnostic-and-AGOP study of why the routing signal is
+diffuse on Mixtral.
 
 \end{document}
