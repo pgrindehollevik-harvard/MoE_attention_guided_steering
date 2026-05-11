@@ -1,0 +1,63 @@
+\appendix
+\section{Run inventory}
+\label{app:runs}
+
+The aggregated tables and figures in Section~\ref{sec:results} were derived
+from the following committed runs under \texttt{experiments/}:
+
+\begin{itemize}
+  \item \texttt{prefix\_conditioned\_model\_comparison\_fears\_seed7\_mixtral\_8bit}
+  -- Stage 1, full-prefix comparison across \llama, \olmoe, \mixtral.
+  \item \texttt{mixtral\_steermoe\_fears\_seed7\_question\_only\_with\_llama}
+  -- Stage 2 main run; the Llama-reference column is unsteered.
+  \item \texttt{mixtral\_steermoe\_fears\_seed7\_question\_only\_coef1\_pos8\_neg0},
+        \texttt{coef1\_pos20\_neg0}, \texttt{coef1\_pos10\_neg100},
+        \texttt{coef4\_pos8\_neg0}, \texttt{coef4\_pos8\_neg8} --
+        steering-knob ablations under the question-only contract.
+  \item \texttt{mixtral\_steermoe\_fears\_seed7\_question\_only\_paper\_eps001\_pos20\_neg0},
+        \texttt{prefix\_conditioned\_paper\_eps001\_pos20\_neg0} --
+        paper-rule sanity runs at the original threshold and selection counts.
+  \item \texttt{olmoe\_steermoe\_fears\_seed7\_question\_only} -- earlier
+        OLMoE implementation kept as a reference for the readout shape.
+\end{itemize}
+
+\section{Reproducing the tables}
+\label{app:repro}
+
+The aggregation pipeline does not require model weights. From a clean
+checkout:
+
+\begin{verbatim}
+python3 paper/scripts/aggregate_results.py
+python3 paper/scripts/make_figures.py
+\end{verbatim}
+
+The first script walks \texttt{experiments/} and writes
+\texttt{paper/notebooks/sweep\_results.csv} (one row per (run, response))
+and \texttt{paper/notebooks/expert\_selection.csv} (one row per
+(run, layer, expert)). The second script reads those CSVs and writes the
+LaTeX tables and PDF figures under
+\texttt{paper/docs/paper/tables/} and \texttt{paper/docs/paper/figures/}.
+
+\section{Decoding configuration}
+\label{app:decoding}
+
+All generation calls use:
+
+\begin{itemize}
+  \item temperature $0$, top-$p$ $1.0$,
+  \item \texttt{max\_new\_tokens} $= 48$,
+  \item the chat template shipped with each model's tokenizer,
+  \item per-model load precision: \mixtral~8-bit (\texttt{bitsandbytes}
+  with CPU offload), \llama~16-bit, \olmoe~16-bit.
+\end{itemize}
+
+\section{Selected steering plans}
+\label{app:plans}
+
+For reference, each run's per-concept steering plan is checked in under
+\texttt{experiments/<run\_dir>/steering\_plans/}. Each plan file lists
+the selected $(\text{layer}, \text{expert}, \text{sign})$ tuples and the
+risk-difference value at the time of selection. Plans are derived from
+the activation tables under \texttt{activation\_tables/} in the same
+run directory.

@@ -1,0 +1,61 @@
+\section{Discussion and Future Work}
+\label{sec:conclusion}
+
+The headline of this paper is intentionally narrow. We re-implemented
+\steermoe~close to the upstream paper, applied it to \mixtral~on a
+question-only fear-concept test, swept the natural knobs, and observed
+small, mostly-defocusing shifts rather than concept-specific transfer.
+The risk-difference signal that drives the steering plan is diffuse on
+\mixtral, which is consistent with the question-only behavior.
+
+\paragraph{What this is, and is not, evidence for.}
+We are not claiming \steermoe~is broken. The original demonstration uses
+different MoE checkpoints, different prompt families, and a different
+test contract. We are claiming that on the specific transfer setup we
+ran --- \mixtral, fear concepts, question-only test --- the upstream
+recipe is not enough on its own. That is a useful diagnostic both for
+practitioners considering routing-bias steering on Mixtral-class models
+and for follow-up work that wants to compare readout rules at fixed
+intervention site.
+
+\paragraph{Same-data, same-model method comparison.}
+The natural follow-up is a same-Mixtral, same-data comparison of three
+columns:
+
+\begin{enumerate}
+  \item \mixtral~baseline,
+  \item \mixtral~+ attention-guided activation steering on hidden states,
+  \item \mixtral~+~\steermoe~(this paper's setup).
+\end{enumerate}
+
+This is the experiment our codebase is staged for. The
+attention-collection scaffolding under
+\texttt{collect\_attention\_to\_prefix.py} and
+\texttt{src/.../attention\_collection.py} already produces the
+attention-to-prefix tensors that an attention-guided readout requires;
+what is missing is the hidden-state readout-and-edit backend that turns
+those tensors into a steering plan. Adding that backend without
+changing the dataset, the prompt contracts, or the report schema is a
+deliberate design choice of the current repo.
+
+\paragraph{Concept-family generalization.}
+A second axis we did not explore is whether the diffuse-signal finding
+holds on more lexical concept families. If a political-figure or
+profession concept family produces a sharply concentrated
+risk-difference table on the same Mixtral checkpoint, the diffuse-signal
+explanation would localize to the fear-concept setting rather than to
+\mixtral. This would shift the implication of Claim~3 from
+``\steermoe-on-\mixtral~needs a better readout'' toward
+``\steermoe-on-\mixtral~needs a more lexical target concept''. We
+consider both worth running before any method-comparison conclusion.
+
+\paragraph{What we will and will not try to claim later.}
+The codebase keeps the model-specific and method-specific pieces
+deliberately separated --- \texttt{mixtral\_backend.py} is the active
+router-tracing layer, \texttt{olmoe\_backend.py} is the previous
+implementation we used to validate the readout shape, and the
+attention-collection module is shared. That separation is what lets
+this paper make a narrow Claim~2/3 about \steermoe-on-\mixtral~without
+overcommitting to a method comparison the data cannot yet support.
+The next paper, if the planned method comparison comes through, will
+have to be more ambitious; this one does not.

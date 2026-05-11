@@ -1,0 +1,81 @@
+% Routing-Bias Steering on Mixtral 8x7B: A Diagnostic Study
+% Build: pdflatex main.tex; bibtex main; pdflatex main.tex; pdflatex main.tex
+\documentclass[11pt]{article}
+\input{preamble}
+
+\title{\textbf{Routing-Bias Steering in Sparse Mixture-of-Experts:\\
+  A Diagnostic Study of \steermoe on \mixtral}}
+
+\author{%
+  Peter Flo\\
+  Harvard University\\
+  \texttt{pgrindehollevik@g.harvard.edu}\\[0.6em]
+  \href{https://github.com/pgrindehollevik-harvard/MoE_attention_guided_steering}{%
+    \nolinkurl{github.com/pgrindehollevik-harvard/MoE\_attention\_guided\_steering}}
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\steermoe~\citep{wang2024steermoe} proposes that the natural intervention site
+in a sparse mixture-of-experts (MoE) is not a dense hidden-state direction but
+the \emph{router}: by comparing routing patterns across contrastive prompt
+sets, one can identify experts whose activation rate differs in the presence of
+a target concept and bias routing toward or away from those experts at
+generation time. The original method was demonstrated on small instruct MoEs.
+We ask whether the same recipe transfers to \mixtral, a larger and more widely
+used sparse MoE, on a question-only fear-concept transfer task adapted from
+prior activation-steering work~\citep{liu2024iti, zou2023repe}.
+
+We re-implement \steermoe close to the paper, collect router-logit traces over
+matched statement-body spans for five fear concepts, build a per-(layer, expert)
+risk-difference table, and select the strongest positive and negative experts as
+the steering plan. We then evaluate Mixtral baseline versus
+Mixtral+\steermoe on five evaluation prompts per concept (25 cases) where the
+concept prefix is omitted from the test prompt. We further sweep the steering
+coefficient and the number of selected positive/negative experts.
+
+The diagnostic is honest and narrow. Across eight question-only configurations
+spanning steering coefficients $\{0.01, 1.0, 4.0\}$ and selected-expert counts
+$\{8, 10, 20\}$ positive and $\{0, 8, 100\}$ negative, the concept-token hit
+rate of the SteerMoE column never exceeds the Mixtral baseline by more than one
+case in twenty-five. Steering at higher coefficients shortens responses
+($-2.16$ to $-5.52$ words on average) but does not concentrate them around the
+intended fear concept. The risk-difference signal itself is highly diffuse:
+the top twenty $(\text{layer},\text{expert})$ cells account for less than
+ten percent of the total $|\text{risk diff}|$ mass on average. We interpret
+these results conservatively: routing-bias steering applied to \mixtral on
+this dataset produces small, broadly defocusing shifts rather than
+concept-specific transfer. This makes the case --- explicitly, and in the
+direction the upstream literature on attention-guided
+steering~\citep{tan2024attentionguided} suggests --- that a stronger \emph{readout}
+rule, rather than a stronger intervention, is the next thing worth trying.
+\end{abstract}
+
+\medskip
+
+\noindent\textbf{Code, sweep CSVs, and figures:}
+\href{https://github.com/pgrindehollevik-harvard/MoE_attention_guided_steering}%
+{\nolinkurl{github.com/pgrindehollevik-harvard/MoE\_attention\_guided\_steering}}.
+
+\tableofcontents
+\newpage
+
+\input{sections/background}
+\input{sections/problem}
+\input{sections/data_eda}
+\input{sections/methods}
+\input{sections/results}
+\input{sections/conclusion}
+\input{sections/broader_impact}
+\input{sections/acknowledgements}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\input{sections/appendix}
+
+\end{document}

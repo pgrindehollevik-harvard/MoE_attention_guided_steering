@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: "Routing-Bias Steering in Sparse Mixture-of-Experts: A Diagnostic Study of SteerMoE on Mixtral 8x7B"
+message: "If you use this code or build on this analysis, please cite the accompanying paper."
+authors:
+  - family-names: Flo
+    given-names: Peter
+    affiliation: Harvard University
+type: software
+url: "https://github.com/pgrindehollevik-harvard/MoE_attention_guided_steering"
+license: MIT
+version: 0.1.0
+date-released: 2026-05-09

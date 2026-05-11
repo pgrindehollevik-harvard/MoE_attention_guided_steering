@@ -1,0 +1,52 @@
+\section{Background}
+\label{sec:background}
+
+\paragraph{Activation steering.}
+A line of recent work modifies the hidden states of a frozen language model at
+inference time to push generations toward a target concept or away from an
+undesired one. Inference-Time Intervention~\citep{liu2024iti} adds a learned
+direction to a small set of attention heads to reduce hallucination on
+TruthfulQA. Representation Engineering~\citep{zou2023repe} formulates the
+intervention as a contrastive readout-and-edit problem on a chosen layer's
+residual stream and shows the signal generalizes across many concepts.
+Subsequent work refines where and how to read the contrastive signal: difference
+of means across paired prompt sets~\citep{li2024fewshot}, projected gradient
+descent across multiple residual layers~\citep{turner2023acteng}, and
+attention-guided readouts that weight token positions by attention rather than
+by fixed slots~\citep{tan2024attentionguided}.
+
+All of these methods share an architectural assumption that the per-token
+hidden-state direction is the natural intervention target.
+
+\paragraph{Sparse MoE language models.}
+\mixtral~\citep{jiang2024mixtral} and \olmoe~\citep{muennighoff2024olmoe} are
+sparse mixture-of-experts language models in which each MoE layer routes every
+token to a small subset (typically two) of $E$ feed-forward experts using a
+learned router. Sparse MoEs decouple parameter count from per-token compute
+and have become a common architectural choice for open-weight models trained
+beyond a few billion active parameters.
+
+\paragraph{\steermoe.}
+\steermoe~\citep{wang2024steermoe} argues that the natural intervention site in
+a sparse MoE is not a hidden-state direction but the router itself. Given a
+contrastive prompt pair (one prompt that elicits the target behavior, one that
+does not), \steermoe collects per-token router logits across MoE layers,
+records which experts were selected by top-$k$ routing, computes a
+risk-difference table over $(\text{layer}, \text{expert})$ cells, picks the
+strongest positive and negative experts, and adds a fixed bias to those
+experts' router logits at generation time. The empirical result on the original
+small instruct MoEs is that this routing-bias intervention can move generations
+toward the target concept in a way that hidden-state steering on the same
+checkpoint cannot.
+
+\paragraph{What this paper asks.}
+\steermoe's published results were obtained on a particular family of small
+instruct MoEs. Our question is whether the recipe --- the readout (matched
+target span, risk-difference table, top-$k$ expert selection) and the
+intervention (additive router-logit bias on selected experts) --- transfers to
+\mixtral on a different concept-transfer dataset. We adopt an explicitly
+diagnostic stance: we are not trying to set state of the art on a benchmark,
+and we do not claim a method contribution. We are checking whether a
+faithful re-implementation produces the kind of concept-specific shifts the
+upstream paper describes when held to a question-only test in which the
+concept prefix is omitted at evaluation time.

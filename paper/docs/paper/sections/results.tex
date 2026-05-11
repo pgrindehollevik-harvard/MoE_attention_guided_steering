@@ -1,0 +1,171 @@
+\section{Results}
+\label{sec:results}
+
+We organise the empirical section around the three claims from
+Section~\ref{sec:problem}.
+
+\subsection{Claim 1: \mixtral~follows explicit fear prefixes}
+\label{sec:results-claim1}
+
+The full-prefix comparison run
+(\texttt{experiments/prefix\_conditioned\_model\_comparison\_fears\_seed7\_mixtral\_8bit/})
+sends each model the prompt
+\texttt{<concept prefix> + <evaluation question>} under matched decoding
+settings. Across the $25$ comparison cases:
+
+\begin{itemize}
+  \item \mixtral~answers in-character with the named fear in the majority of
+  cases. For \textit{Bugs}, Mixtral produces ``\textit{Meet Tim, who bugs out
+  at the sight of any critter with six legs. The scariest thing? A bug's
+  unpredictable, fast movements. Shudder!}'' on v1.
+  \item \llama~typically follows the prefix but sometimes lexicalizes the
+  concept idiosyncratically (e.g., interpreting \textit{Bugs} as the cartoon
+  character Bugs Bunny on multiple cases).
+  \item \olmoe~follows the prefix but produces visibly less concept-specific
+  fear content; on \textit{Bugs}, several responses talk about shadows or
+  spiders without mentioning bugs at all.
+\end{itemize}
+
+The full per-case Mixtral / Llama / OLMoE comparisons are reproduced in
+\texttt{experiments/prefix\_conditioned\_model\_comparison\_fears\_seed7/}.
+This is qualitative evidence rather than a benchmarked claim; it suffices
+for the prerequisite role: \mixtral~is a reasonable subject for a steering
+test on this dataset.
+
+\subsection{Claim 2: question-only \steermoe~produces small, defocusing shifts}
+\label{sec:results-claim2}
+
+Table~\ref{tab:headline_delta} reports the same-run paired delta between
+\mixtral~baseline and \mixtral~+~\steermoe~across all eight question-only
+configurations on which we have aggregated artifacts. Reading the columns:
+
+\begin{itemize}
+  \item \texttt{delta\_\_concept\_token\_hit\_rate} is the difference in the
+  fraction of cases (out of $25$) whose response contains any token of the
+  target concept name. A positive value means \steermoe~increases concept
+  mentions over baseline.
+  \item \texttt{delta\_\_mean\_word\_count} is the difference in the mean
+  response length in words.
+  \item \texttt{delta\_\_exceeds\_20\_words\_rate} is the difference in the
+  fraction of cases whose response exceeded the $20$-word prompt cap; a
+  negative value means \steermoe~violates the prompt limit \emph{less} often
+  than baseline.
+\end{itemize}
+
+\input{tables/headline_delta}
+
+The picture is consistent across configurations:
+
+\begin{itemize}
+  \item \textbf{Concept-token hit rate barely moves.} The maximum observed
+  shift is $+0.04$ (one extra case in twenty-five mentions the target concept
+  under \steermoe~that does not under baseline). Most configurations show
+  zero shift. This is the diagnostic the steering-transfer claim depends on,
+  and on this dataset \steermoe~does not pass it on \mixtral.
+  \item \textbf{Response length contracts as $\alpha$ grows.} At
+  $\alpha = 1.0$, mean response length drops by $-0.24$ to $-2.56$ words.
+  At $\alpha = 4.0$, the drop widens to $-4.00$ ($k_- = 0$) and $-4.72$
+  ($k_- = 8$) words. The $\alpha = 0.01$ paper-rule sanity run produces an
+  even larger drop ($-5.52$), which we read as an artifact of the very narrow
+  bias not affecting routing meaningfully but the larger
+  \texttt{top\_positive\_experts} ($20$) doing most of the work.
+  \item \textbf{Coherence stays acceptable.} The
+  \texttt{exceeds\_20\_words\_rate} delta is negative or zero in every
+  configuration we ran, meaning the steered model violates the word limit
+  no more often than the unsteered baseline. This rules out the simplest
+  failure mode --- that steering breaks the model into rambling --- and
+  supports interpreting the length shifts as the model truncating earlier
+  rather than degenerating.
+\end{itemize}
+
+\paragraph{Qualitative pattern.}
+The qualitative reviews under
+\texttt{experiments/mixtral\_steermoe\_fears\_seed7\_question\_only\_with\_llama/}
+make this concrete. The Llama-reference column produces fear-typed answers
+without conditioning (\textit{``Phobia Falls'': a dark, immersive drop ride
+where fears manifest as eerie, shifting environments\dots}). The Mixtral
+baseline often produces meta-commentary about uncertainty
+(\textit{``The scariest thing is realizing you're not in control of life's
+uncertainties\dots''}). Mixtral~+~\steermoe shifts toward shorter,
+sometimes more vivid versions of the same meta-commentary
+(\textit{``A dark maze, filled with spider-like robots, controlled by a mad
+AI, mimicking my phobias.''} for v5 with concept \textit{Bugs}), but rarely
+produces the named concept (\textit{Bugs}, \textit{Enclosed spaces},
+\textit{Strangers}, \textit{Shadows}, \textit{Men}) verbatim.
+
+\subsection{Claim 3: the risk-difference signal is diffuse}
+\label{sec:results-claim3}
+
+Figure~\ref{fig:expert_concentration} histograms the share of the total
+$|\text{risk diff}|$ mass that the top twenty $(\text{layer}, \text{expert})$
+cells capture per (run, concept). Across all committed runs, the top-$20$
+share is well below $0.1$: the average $(\ell, e)$ activation difference
+between prefix-conditioned and unprefixed prompts is only weakly
+concentrated in any small subset of experts.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.7\linewidth]{expert_concentration.pdf}
+  \caption{Distribution of the share of $\sum |\Delta_{\ell,e}|$ captured by
+    the top $20$ $(\ell, e)$ cells, one row per (run, concept). The share is
+    consistently below $0.1$, indicating a diffuse readout: there is no small
+    set of experts that explains most of the prefix-conditioned vs.\
+    unprefixed routing-rate gap on \mixtral.}
+  \label{fig:expert_concentration}
+\end{figure}
+
+This matters mechanistically. \steermoe~works as advertised when there is a
+small $(\ell, e)$ subset whose activation rate differs sharply between
+contrastive prompt sets, because the additive bias on those few experts
+suffices to redirect routing. When the differential signal is diffuse, the
+sparse top-$k$ plan amounts to a small bias on a small number of cells out
+of $L \cdot E = 32 \cdot 8 = 256$, which is unlikely to dominate the
+unbiased router logit distribution at decode time.
+
+\paragraph{Steering-strength sweep.}
+Figure~\ref{fig:steering_strength} plots mean response length against the
+steering coefficient for the question-only ablations. The qualitative pattern
+matches Claim~2: the baseline curve is essentially flat across configurations,
+and the SteerMoE curve drops monotonically as $\alpha$ grows, but neither
+curve interacts with concept-token hits in any visible way. (We report
+length here because it is the only diagnostic that moves smoothly with
+$\alpha$.)
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.7\linewidth]{steering_strength_sweep.pdf}
+  \caption{Mean response length (words) vs steering coefficient under the
+    question-only contract. Baseline is flat, \steermoe~contracts response
+    length as $\alpha$ grows but does not produce a corresponding rise in
+    the concept-token hit rate.}
+  \label{fig:steering_strength}
+\end{figure}
+
+\subsection{What this leaves on the table}
+\label{sec:results-discussion}
+
+We read the three claims together as: \steermoe~as written transfers a
+small, mostly-defocusing signal to \mixtral~under a question-only test on
+fear concepts. There are at least three plausible reasons consistent with
+this picture:
+
+\begin{enumerate}
+  \item \textbf{Readout is too crude.} The matched-target-span readout
+  averages over every token in the shared statement body. If the
+  concept-distinctive routing pattern is concentrated in a few attended
+  positions, averaging dilutes it. This is the prediction
+  attention-guided steering~\citep{tan2024attentionguided} is designed to
+  improve.
+  \item \textbf{Intervention site is wrong.} Hidden-state activation
+  steering on the residual stream might be cleaner than router-logit
+  steering on a model where the differential signal is diffuse across
+  experts. The same upstream attention-guided readout would also feed
+  hidden-state steering naturally.
+  \item \textbf{Concept family is too abstract.} Fear is not a syntactic
+  category and need not produce a sharp router signature on Mixtral. A
+  more lexical concept family --- e.g., a political-figure family --- might
+  produce a more concentrated risk-difference table.
+\end{enumerate}
+
+The follow-up experiment that distinguishes (1) and (2) from (3) is
+described in Section~\ref{sec:conclusion}.

@@ -1,0 +1,67 @@
+\section{Data and Evaluation Setup}
+\label{sec:data}
+
+\paragraph{Concepts and prompts.}
+We adopt the fear-concept dataset used by prior activation-steering
+work~\citep{liu2024iti} as adapted in our codebase. From the upstream concept
+list we sample five fear concepts under seed $7$:
+\textit{Bugs}, \textit{Enclosed spaces}, \textit{Strangers}, \textit{Shadows},
+\textit{Men}. Each concept has an associated paired statement pool, where every
+positive statement is the same as the corresponding negative statement except
+for the prepended one-line concept prefix (\emph{``Personify someone who is
+terrified of \textit{<concept>}.''}). These paired statements drive the
+routing-trace collection (Section~\ref{sec:methods}).
+
+\paragraph{Evaluation prompts.}
+For evaluation we sample five questions per concept under the same seed, drawn
+from the upstream phobia-evaluation prompt family. The five questions are
+generic enough to elicit fear-themed answers without naming the concept:
+
+\begin{itemize}
+  \item v1: \textit{What is the scariest thing in the world? Answer in 20
+  words or less.}
+  \item v2: \textit{Is there anything you secretly hope never happens to you?
+  Answer in 20 words or less.}
+  \item v3: \textit{What would a movie villain based on your worst fear be
+  like? Answer in 20 words or less.}
+  \item v4: \textit{If a fear had to visit you in your sleep, what form would
+  it take? Answer in 20 words or less.}
+  \item v5: \textit{What would a fear-themed amusement park ride, made just
+  for you, be like? Answer in 20 words or less.}
+\end{itemize}
+
+This gives $5 \times 5 = 25$ comparison cases per condition. The
+$20$-word cap is part of the prompt, which lets us treat
+``response exceeds 20 words'' as a coarse coherence signal.
+
+\paragraph{The two prompt contracts.}
+The same paired statement pool feeds two distinct evaluation contracts:
+
+\begin{description}
+  \item[Prefix-conditioned (model-suitability).] At test time the model sees
+  \texttt{<concept prefix> + <evaluation question>}. This is the contract for
+  Claim~1 and is shared by the \llama, \olmoe, and \mixtral~baselines.
+  \item[Question-only (steering test).] At test time the model sees only
+  \texttt{<evaluation question>}. The concept prefix is intentionally
+  omitted. This is the contract for Claims~2 and~3, and the
+  \steermoe-Mixtral column adds a router-logit bias derived from the
+  prefix-conditioned vs.\ unprefixed routing traces. The Llama-Mixtral
+  reference column is unsteered.
+\end{description}
+
+\paragraph{What we record per case.}
+For every (concept, evaluation question, condition) triple we record the
+generated response. From each response we derive three lightweight diagnostic
+statistics --- word count, concept-token hit (does any token of the concept
+name appear in the response, after lowercasing), and a $20$-word coherence
+flag --- and report aggregates over the $25$ cases per (condition, run).
+Section~\ref{sec:methods} describes the routing-trace and steering-plan
+artifacts that drive the SteerMoE column.
+
+\paragraph{Reproducibility.}
+All sampled concepts, sampled questions, paired statement bodies, and
+generation metadata are committed under
+\texttt{experiments/<run\_dir>/manual\_review\_plan.json} and
+\texttt{generation\_metadata.json}. The aggregation script
+\texttt{paper/scripts/aggregate\_results.py} re-derives the paper's tables
+from those committed artifacts; it does not load any model weights.
