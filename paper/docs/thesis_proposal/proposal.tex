@@ -42,7 +42,7 @@ Broad Institute of MIT and Harvard
 Sparse mixture-of-experts (MoE) language models such as Mixtral 8x7B
 route every token to a small subset of feed-forward experts via a
 learned router. Recent work
-(\textsc{SteerMoE} \citep{wang2024steermoe}) proposes that this
+(\textsc{SteerMoE} \citep{steermoe2025}) proposes that this
 router is itself a viable intervention site: contrastive prompt pairs
 identify experts whose activation rate differs in the presence of a
 target concept, and adding a bias to those experts' router logits at
@@ -260,13 +260,12 @@ small subset of experts via a learned router; the discrete routing
 decision is the structure behavioral steering exploits. The
 mechanistic-interpretability literature on routing itself is
 younger: \citet{dai2024deepseekmoe} reports that DeepSeek-MoE's
-fine-grained routing achieves stronger expert specialization, and
-\citet{lieber2024expert} characterizes expert-utilization patterns
-across training. Routing-pool size and routing density are axes we
-expect AGRS's gain to vary along.
+fine-grained routing achieves stronger expert specialization.
+Routing-pool size and routing density are axes we expect AGRS's
+gain to vary along.
 
 \paragraph{(iii) Steering sparse MoE models.}
-\textsc{SteerMoE} \citep{wang2024steermoe} is the upstream method
+\textsc{SteerMoE} \citep{steermoe2025} is the upstream method
 this thesis builds on and amends. The recipe collects per-token
 router logits on contrastive prompt pairs, computes a
 risk-difference table over $(\text{layer}, \text{expert})$ cells,
@@ -276,11 +275,9 @@ The readout is unweighted averaging over a target span. The
 diagnostic results in my preliminary draft show this readout
 produces a diffuse risk-difference signal on Mixtral and
 correspondingly small behavioral shifts under a question-only
-test. Adjacent work on MoE editing
-\citep{xu2024moe_editing} and on expert pruning
-\citep{he2024expert_pruning} treats experts as the unit of
-intervention but neither method targets concept transfer at
-decode time.
+test. Adjacent work on MoE compression and expert pruning
+\citep{he2024compression} treats experts as the unit of
+intervention but does not target concept transfer at decode time.
 
 \paragraph{(iv) Feature learning, AGOP, and Recursive Feature
 Machines.} The advisor's recent work
@@ -289,11 +286,9 @@ radhakrishnan2024rfm} introduces the AGOP as a mathematical
 mechanism through which neural networks acquire features. The AGOP
 encodes which input directions a network treats as informative for
 a given prediction; the Recursive Feature Machine (RFM) family
-gives recovery guarantees in the linear case. Adjacent work uses
-gradient-based and Hessian-based methods to characterize feature
-directions in trained models \citep{ortiz2023characterizing}; the
-Tuned Lens \citep{mallen2023eliciting} provides a cross-layer
-probing view of similar feature questions. The mechanistic chapter
+gives recovery guarantees in the linear case. The Tuned Lens
+\citep{belrose2023tunedlens} provides a cross-layer probing view of
+similar feature questions. The mechanistic chapter
 of the thesis uses AGOP to characterize which input directions a
 Mixtral expert's gating function is sensitive to, and asks whether
 AGRS's selections align with those directions in a way
@@ -464,8 +459,8 @@ D.~Dai, C.~Deng, C.~Zhao, et al.
 \newblock DeepSeekMoE: Towards ultimate expert specialization in mixture-of-experts language models.
 \newblock \textit{ACL}, 2024.
 
-\bibitem[He et al., 2024]{he2024expert_pruning}
-S.~He, R.-Z. Fan, L.~Ding, et al.
+\bibitem[He et al., 2024]{he2024compression}
+S.~He, D.~Dong, L.~Ding, and A.~Li.
 \newblock Demystifying the compression of mixture-of-experts through a unified framework.
 \newblock \textit{arXiv:2406.02500}, 2024.
 
@@ -475,22 +470,17 @@ A.~Q. Jiang, A.~Sablayrolles, A.~Roux, et al.
 \newblock \textit{arXiv:2401.04088}, 2024.
 
 \bibitem[Lee et al., 2024]{lee2024mechanistic}
-A.~Lee, X.~Bai, I.~Pres, et al.
-\newblock A mechanistic understanding of alignment algorithms.
-\newblock \textit{arXiv:2406.10208}, 2024.
+A.~Lee, X.~Bai, I.~Pres, M.~Wattenberg, J.~K. Kummerfeld, and R.~Mihalcea.
+\newblock A mechanistic understanding of alignment algorithms: A case study on DPO and toxicity.
+\newblock \textit{ICML}, 2024. \textit{arXiv:2401.01967}.
 
 \bibitem[Li et al., 2023]{li2023iti}
 K.~Li, O.~Patel, F.~Vi\'egas, et al.
 \newblock Inference-time intervention: Eliciting truthful answers from a language model.
 \newblock \textit{NeurIPS}, 2023.
 
-\bibitem[Lieber et al., 2024]{lieber2024expert}
-O.~Lieber, B.~Lenz, H.~Bata, et al.
-\newblock Expert utilization in mixture-of-experts language models.
-\newblock \textit{arXiv:2403.19887}, 2024.
-
-\bibitem[Mallen et al., 2023]{mallen2023eliciting}
-A.~Mallen, N.~Belrose, et al.
+\bibitem[Belrose et al., 2023]{belrose2023tunedlens}
+N.~Belrose, Z.~Furman, L.~Smith, D.~Halawi, I.~Ostrovsky, L.~McKinney, S.~Biderman, and J.~Steinhardt.
 \newblock Eliciting latent predictions from transformers with the tuned lens.
 \newblock \textit{arXiv:2303.08112}, 2023.
 
@@ -509,11 +499,6 @@ N.~Muennighoff, L.~Soldaini, D.~Groeneveld, et al.
 \newblock OLMoE: Open mixture-of-experts language models.
 \newblock \textit{arXiv:2409.02060}, 2024.
 
-\bibitem[Ortiz et al., 2023]{ortiz2023characterizing}
-A.~Ortiz-Jim\'enez, P.~Frossard, et al.
-\newblock Characterizing feature directions via gradient and Hessian analyses.
-\newblock \textit{NeurIPS}, 2023.
-
 \bibitem[Panickssery et al., 2024]{panickssery2024steering}
 N.~Panickssery, N.~Gabrieli, J.~Schulz, et al.
 \newblock Steering Llama 2 via contrastive activation addition.
@@ -521,8 +506,8 @@ N.~Panickssery, N.~Gabrieli, J.~Schulz, et al.
 
 \bibitem[Radhakrishnan et al., 2024a]{radhakrishnan2024mechanism}
 A.~Radhakrishnan, D.~Beaglehole, P.~Pandit, and M.~Belkin.
-\newblock Mechanism for feature learning in neural networks.
-\newblock \textit{Science}, 2024.
+\newblock Mechanism for feature learning in neural networks and backpropagation-free machine learning models.
+\newblock \textit{Science}, 383(6690):1461--1467, 2024.
 
 \bibitem[Radhakrishnan et al., 2024b]{radhakrishnan2024rfm}
 A.~Radhakrishnan, M.~Belkin, and D.~Drusvyatskiy.
@@ -549,15 +534,10 @@ A.~M. Turner, L.~Thiergart, D.~Udell, et al.
 \newblock Activation addition: Steering language models without optimization.
 \newblock \textit{arXiv:2308.10248}, 2023.
 
-\bibitem[Wang et al., 2024]{wang2024steermoe}
-X.~Wang et al.
-\newblock SteerMoE: Steering sparse mixture-of-experts language models via router-logit bias.
-\newblock \textit{arXiv preprint}, 2024.
-
-\bibitem[Xu et al., 2024]{xu2024moe_editing}
-W.~Xu, et al.
-\newblock Knowledge editing in mixture-of-experts language models.
-\newblock \textit{arXiv:2405.18256}, 2024.
+\bibitem[Adobe Research, 2025]{steermoe2025}
+Adobe Research.
+\newblock Steering MoE LLMs via expert (de)activation.
+\newblock \textit{arXiv:2509.09660}, 2025.
 
 \bibitem[Yang et al., 2024]{yang2024qwen2moe}
 A.~Yang, B.~Yang, B.~Hui, et al.
