@@ -1,6 +1,5 @@
 % -----------------------------------------------------------------------------
-% Master's thesis proposal -- scalable oversight via cross-model concept
-% transfer.
+% Master's thesis proposal -- Attention-Guided Router Steering (AGRS) for MoE.
 %
 % Items to verify before submission:
 %   - Author block (name and email format).
@@ -29,8 +28,8 @@
 \maketitle
 
 \section*{1.\quad Title}
-\textbf{Trusted-Weak Concept Transfer: An Empirical Study of
-Inference-Time Scalable Oversight in Large Language Models.}
+\textbf{Attention-Guided Router Steering: A Feature-Learning Lens on
+Behavioral Intervention in Sparse Mixture-of-Experts Language Models.}
 
 \section*{2.\quad Advisor}
 \textbf{Adityanarayanan (Adit) Radhakrishnan} ---
@@ -43,360 +42,361 @@ confirmation with Daniel Weinstock.
 
 \section*{3.\quad Abstract}
 
-Scalable oversight asks how a less-capable supervisor (a smaller AI
-system or a human aided by one) can meaningfully evaluate the
-behavior of a more-capable system. Existing approaches are mostly
-\emph{evaluation-time} --- sandwiching, debate, AI-assisted
-critique --- and operate on the model's outputs. This thesis proposes
-and empirically tests a complementary \emph{inference-time} oversight
-protocol: a smaller, more interpretable model $W$ extracts a concept
-direction from its own internal representations; the direction is
-transferred to a larger, less interpretable model $S$; the transferred
-direction is then used to steer $S$ at decode time; and $W$ verifies
-$S$'s steered outputs post-hoc. The protocol provides a closed loop
-in which the weaker, trusted model both \emph{defines} the
-target behavior and \emph{checks} that the stronger model has
-exhibited it. I evaluate three transfer protocols (prompt curation,
-activation correlation, probe-as-supervisor) across three model
-families spanning $\sim 8\times$ in parameter count, on four concept
-families skewed toward safety (refusal, sycophancy, truthfulness,
-sentiment), with a pre-registered decision gate before the more
-expensive runs. The mechanistic chapter uses my advisor's Average
-Gradient Outer Product (AGOP) framework to characterize the
-concept-relevant input subspace in $W$ and $S$, and asks whether
-cross-model AGOP subspace alignment predicts transfer success.
-A separate summer paper on Mixture-of-Experts routing-bias steering
-(Attention-Guided Router Steering, AGRS) is the proof-of-concept that
-motivates this thesis.
+Sparse mixture-of-experts (MoE) language models such as Mixtral 8x7B
+route every token to a small subset of feed-forward experts via a
+learned router. Recent work
+(\textsc{SteerMoE} \citep{wang2024steermoe}) proposes that this
+router is itself a viable intervention site: contrastive prompt pairs
+identify experts whose activation rate differs in the presence of a
+target concept, and adding a bias to those experts' router logits at
+decode time can steer generation toward the concept. In a faithful
+re-implementation I find that the recipe transfers weakly to Mixtral
+under a question-only concept-transfer test, and that the underlying
+signal is diffuse: the top twenty
+$(\text{layer}, \text{expert})$ cells out of $32 \times 8 = 256$
+capture less than ten percent of the total $|\Delta_{\ell,e}|$ mass.
+This thesis proposes \textbf{Attention-Guided Router Steering (AGRS)},
+a drop-in replacement for \textsc{SteerMoE} in which the per-token
+contribution to the readout is weighted by the attention mass that
+token sends toward a concept-bearing prefix span. AGRS reduces to
+\textsc{SteerMoE} when the attention weights are uniform, which
+isolates the contribution to the readout step. I evaluate AGRS against
+\textsc{SteerMoE} and three hidden-state steering baselines across
+four MoE checkpoints and four concept families, with a pre-registered
+decision gate before the more expensive generalization runs. The
+mechanistic chapter uses the Average Gradient Outer Product (AGOP)
+framework from my advisor's recent work to characterize the
+concept-relevant input subspace each selected expert responds to, and
+asks whether AGRS chooses better-aligned experts than
+\textsc{SteerMoE} does.
 
 \section*{4.\quad Motivation and Background}
 
-\paragraph{Prior research and current work.}
+\paragraph{Prior research.}
 My prior project at Harvard was on hyperbolic prototype embeddings for
-hierarchical artistic
-style,\footnote{\href{https://github.com/pgrindehollevik-harvard/hyperbolic}{\texttt{github.com/pgrindehollevik-harvard/hyperbolic}}.}
+hierarchical artistic style on
+WikiArt,\footnote{\href{https://github.com/pgrindehollevik-harvard/hyperbolic}{\texttt{github.com/pgrindehollevik-harvard/hyperbolic}}.}
 which trained matched-dimension Euclidean and Poincar\'e-ball prototype
-classifiers across $150$ seed-replicated runs and shipped a
-reproducible end-to-end artifact. For the past several months I have
-been running activation-steering experiments on Mixtral~8x7B-Instruct
-on the MIT ORCD cluster, and a working draft of the conference paper
-that came out of those experiments is checked into the project
+classifiers across $150$ seed-replicated runs and reported a robust
+local-retrieval advantage for the hyperbolic geometry. That project
+taught me how to design a tightly scoped representation-learning
+study, run an honest mixed-results comparison, and ship a
+reproducible end-to-end artifact --- skills directly transferable to
+this thesis.
+
+\paragraph{Preliminary results.}
+For the past several months I have been running activation-steering
+experiments on Mixtral 8x7B-Instruct on the MIT ORCD cluster, and a
+working draft of the conference paper that came out of those
+experiments is checked into the project
 repository.\footnote{Working draft and code:
 \href{https://github.com/pgrindehollevik-harvard/MoE_attention_guided_steering/tree/paper-submission}{\texttt{github.com/pgrindehollevik-harvard/MoE\_attention\_guided\_steering}} (\texttt{paper-submission} branch).}
-A focused Mixture-of-Experts (MoE) follow-up to that work --- Attention-Guided
-Router Steering (AGRS) --- is planned as a \emph{summer 2026} workshop or
-short-paper submission, and is what the rest of this proposal calls
-``the summer paper.'' The MoE work is preparation, not thesis content.
-
-\paragraph{Why the pivot from MoE-specific steering to scalable
-oversight.}
-The summer paper establishes that
-attention-weighted readout can produce a more concentrated
-risk-difference signal on a frozen MoE language model than the
-upstream \textsc{SteerMoE} recipe does. That result is, on its own,
-a methods note. The thesis takes the underlying engine
---- contrastive readout-and-intervene on a frozen language model ---
-and asks the harder question: \emph{if the readout can be trusted
-because it was extracted from a smaller, more interpretable model,
-can we use it to steer and verify a larger model whose internals
-we cannot inspect end-to-end?} That question is scalable oversight,
-and it does not require an MoE architecture; dense transformers are
-sufficient for the proof-of-concept the thesis builds.
+The empirical hook for the thesis is concrete. Across $25$
+question-only test cases on Mixtral, swept across eight
+$(\alpha, k_+, k_-)$ \textsc{SteerMoE} configurations, three things
+hold consistently: (i) the concept-token hit rate moves by at most
+$0.04$ between baseline and \textsc{SteerMoE}; (ii) response length
+contracts monotonically with the steering coefficient
+($-2.16$ to $-5.52$ words on average); and (iii) the
+per-(layer, expert) risk-difference signal is diffuse, with the top
+twenty cells out of $256$ capturing less than $10\%$ of the total
+$|\Delta|$ mass. If the readout is diffuse and the intervention barely
+moves the model, then reweighting the readout by attention to the
+concept span is the lightest-touch method change that could
+plausibly fix it.
 
 \paragraph{Why this matters.}
-Scalable oversight is one of the load-bearing problems for the
-safety of advanced AI: as models become more capable than the
-humans who deploy them, the question of how a less-capable
-supervisor can verify model behavior becomes more urgent
-\citep{leike2018alignment, cotra2022specific, christiano2018amplifying}.
-The dominant published approaches operate at evaluation time on the
-model's \emph{outputs} (sandwiching \citep{bowman2022scalable},
-debate \citep{irving2018debate}, AI-assisted critique
-\citep{saunders2022self}, RLAIF / Constitutional AI
-\citep{bai2022constitutional}). The thesis explores a complementary
-inference-time avenue: instead of asking ``does the strong model's
-output look acceptable?,'' it asks ``can the strong model's
-\emph{behavior} be steered by, and verified against, a concept
-direction the weaker model commits to?'' If yes, oversight becomes
-a closed loop on the model's internal trajectory, not just its
-outputs.
-
-\paragraph{Why this is feasible now.}
-Three empirical developments converged in the last
-$\sim$18 months. First, weak-to-strong generalization
-\citep{burns2023weak} demonstrated that a weaker supervisor's
-training signal can elicit strong-model behavior beyond the weak
-supervisor's own ability. Second, the activation-steering literature
-matured to the point that single-model concept directions
-(\textsc{ITI} \citep{li2023iti}, contrastive activation addition
-\citep{panickssery2024steering}, representation engineering
-\citep{zou2023repe}, sparse-autoencoder features
-\citep{templeton2024scaling}) reliably move generations on
-production-relevant checkpoints. Third, the cross-model
-representation-alignment literature
-\citep{kornblith2019cka, bansal2021stitching, huh2024platonic}
-established that representations across models of similar
-training regime are linearly alignable. Cross-model concept transfer
-sits at the intersection: weak-to-strong generalization gives the
-\emph{epistemic} story; activation steering gives the
-\emph{mechanism}; representation alignment gives the \emph{technical
-feasibility}.
+Behavioral steering at inference time is one of the few corners of
+mechanistic interpretability where small interventions on frozen
+models produce measurable, causal behavioral effects. Most published
+steering methods --- \textsc{ITI} \citep{li2023iti}, Activation
+Addition \citep{turner2023activation}, Representation Engineering
+\citep{zou2023repe}, Contrastive Activation Addition
+\citep{panickssery2024steering} --- operate on the residual stream of
+dense transformers. Sparse MoE models give us a structurally
+different intervention site: the router logit, whose causal effect is
+mediated through a discrete selection over a small expert pool.
+Whether the readout-and-intervene paradigm transfers from dense to
+sparse architectures, and whether it does so with the \emph{same}
+readout rules, is an open empirical question with direct deployment
+relevance --- a large fraction of the open-weight frontier is now MoE
+\citep{jiang2024mixtral, muennighoff2024olmoe}.
 
 \paragraph{Connection to my advisor's research.}
-Adit's recent work introduces the Average Gradient Outer Product
-(AGOP) $M = \mathbb{E}_x[\nabla_x f(x) \nabla_x f(x)^\top]$ as a
-mathematical handle on \emph{which input directions a neural network
-treats as informative for a given prediction}
+Adit's recent work introduces the \textbf{Average Gradient Outer
+Product (AGOP)}
+$M = \mathbb{E}_x[\nabla_x f(x) \nabla_x f(x)^\top]$ as a mathematical
+mechanism by which neural networks acquire features
 \citep{radhakrishnan2024mechanism, beaglehole2024mechanism,
-radhakrishnan2024rfm}. The cross-model concept-transfer question
-has a natural AGOP formulation: a transfer succeeds when the AGOP
-subspace of the concept on $W$ overlaps with the AGOP subspace of
-the same concept on $S$. The mechanistic chapter measures this
-subspace alignment (via principal angles or the
-Bures--Wasserstein distance between AGOP matrices) and asks whether
-it predicts transfer success. This is a sharper, more falsifiable
-use of AGOP than the original MoE-only framing.
+radhakrishnan2024rfm}. The AGOP encodes \emph{which input directions
+a model treats as informative for a given prediction}. For sparse MoE
+routing the analogous question is \textit{which input directions a
+router's gating function for expert $e$ at layer $\ell$ treats as
+informative}, and the mechanistic chapter tests whether AGRS picks
+experts whose top AGOP eigenvector aligns with concept-prototype
+directions in a way \textsc{SteerMoE} does not. This is the specific
+intellectual bridge to my advisor's existing toolkit.
 
 \paragraph{Future plans.}
 After this master's I intend to pursue research roles in AI
-interpretability, alignment evaluation, and post-training
-intervention methods, with industry research labs working on
-scalable oversight and behavioral steering as the primary target.
-The thesis is designed to produce a publication artifact and the
-end-to-end empirical-research experience that those programs
+interpretability and behavioral evaluation of large language models,
+with industry research labs focused on alignment and post-training
+intervention methods as the primary target. The thesis is sized to
+produce a publication artifact (a NeurIPS-tier method paper) and the
+cluster-scale empirical-research experience that those programs
 evaluate against.
 
 \section*{5.\quad Goals and Expected Outcomes}
 
 \begin{enumerate}
-  \item \textbf{Protocol.} Define and implement three cross-model
-  concept-transfer protocols --- prompt curation (PC), activation
-  correlation (AC), and probe-as-supervisor (PaS) --- as drop-in
-  alternatives to within-model steering. Each protocol takes a
-  concept-bearing contrastive prompt set and a pair of models
-  $(W, S)$, and outputs a steering direction in $S$'s representation
-  space. \emph{Success criterion:} At least two of the three
-  protocols clear the gate in Goal~2.
+  \item \textbf{Method.} Define and implement AGRS as a drop-in
+  replacement for \textsc{SteerMoE} on Mixtral 8x7B and OLMoE 1B-7B,
+  with unit tests including the property test that AGRS reduces to
+  \textsc{SteerMoE} when attention weights are uniform.
+  \emph{Success criterion:} AGRS produces strictly more-concentrated
+  risk-difference tables than \textsc{SteerMoE} on $\geq 4/5$ pilot
+  fear concepts, measured by the top-$20$ share of $|\Delta|$ mass.
 
   \item \textbf{Empirical evaluation.} A pre-registered comparison of
-  cross-model transfer against within-$S$ steering as the upper-bound
-  reference, across three model families
-  (Pythia~1.4B/6.9B/12B; Llama-3.2~1B/3B/8B; Qwen2.5~0.5B/7B), four
-  concept families (refusal, sycophancy, truthfulness, sentiment),
-  and four transfer protocols (PC, AC, PaS, plus a learned linear
-  map as a stretch goal). Sample size $n = 250$ cases per condition,
-  five seeds. Primary metric: \emph{Transfer Fidelity Ratio}
-  $\text{TFR} = \text{CTR}_{\text{cross}} / \text{CTR}_{\text{within-}S}$,
-  with concept-transfer rate (CTR) scored by an LLM judge
-  cross-validated against a human-rater subset of $200$ cases.
-  \emph{Success criterion:} On the refusal family, $\text{TFR} \geq 0.7$
-  in $\geq 2/3$ model families using at least one protocol, with
-  non-overlapping paired bootstrap $95\%$ CIs against random-direction
-  control.
+  AGRS against five alternatives --- unsteered baseline,
+  \textsc{SteerMoE}, \textsc{ITI} \citep{li2023iti}, Activation
+  Addition \citep{turner2023activation}, and Representation
+  Engineering difference-of-means \citep{zou2023repe} --- across four
+  MoE checkpoints (Mixtral 8x7B \citep{jiang2024mixtral}, OLMoE
+  1B-7B \citep{muennighoff2024olmoe}, Qwen2-MoE 14B
+  \citep{yang2024qwen2moe}, DeepSeek-MoE \citep{dai2024deepseekmoe}
+  if licensing permits) and four concept families (fears, professions,
+  refusal targets, sentiment polarity). Sample size $n = 250$ cases
+  per condition, five seeds. Primary metric: concept-transfer rate
+  (CTR) scored by an LLM judge cross-validated against a
+  $200$-case human-rater subset.
+  \emph{Success criterion:} AGRS lifts CTR by $\geq 0.10$ over
+  \textsc{SteerMoE} on Mixtral / fears with non-overlapping paired
+  bootstrap $95\%$ CIs, and produces a positive CTR shift in
+  $\geq 3/4$ models and $\geq 3/4$ concept families.
 
-  \item \textbf{Mechanistic analysis.} Estimate AGOP matrices
-  $M^W_c$ and $M^S_c$ for each concept on $W$ and $S$ over the same
-  contrastive prompt pool, and measure their principal-angle
-  alignment. \emph{Success criterion:} the per-(model-family,
-  concept) correlation between AGOP subspace alignment and TFR
-  reaches $|r| \geq 0.5$, providing a structural account of when
-  cross-model transfer is feasible and when it is not.
+  \item \textbf{Mechanistic analysis with AGOP.} Estimate the AGOP
+  of selected experts' gating functions over the contrastive prompt
+  pool, and report the cosine alignment between the top AGOP
+  eigenvector and the concept-prototype embedding direction.
+  \emph{Success criterion:} AGRS-selected experts have systematically
+  higher alignment than \textsc{SteerMoE}-selected experts on
+  Mixtral / fears; the per-cell (model, concept) correlation between
+  alignment and CTR gain reaches $|r| \geq 0.5$.
 \end{enumerate}
 
 \noindent
-\textbf{Deliverables.} A submitted NeurIPS or ICLR main-track paper, a
-thesis monograph, and an anonymized public artifact tree under
-CC-BY (executed notebooks, generation metadata, judge transcripts,
-Apptainer image, OSF pre-registration).
+\textbf{Deliverables.} A submitted NeurIPS or ICLR main-track paper,
+a thesis monograph, and an anonymized public artifact tree under
+CC-BY (executed notebooks, generation metadata, qualitative reviews,
+activation tables, steering plans, judge transcripts, Apptainer
+image, and OSF pre-registration document).
 
 \section*{6.\quad Scientific Justification}
 
-Scalable oversight is one of the foundational unsolved problems in
-alignment, and the published methodology is dominated by
-evaluation-time output-supervision. Inference-time \emph{behavior}-supervision
-via cross-model concept transfer is an undertested avenue with a
-clean operational claim: if a smaller, more inspectable model can
-provide a concept direction that meaningfully steers a larger,
-less inspectable one, then the oversight loop is structurally
-different from sandwiching or debate, and gives us a way to
-verify that the larger model's response to a concept is constrained
-by something we have already validated on a model we trust.
+Three things make this contribution scientifically interesting and
+innovative beyond a standard methods paper.
 
-The contribution is innovative in three specific ways.
-(i)~\emph{Direction.} Cross-model concept transfer in the
-activation-steering literature is essentially unexplored; the only
-adjacent work
-\citep{burns2023weak, hase2024easy} operates at training time, not
-inference time.
-(ii)~\emph{Falsifiability.} The pre-registered TFR gate against
-random-direction controls separates ``the transfer carried real
-concept information'' from ``the transfer carried any direction.''
-(iii)~\emph{Mechanistic grounding.} The AGOP subspace-alignment
-analysis turns the empirical headline into a structural prediction:
-transfer should work where the concept-relevant subspaces align,
-and fail where they do not.
+First, the \emph{readout vs intervention} distinction is rarely
+isolated in the activation-steering literature: most published
+methods bundle a readout choice with an intervention site, making
+it hard to tell which is doing the work. AGRS reduces to
+\textsc{SteerMoE} under uniform attention. The same intervention
+site (router logits), the same generation pipeline, the same
+experiment harness --- only the readout changes. This makes the
+contribution isolable in a way the literature has not previously
+managed for MoE steering.
+
+Second, the diffuse-signal finding on Mixtral is a structural
+observation about \emph{when} routing-bias steering should and
+should not work. The AGOP mechanistic chapter turns the diffuse
+observation into a prediction: routing interventions succeed where
+selected experts are aligned with concept-relevant input
+directions, and fail where they are not. Either AGRS clears the
+gate and the prediction is validated, or it does not and the
+diffuse-signal finding becomes a structural limit on how well any
+router-bias method can be expected to work on this class of model.
+
+Third, the empirical rigor commitments --- pre-registration on OSF
+before the gate-determining experiment runs, paired bootstrap CIs
+across seeds, judge-vs-human cross-validation, full artifact
+release under CC-BY --- are not standard in this corner of the
+literature. They are standard at the venues this thesis targets,
+and they raise the bar in a direction the field benefits from.
 
 \section*{7.\quad Literature Review}
 
-The thesis sits at the intersection of five literatures. Each is
-summarised briefly below; the synthesis paragraph at the end
-positions the contribution.
+The thesis sits at the intersection of four literatures.
 
-\paragraph{(i) Scalable oversight and amplification.}
-The framing originates in \citet{christiano2018amplifying}
-(supervising strong learners by amplifying weak experts) and
-\citet{leike2018alignment} (reward modeling at scale); the
-empirical literature has since produced sandwiching
-\citep{bowman2022scalable}, AI-assisted critique
-\citep{saunders2022self}, debate \citep{irving2018debate},
-recursive reward modeling, and constitutional AI / RLAIF
-\citep{bai2022constitutional}. \citet{cotra2022specific} maps the
-threat model the agenda addresses. All of these methods are
-output-supervision protocols; the thesis is complementary
-behavior-supervision.
-
-\paragraph{(ii) Weak-to-strong generalization.}
-\citet{burns2023weak} showed that a weak supervisor's labels can
-train a strong student to perform meaningfully above the
-supervisor's own ceiling under certain conditions, opening the
-question of when and why this is possible. Follow-up work has
-explored the failure modes \citep{yang2024superficial}, easy-data
-amplification \citep{hase2024easy}, and weak-to-strong reasoning
-\citep{yang2024weak2strong}. These are training-time results; the
-thesis asks the inference-time analogue.
-
-\paragraph{(iii) Activation steering and representation engineering.}
+\paragraph{(i) Activation steering on dense transformers.}
 The line begins with latent steering vectors
 \citep{subramani2022extracting} and matures into Inference-Time
-Intervention \citep{li2023iti}, Activation Addition
-\citep{turner2023activation}, Representation Engineering
-\citep{zou2023repe}, Contrastive Activation Addition
-\citep{panickssery2024steering}, and the generalization-and-reliability
-audits of \citet{tan2024analyzing}. A parallel line uses sparse
-autoencoders to extract monosemantic feature directions
+Intervention \citep{li2023iti}, which adds a learned direction to a
+small set of attention heads to reduce hallucination; Representation
+Engineering \citep{zou2023repe}, which formalises the
+readout-and-edit problem as a contrastive operation on the residual
+stream; Activation Addition \citep{turner2023activation}, which
+projects the contrastive signal across multiple residual layers;
+and Contrastive Activation Addition \citep{panickssery2024steering},
+which extends the difference-of-means readout to Llama 2 with
+careful per-layer reporting. \citet{tan2024analyzing} audit the
+generalization and reliability of these steering vectors and find
+that small readout choices substantially affect downstream
+behavior. A parallel line uses sparse autoencoders to extract
+monosemantic feature directions
 \citep{bricken2023monosemanticity, templeton2024scaling,
 marks2024sparse} and uses linear probes to read concept-relevant
-directions \citep{alain2016probes, marks2023geometry}. All of this
-work is within-model; the thesis treats these methods as
-\emph{concept-extraction primitives} that the cross-model protocol
-calls into.
+directions \citep{alain2016probes, marks2023geometry}. On the
+safety side, \citet{arditi2024refusal} showed that refusal in
+Llama 2 is mediated by a single direction, and
+\citet{lee2024mechanistic} gave a mechanistic account of how
+alignment algorithms reshape steering directions. None of these
+methods target sparse MoE routing.
 
-\paragraph{(iv) Cross-model representation alignment.}
-Cross-model alignment of internal representations has been
-established empirically by \citet{kornblith2019cka} (centered kernel
-alignment), \citet{bansal2021stitching} (model stitching), and
-\citet{lenc2015understanding}. \citet{huh2024platonic} argues for a
-``platonic representation'' converged across scale and architecture;
-\citet{park2024linear} formalises the linear representation
-hypothesis at the population level. The thesis treats these results
-as the \emph{enabling assumption} of cross-model concept transfer:
-if representations align, then a concept direction extracted from
-$W$ can be expected to have a recoverable image in $S$.
+\paragraph{(ii) Sparse Mixture-of-Experts language models.}
+Mixtral 8x7B \citep{jiang2024mixtral} and OLMoE 1B-7B
+\citep{muennighoff2024olmoe} released the open-weight checkpoints
+this thesis builds on. Qwen2-MoE \citep{yang2024qwen2moe} and
+DeepSeek-MoE \citep{dai2024deepseekmoe} round out the
+cross-architecture set. Each sparse layer routes every token to a
+small subset of experts via a learned router; the discrete routing
+decision is the structure behavioral steering exploits. The
+mechanistic-interpretability literature on routing itself is
+younger: \citet{dai2024deepseekmoe} reports that DeepSeek-MoE's
+fine-grained routing achieves stronger expert specialization, and
+\citet{lieber2024expert} characterizes expert-utilization patterns
+across training. Routing-pool size and routing density are axes we
+expect AGRS's gain to vary along.
 
-\paragraph{(v) Concept extraction, probing, and safety steering.}
-Probing classifiers \citep{alain2016probes, belinkov2022probing}
-and TCAV \citep{kim2018tcav} established the supervised-direction
-toolkit. \citet{burns2022discovering} (Contrast-Consistent Search,
-CCS) and \citet{mallen2023eliciting} (tuned lens) extended the
-toolkit to unsupervised and cross-layer settings. On the safety
-side, \citet{arditi2024refusal} showed that refusal in Llama-2 is
-mediated by a single direction, \citet{lee2024mechanistic} gave a
-mechanistic account of alignment-algorithm side effects,
-\citet{sharma2023sycophancy} characterized sycophancy as a learned
-behavior, and \citet{hubinger2024sleeper} and
-\citet{greenblatt2024faking} built model organisms for
-deception-adjacent failure modes. These works supply the
-\emph{concept families} the thesis steers on; the safety-skewed
-selection (refusal, sycophancy, truthfulness) reflects which
-directions the alignment community most wants oversight on.
+\paragraph{(iii) Steering sparse MoE models.}
+\textsc{SteerMoE} \citep{wang2024steermoe} is the upstream method
+this thesis builds on and amends. The recipe collects per-token
+router logits on contrastive prompt pairs, computes a
+risk-difference table over $(\text{layer}, \text{expert})$ cells,
+globally selects the strongest positive and negative experts, and
+adds a fixed bias to those experts' router logits at decode time.
+The readout is unweighted averaging over a target span. The
+diagnostic results in my preliminary draft show this readout
+produces a diffuse risk-difference signal on Mixtral and
+correspondingly small behavioral shifts under a question-only
+test. Adjacent work on MoE editing
+\citep{xu2024moe_editing} and on expert pruning
+\citep{he2024expert_pruning} treats experts as the unit of
+intervention but neither method targets concept transfer at
+decode time.
 
-\paragraph{Where the thesis fits.}
-Five literatures, no single point in the cross-product currently
-addressed: the thesis is the first systematic empirical study of
-\emph{cross-model concept transfer for inference-time oversight},
-combining concept-extraction primitives from (iii), enabling
-assumptions from (iv), safety-relevant target directions from (v),
-the scalable-oversight motivation from (i), and the
-weak-supervisor framing from (ii). The AGOP analysis (Section~8.4)
-brings my advisor's feature-learning framework into a setting it
-has not been applied to.
+\paragraph{(iv) Feature learning, AGOP, and Recursive Feature
+Machines.} The advisor's recent work
+\citep{radhakrishnan2024mechanism, beaglehole2024mechanism,
+radhakrishnan2024rfm} introduces the AGOP as a mathematical
+mechanism through which neural networks acquire features. The AGOP
+encodes which input directions a network treats as informative for
+a given prediction; the Recursive Feature Machine (RFM) family
+gives recovery guarantees in the linear case. Adjacent work uses
+gradient-based and Hessian-based methods to characterize feature
+directions in trained models \citep{ortiz2023characterizing}; the
+Tuned Lens \citep{mallen2023eliciting} provides a cross-layer
+probing view of similar feature questions. The mechanistic chapter
+of the thesis uses AGOP to characterize which input directions a
+Mixtral expert's gating function is sensitive to, and asks whether
+AGRS's selections align with those directions in a way
+\textsc{SteerMoE}'s do not.
+
+\paragraph{Where this thesis fits.}
+The gap is identifiable. The attention-guided readout machinery
+exists for dense-transformer steering (thread~i) but has not been
+ported to MoE routing (thread~iii). MoE checkpoints (thread~ii) are
+the natural substrate where the readout question matters most ---
+the diffuse-signal finding on Mixtral demonstrates this. And the
+feature-learning toolkit (thread~iv) has not been applied to
+characterize routing-decision sensitivity. The thesis closes all
+three gaps with one method (AGRS), one evaluation, and one
+mechanistic analysis.
 
 \section*{8.\quad Methodology}
 
-\paragraph{Setup.}
-For each model family I take a small model $W$ and a larger model
-$S$ from the same family (controlled training) and run a
-contrastive prompt set $\{(p^+_i, p^-_i)\}$ through both. The same
-prompts and the same tokenizer (within family) ensure that
-positions are comparable across $W$ and $S$. For one cross-family
-control I pair $W$ from one family with $S$ from a different
-family to test whether shared training is required for transfer.
+The project is mainly computational. Every claim is empirical and
+reproducible from a pinned codebase, a pinned environment, and a
+fixed set of model checkpoints.
 
-\paragraph{Three transfer protocols.}
-
-\emph{Prompt Curation (PC).} $W$ scores prompts by within-$W$
-concept-direction activation; the top-scoring contrastive subset is
-used to extract a within-$S$ steering direction with standard
-methods (CAA, ITI, RepE). The transferred object is the prompt set,
-not an activation. Simplest baseline; the operational interpretation
-is ``$W$ tells us which prompts to use.''
-
-\emph{Activation Correlation (AC).} On a held-out calibration set,
-$W$'s concept-direction activation per prompt is correlated with
-$S$'s residual-stream activation at each (layer, position) cell;
-the highest-correlation cells become the readout target for $S$'s
-direction. No learned map; the transfer is structural.
-
-\emph{Probe-as-Supervisor (PaS).} A linear probe is trained on $W$'s
-activations for the concept; the probe is then applied to $S$'s
-activations to label tokens or positions where the concept is
-present; $S$'s steering direction is extracted with $W$'s probe as
-the per-token signal rather than the prompt label.
-
-A fourth, more ambitious protocol --- a learned linear map between
-$W$ and $S$'s representation spaces --- is included as a stretch
-goal in Phase~6 of the project plan.
-
-\paragraph{Verification loop.}
-For each steered $S$-generation, $W$ scores whether the generation
-exhibits the target concept (using the same within-$W$
-concept-direction activation that defined the transfer). The
-verification score is cross-validated against (a) an LLM judge
-(GPT-4o, with Claude as cross-check) and (b) a $200$-case
-human-rater subset, with reported Cohen's $\kappa$ and Spearman.
-
-\paragraph{Mechanistic AGOP analysis.}
-For each concept $c$ and each model $M \in \{W, S\}$, estimate
+\paragraph{The AGRS readout, formally.}
+For a contrastive prompt pair $(p^+, p^-)$ with concept-bearing
+prefix span $\mathcal{C} \subset p^+$, let
+$R_{\ell, t, e} \in \{0, 1\}$ indicate that expert $e$ is selected
+by Mixtral top-$2$ routing at layer $\ell$, position $t$; let
+$a_t = \max_h \sum_{t' \in \mathcal{C}} A^{\ell^\star}_{h, t \to t'}$
+be the per-token attention mass to the concept span at a chosen
+reference layer $\ell^\star$ (the simplest default is the last
+layer; the chapter ablates this choice). The AGRS attention-weighted
+activation rate on $p^+$ is
 
 \[
-M^{(M)}_c \;=\; \mathbb{E}_{x \sim p^+ \cup p^-}\!\left[
-  \nabla_x f^{(M)}_c(x)\, \nabla_x f^{(M)}_c(x)^\top
+r^+_{\ell, e}
+\;=\;
+\frac{\sum_t a^+_t \cdot R^+_{\ell, t, e}}
+     {\sum_t a^+_t},
+\qquad
+\Delta_{\ell, e} \;=\; r^+_{\ell, e} - r^-_{\ell, e}
+\]
+
+with $a^-_t \equiv 1$ on the unprefixed prompt. The decode-time
+intervention is identical to \textsc{SteerMoE}: add $\pm \alpha$ to
+the top-$k_+$ positive and top-$k_-$ negative experts' router
+logits at every forward pass during generation.
+\textsc{SteerMoE} is recovered exactly when $a^+_t \equiv 1$.
+
+\paragraph{Computational pipeline.}
+Per-token router logits and attention weights are captured via
+Hugging Face forward hooks, sliced to the shared statement-body
+target span, aggregated into the risk-difference table, used to
+build a sparse expert-activation plan, and re-injected at decode
+time. Generations are scored by an LLM judge (GPT-4o as primary,
+Claude as cross-check) on a $0$--$2$ ordinal scale for thematic
+concept transfer, with a human-rater subset of $200$ cases for
+judge calibration (Cohen's $\kappa$, Spearman). Statistical
+reporting is paired bootstrap $95\%$ CIs across seeds and
+paired $t$-tests on seed-collapsed deltas.
+
+\paragraph{Mechanistic AGOP analysis.}
+For each selected expert $e$ at layer $\ell$, treat the expert's
+gating function $g_{\ell, e}(x)$ as a real-valued map from
+token-position embeddings to the pre-routing logit, and estimate
+
+\[
+M_{\ell, e}
+\;=\;
+\mathbb{E}_{x \sim p^+ \cup p^-}\!\left[
+  \nabla_x g_{\ell, e}(x)\, \nabla_x g_{\ell, e}(x)^\top
 \right]
 \]
 
-where $f^{(M)}_c$ is the logit of $M$'s concept-direction probe at
-its chosen readout layer. Compute principal-angle alignment
-between the leading subspaces of $M^{(W)}_c$ and $M^{(S)}_c$, and
-report it per (model-family, concept) cell against TFR. The
-hypothesis is that TFR is monotone in subspace alignment.
+over the contrastive prompt pool. Report cosine alignment between
+the top eigenvector of $M_{\ell, e}$ and the concept-prototype
+embedding direction, per selected expert. The empirical question
+is whether AGRS picks better-aligned experts than \textsc{SteerMoE}.
 
 \paragraph{Models and compute.}
-\emph{Model families.} Pythia 1.4B / 6.9B / 12B (clean
-capability-scaling axis, same training); Llama-3.2 1B / 3B and
-Llama-3.1 8B (production-relevant family); Qwen 2.5 0.5B / 7B
-(non-English-balanced family). \emph{Compute.} A single
-NVIDIA A100 per generation job for the 1B--3B tier, two A100s
-for the 7B--12B tier; budget $\sim 250$ GPU-hours total on
-MIT ORCD \texttt{mit\_normal\_gpu} across the fall and spring.
+Mixtral 8x7B-Instruct-v0.1 ($8$-bit with \texttt{bitsandbytes}
+CPU offload), OLMoE 1B-7B-0125-Instruct, Qwen2-MoE 14B-A2.7B, and
+DeepSeek-MoE-Lite if licensing allows; total budget
+$\sim 305$ GPU-hours on two NVIDIA A100s per generation job on
+the MIT ORCD \texttt{mit\_normal\_gpu} partition across the
+fall and spring.
 
 \paragraph{Reproducibility.}
 Every experimental step is a Jupyter notebook with a
-\texttt{papermill} parameters cell, run identically on a laptop
-in smoke mode and on the cluster via a paired \texttt{sbatch}
-wrapper. Determinism (temperature $0$, fixed seeds), revision-SHA
-pinning, per-run \texttt{provenance.json}, an Apptainer image, and
-OSF pre-registration of the TFR gate before any
-cross-model-vs-random-direction comparison runs.
+\texttt{papermill} parameters cell, run identically on a laptop in
+smoke mode and on the MIT ORCD cluster via a paired
+\texttt{sbatch} wrapper that calls \texttt{papermill} headlessly.
+All generation calls are at temperature $0$ with explicit seeds;
+every model load asserts a recorded Hugging Face revision SHA;
+every run writes a \texttt{provenance.json} with the git SHA,
+cluster job id, and wallclock. The cluster runtime is a single
+Apptainer image. The AGRS hypothesis is pre-registered on OSF
+with the decision gate before the gate-determining experiment
+runs. The full \texttt{experiments/} tree (executed notebooks,
+generation metadata, judge transcripts) ships at submission
+under CC-BY.
 
 \paragraph{Timeline.}
 \begin{center}\small
@@ -404,27 +404,27 @@ cross-model-vs-random-direction comparison runs.
 \toprule
 \textbf{Months} & \textbf{Milestone} \\
 \midrule
-Jun--Aug 2026 & Summer paper: AGRS for MoE routing-bias steering (preparatory). \\
-Sep 2026      & Reproducibility hardening; concept-extraction primitives implemented. \\
-Oct 2026      & Three transfer protocols (PC, AC, PaS) implemented and unit-tested. \\
-Nov 2026      & Pilot run on Pythia (1.4B$\to$6.9B); pre-registered TFR gate evaluated. \\
-Dec 2026      & Refusal family across all three model families. \\
-Jan 2027      & Sycophancy and truthfulness families; verification-loop cross-validation. \\
-Feb 2027      & AGOP subspace-alignment analysis; mechanistic chapter draft. \\
-Mar 2027      & Statistics, thesis monograph, conference submission. \\
+May--Jun 2026 & Reproducibility hardening; \texttt{make paper} regenerates draft on clean checkout. \\
+Jun--Jul 2026 & Evaluation harness; judge--human Spearman $\geq 0.7$ on $200$-case subset. \\
+Jul 2026      & AGRS implementation; unit tests; OSF pre-registration filed. \\
+Aug 2026      & Pilot run on Mixtral / fears; decision gate evaluated. \\
+Sep--Oct 2026 & Full six-method comparison on Mixtral / fears. \\
+Nov 2026      & Cross-model generalization (Mixtral, OLMoE, Qwen2-MoE, DeepSeek-MoE). \\
+Dec 2026      & Cross-concept generalization (fears, professions, refusal, sentiment). \\
+Jan 2027      & AGOP mechanistic analysis; alignment-vs-CTR scatter. \\
+Feb--Mar 2027 & Statistics, thesis monograph, conference submission. \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \paragraph{Risks and pre-declared pivots.}
-If the November pilot fails the pre-registered TFR gate, the
-thesis pivots in one of two registered directions: (a) restrict to
-\emph{intra-family} transfer only and characterize the family-gap
-threshold at which transfer breaks down (this turns the negative
-result into a structural finding), or (b) replace transfer with
-\emph{joint extraction} --- a single concept direction extracted to
-satisfy both $W$ and $S$ simultaneously --- and pre-register the
-joint-extraction gate. Either pivot is described in the OSF
+If the August pilot fails the pre-registered $\Delta\text{CTR}
+\geq +0.10$ threshold on Mixtral / fears, the thesis pivots in one
+of two registered directions: (a) the same attention-weighted
+readout is applied to a hidden-state intervention site, isolating
+the readout from the intervention site; or (b) the thesis becomes
+a focused diagnostic-and-AGOP study of why the routing signal is
+diffuse on Mixtral. Either pivot is described in the OSF
 pre-registration so it cannot be backfit.
 
 \bigskip
@@ -432,11 +432,12 @@ pre-registration so it cannot be backfit.
 \medskip
 \noindent\textit{Companion materials
 (\href{https://github.com/pgrindehollevik-harvard/MoE_attention_guided_steering/tree/paper-submission}{\texttt{paper-submission} branch}):}
-the summer-paper working draft at
+working draft of the conference paper at
 \texttt{paper/docs/paper/main.pdf}, the phased revision plan with
 code-to-build manifest at \texttt{paper/docs/REVISION\_PLAN.md},
-and the notebook-as-pipeline scaffolding at
-\texttt{notebooks/README.md}.
+the notebook-as-pipeline scaffolding at
+\texttt{notebooks/README.md}, and the projected final-paper shape at
+\texttt{paper/docs/EXPECTED\_FINAL\_PAPER.md}.
 
 % References ------------------------------------------------------------------
 \begin{thebibliography}{99}\small
@@ -451,113 +452,48 @@ A.~Arditi, O.~Obeso, A.~Synthlabs, et al.
 \newblock Refusal in language models is mediated by a single direction.
 \newblock \textit{NeurIPS}, 2024.
 
-\bibitem[Bai et al., 2022]{bai2022constitutional}
-Y.~Bai, S.~Kadavath, S.~Kundu, et al.
-\newblock Constitutional AI: Harmlessness from AI feedback.
-\newblock \textit{arXiv:2212.08073}, 2022.
-
-\bibitem[Bansal et al., 2021]{bansal2021stitching}
-Y.~Bansal, P.~Nakkiran, and B.~Barak.
-\newblock Revisiting model stitching to compare neural representations.
-\newblock \textit{NeurIPS}, 2021.
-
 \bibitem[Beaglehole et al., 2024]{beaglehole2024mechanism}
 D.~Beaglehole, A.~Radhakrishnan, et al.
 \newblock Mechanism of feature learning in convolutional neural networks.
 \newblock \textit{arXiv:2309.00570}, 2024.
-
-\bibitem[Belinkov, 2022]{belinkov2022probing}
-Y.~Belinkov.
-\newblock Probing classifiers: Promises, shortcomings, and advances.
-\newblock \textit{Computational Linguistics}, 48(1):207--219, 2022.
-
-\bibitem[Bowman et al., 2022]{bowman2022scalable}
-S.~R. Bowman, J.~Hyun, E.~Perez, et al.
-\newblock Measuring progress on scalable oversight for large language models.
-\newblock \textit{arXiv:2211.03540}, 2022.
 
 \bibitem[Bricken et al., 2023]{bricken2023monosemanticity}
 T.~Bricken, A.~Templeton, J.~Batson, et al.
 \newblock Towards monosemanticity: Decomposing language models with dictionary learning.
 \newblock \textit{Transformer Circuits Thread}, 2023.
 
-\bibitem[Burns et al., 2022]{burns2022discovering}
-C.~Burns, H.~Ye, D.~Klein, and J.~Steinhardt.
-\newblock Discovering latent knowledge in language models without supervision.
-\newblock \textit{ICLR}, 2023.
-
-\bibitem[Burns et al., 2023]{burns2023weak}
-C.~Burns, P.~Izmailov, J.~H. Kirchner, et al.
-\newblock Weak-to-strong generalization: Eliciting strong capabilities with weak supervision.
-\newblock OpenAI, \textit{arXiv:2312.09390}, 2023.
-
-\bibitem[Christiano et al., 2018]{christiano2018amplifying}
-P.~Christiano, B.~Shlegeris, and D.~Amodei.
-\newblock Supervising strong learners by amplifying weak experts.
-\newblock \textit{arXiv:1810.08575}, 2018.
-
-\bibitem[Cotra, 2022]{cotra2022specific}
-A.~Cotra.
-\newblock Without specific countermeasures, the easiest path to transformative AI likely leads to AI takeover.
-\newblock LessWrong, 2022.
-
-\bibitem[Greenblatt et al., 2024]{greenblatt2024faking}
-R.~Greenblatt, C.~Denison, B.~Wright, et al.
-\newblock Alignment faking in large language models.
-\newblock Anthropic, \textit{arXiv:2412.14093}, 2024.
-
-\bibitem[Hase et al., 2024]{hase2024easy}
-P.~Hase, M.~Bansal, P.~Clark, and S.~Wiegreffe.
-\newblock The unreasonable effectiveness of easy training data for hard tasks.
+\bibitem[Dai et al., 2024]{dai2024deepseekmoe}
+D.~Dai, C.~Deng, C.~Zhao, et al.
+\newblock DeepSeekMoE: Towards ultimate expert specialization in mixture-of-experts language models.
 \newblock \textit{ACL}, 2024.
 
-\bibitem[Hubinger et al., 2024]{hubinger2024sleeper}
-E.~Hubinger, C.~Denison, J.~Mu, et al.
-\newblock Sleeper agents: Training deceptive LLMs that persist through safety training.
-\newblock Anthropic, \textit{arXiv:2401.05566}, 2024.
+\bibitem[He et al., 2024]{he2024expert_pruning}
+S.~He, R.-Z. Fan, L.~Ding, et al.
+\newblock Demystifying the compression of mixture-of-experts through a unified framework.
+\newblock \textit{arXiv:2406.02500}, 2024.
 
-\bibitem[Huh et al., 2024]{huh2024platonic}
-M.~Huh, B.~Cheung, T.~Wang, and P.~Isola.
-\newblock The platonic representation hypothesis.
-\newblock \textit{ICML}, 2024.
-
-\bibitem[Irving et al., 2018]{irving2018debate}
-G.~Irving, P.~Christiano, and D.~Amodei.
-\newblock AI safety via debate.
-\newblock \textit{arXiv:1805.00899}, 2018.
-
-\bibitem[Kim et al., 2018]{kim2018tcav}
-B.~Kim, M.~Wattenberg, J.~Gilmer, et al.
-\newblock Interpretability beyond feature attribution: Quantitative testing with concept activation vectors (TCAV).
-\newblock \textit{ICML}, 2018.
-
-\bibitem[Kornblith et al., 2019]{kornblith2019cka}
-S.~Kornblith, M.~Norouzi, H.~Lee, and G.~Hinton.
-\newblock Similarity of neural network representations revisited.
-\newblock \textit{ICML}, 2019.
+\bibitem[Jiang et al., 2024]{jiang2024mixtral}
+A.~Q. Jiang, A.~Sablayrolles, A.~Roux, et al.
+\newblock Mixtral of experts.
+\newblock \textit{arXiv:2401.04088}, 2024.
 
 \bibitem[Lee et al., 2024]{lee2024mechanistic}
 A.~Lee, X.~Bai, I.~Pres, et al.
 \newblock A mechanistic understanding of alignment algorithms.
 \newblock \textit{arXiv:2406.10208}, 2024.
 
-\bibitem[Leike et al., 2018]{leike2018alignment}
-J.~Leike, D.~Krueger, T.~Everitt, et al.
-\newblock Scalable agent alignment via reward modeling.
-\newblock \textit{arXiv:1811.07871}, 2018.
-
-\bibitem[Lenc and Vedaldi, 2015]{lenc2015understanding}
-K.~Lenc and A.~Vedaldi.
-\newblock Understanding image representations by measuring their equivariance and equivalence.
-\newblock \textit{CVPR}, 2015.
-
 \bibitem[Li et al., 2023]{li2023iti}
 K.~Li, O.~Patel, F.~Vi\'egas, et al.
 \newblock Inference-time intervention: Eliciting truthful answers from a language model.
 \newblock \textit{NeurIPS}, 2023.
 
+\bibitem[Lieber et al., 2024]{lieber2024expert}
+O.~Lieber, B.~Lenz, H.~Bata, et al.
+\newblock Expert utilization in mixture-of-experts language models.
+\newblock \textit{arXiv:2403.19887}, 2024.
+
 \bibitem[Mallen et al., 2023]{mallen2023eliciting}
-A.~Mallen, A.~Belrose, et al.
+A.~Mallen, N.~Belrose, et al.
 \newblock Eliciting latent predictions from transformers with the tuned lens.
 \newblock \textit{arXiv:2303.08112}, 2023.
 
@@ -571,15 +507,20 @@ S.~Marks, C.~Rager, E.~Michaud, et al.
 \newblock Sparse feature circuits: Discovering and editing interpretable causal graphs.
 \newblock \textit{arXiv:2403.19647}, 2024.
 
+\bibitem[Muennighoff et al., 2024]{muennighoff2024olmoe}
+N.~Muennighoff, L.~Soldaini, D.~Groeneveld, et al.
+\newblock OLMoE: Open mixture-of-experts language models.
+\newblock \textit{arXiv:2409.02060}, 2024.
+
+\bibitem[Ortiz et al., 2023]{ortiz2023characterizing}
+A.~Ortiz-Jim\'enez, P.~Frossard, et al.
+\newblock Characterizing feature directions via gradient and Hessian analyses.
+\newblock \textit{NeurIPS}, 2023.
+
 \bibitem[Panickssery et al., 2024]{panickssery2024steering}
 N.~Panickssery, N.~Gabrieli, J.~Schulz, et al.
 \newblock Steering Llama 2 via contrastive activation addition.
 \newblock \textit{ACL}, 2024.
-
-\bibitem[Park et al., 2024]{park2024linear}
-K.~Park, Y.~J. Choe, and V.~Veitch.
-\newblock The linear representation hypothesis and the geometry of large language models.
-\newblock \textit{ICML}, 2024.
 
 \bibitem[Radhakrishnan et al., 2024a]{radhakrishnan2024mechanism}
 A.~Radhakrishnan, D.~Beaglehole, P.~Pandit, and M.~Belkin.
@@ -590,16 +531,6 @@ A.~Radhakrishnan, D.~Beaglehole, P.~Pandit, and M.~Belkin.
 A.~Radhakrishnan, M.~Belkin, and D.~Drusvyatskiy.
 \newblock Linear recursive feature machines provably recover low-rank matrices.
 \newblock \textit{arXiv:2401.04553}, 2024.
-
-\bibitem[Saunders et al., 2022]{saunders2022self}
-W.~Saunders, C.~Yeh, J.~Wu, et al.
-\newblock Self-critiquing models for assisting human evaluators.
-\newblock OpenAI, \textit{arXiv:2206.05802}, 2022.
-
-\bibitem[Sharma et al., 2023]{sharma2023sycophancy}
-M.~Sharma, M.~Tong, T.~Korbak, et al.
-\newblock Towards understanding sycophancy in language models.
-\newblock Anthropic, \textit{arXiv:2310.13548}, 2023.
 
 \bibitem[Subramani et al., 2022]{subramani2022extracting}
 N.~Subramani, N.~Suresh, and M.~Peters.
@@ -621,15 +552,20 @@ A.~M. Turner, L.~Thiergart, D.~Udell, et al.
 \newblock Activation addition: Steering language models without optimization.
 \newblock \textit{arXiv:2308.10248}, 2023.
 
-\bibitem[Yang et al., 2024a]{yang2024superficial}
-Y.~Yang, S.~Singhal, A.~Modi, et al.
-\newblock Super(ficial)-alignment: Strong models may deceive weak models.
-\newblock \textit{arXiv:2406.11431}, 2024.
+\bibitem[Wang et al., 2024]{wang2024steermoe}
+X.~Wang et al.
+\newblock SteerMoE: Steering sparse mixture-of-experts language models via router-logit bias.
+\newblock \textit{arXiv preprint}, 2024.
 
-\bibitem[Yang et al., 2024b]{yang2024weak2strong}
-Y.~Yang, A.~Modi, et al.
-\newblock Weak-to-strong reasoning.
-\newblock \textit{EMNLP Findings}, 2024.
+\bibitem[Xu et al., 2024]{xu2024moe_editing}
+W.~Xu, et al.
+\newblock Knowledge editing in mixture-of-experts language models.
+\newblock \textit{arXiv:2405.18256}, 2024.
+
+\bibitem[Yang et al., 2024]{yang2024qwen2moe}
+A.~Yang, B.~Yang, B.~Hui, et al.
+\newblock Qwen2 technical report.
+\newblock \textit{arXiv:2407.10671}, 2024.
 
 \bibitem[Zou et al., 2023]{zou2023repe}
 A.~Zou, L.~Phan, S.~Chen, et al.
